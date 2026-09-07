@@ -9,5 +9,6 @@
 #include <unordered_map>
 #include <fstream>
 #include <sstream>
+#include <limits>
 
 #include "nlohmann/json.hpp"

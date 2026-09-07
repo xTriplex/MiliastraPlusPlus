@@ -37,9 +37,15 @@ compile_commands.json
 *.ipdb
 *.tlog
 *.lastbuildstate
+*.pch
+*.recipe
+*.log
+*.FileListAbsolute.txt
 
 # CMake generated directories
 cmake-build-*/
+**/Miliastra++.dir/
+**/x64/
 
 # IDE
 .vscode/

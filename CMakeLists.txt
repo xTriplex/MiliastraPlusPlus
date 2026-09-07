@@ -34,7 +34,7 @@ file(GLOB_RECURSE MILIASTRA_SOURCES
 # Main Executable
 # --------------------------------------------
 
-add_executable(${PROJECT_NAME} WIN32
+add_executable(${PROJECT_NAME}
     ${MILIASTRA_SOURCES}
 )
 
@@ -105,4 +105,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     LINK_FLAGS "/ENTRY:mainCRTStartup"
+)
+
+set_property(
+    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME}
 )
