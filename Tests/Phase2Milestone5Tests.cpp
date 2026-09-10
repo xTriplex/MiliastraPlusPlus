@@ -24,13 +24,28 @@ namespace
             "TestNode",
             {NodeAvailability::Server},
             {
-                PinSchema("Input", TypeDesc::Integer(), PinDirection::Input,
+                PinSchema(
+                    "Input",
+                    TypeDesc::Integer(),
+                    PinDirection::Input,
                     Execution ? PinCategory::Execution : PinCategory::Data,
-                    PinCardinality::Single, !Execution),
-                PinSchema("Output", TypeDesc::Integer(), PinDirection::Output,
-                    Execution ? PinCategory::Execution : PinCategory::Data),
-                PinSchema("Many", TypeDesc::Integer(), PinDirection::Input,
-                    PinCategory::Data, PinCardinality::Multiple, true)
+                    PinCardinality::Single,
+                    !Execution
+                ),
+                PinSchema(
+                    "Output",
+                    TypeDesc::Integer(),
+                    PinDirection::Output,
+                    Execution ? PinCategory::Execution : PinCategory::Data
+                ),
+                PinSchema(
+                    "Many",
+                    TypeDesc::Integer(),
+                    PinDirection::Input,
+                    PinCategory::Data,
+                    PinCardinality::Multiple,
+                    true
+                )
             }
         );
     }
@@ -51,8 +66,12 @@ namespace
 int main()
 {
     NodeDescriptorRegistry Descriptors;
-    Check(Descriptors.Register(MakeDescriptor(NodeDescriptorId(1U))).has_value());
-    Check(Descriptors.Register(MakeDescriptor(NodeDescriptorId(2U), true)).has_value());
+    Check(
+        Descriptors.Register(MakeDescriptor(NodeDescriptorId(1U))).has_value()
+    );
+    Check(
+        Descriptors.Register(MakeDescriptor(NodeDescriptorId(2U), true)).has_value()
+    );
 
     GraphIR ValidGraph;
     const NodeInstance Source{NodeInstanceId(1U), NodeDescriptorId(1U)};
@@ -63,11 +82,17 @@ int main()
         GraphVariableId(1U), "Value", TypeDesc::Integer(),
         LiteralValue(LiteralValue::Data{std::int64_t{3}})
     });
-    ValidGraph.BindInput(Source.Identifier, PinIndex(0U),
+    ValidGraph.BindInput(
+        Source.Identifier,
+        PinIndex(0U),
         LiteralValue(LiteralValue::Data{std::int64_t{4}}));
-    ValidGraph.BindInput(Destination.Identifier, PinIndex(0U),
+    ValidGraph.BindInput(
+        Destination.Identifier,
+        PinIndex(0U),
         OutputReference{Source.Identifier, PinIndex(1U)});
-    ValidGraph.BindInput(Destination.Identifier, PinIndex(2U),
+    ValidGraph.BindInput(
+        Destination.Identifier,
+        PinIndex(2U),
         GraphVariableReference{GraphVariableId(1U)});
     Check(GraphIRValidator::Validate(ValidGraph, Descriptors).empty());
 
@@ -88,15 +113,25 @@ int main()
         GraphVariableId(2U), "Bad", TypeDesc::Float(),
         LiteralValue(LiteralValue::Data{std::int64_t{1}})
     });
-    InvalidGraph.BindInput(NodeInstanceId(77U), PinIndex(0U),
+    InvalidGraph.BindInput(
+        NodeInstanceId(77U),
+        PinIndex(0U),
         LiteralValue(LiteralValue::Data{std::int64_t{1}}));
-    InvalidGraph.BindInput(NodeInstanceId(5U), PinIndex(99U),
+    InvalidGraph.BindInput(
+        NodeInstanceId(5U),
+        PinIndex(99U),
         LiteralValue(LiteralValue::Data{std::int64_t{1}}));
-    InvalidGraph.BindInput(NodeInstanceId(5U), PinIndex(0U),
+    InvalidGraph.BindInput(
+        NodeInstanceId(5U),
+        PinIndex(0U),
         LiteralValue(LiteralValue::Data{std::int64_t{1}}));
-    InvalidGraph.BindInput(NodeInstanceId(5U), PinIndex(0U),
+    InvalidGraph.BindInput(
+        NodeInstanceId(5U),
+        PinIndex(0U),
         LiteralValue(LiteralValue::Data{std::int64_t{2}}));
-    InvalidGraph.BindInput(NodeInstanceId(5U), PinIndex(0U),
+    InvalidGraph.BindInput(
+        NodeInstanceId(5U),
+        PinIndex(0U),
         OutputReference{NodeInstanceId(5U), PinIndex(0U)});
     InvalidGraph.AddControlEdge(ControlEdge{
         NodeInstanceId(5U), PinIndex(0U), NodeInstanceId(5U), PinIndex(1U)
@@ -116,23 +151,31 @@ int main()
     TypeGraph.AddVariable(GraphVariable{
         GraphVariableId(3U), "Wrong", TypeDesc::Float(), std::nullopt
     });
-    TypeGraph.BindInput(NodeInstanceId(6U), PinIndex(0U),
+    TypeGraph.BindInput(
+        NodeInstanceId(6U),
+        PinIndex(0U),
         GraphVariableReference{GraphVariableId(3U)});
     Check(HasCode(GraphIRValidator::Validate(TypeGraph, Descriptors),
         DiagnosticCode::IncompatibleGraphIRTypes));
 
     GraphIR LiteralGraph;
     LiteralGraph.AddNode(NodeInstance{NodeInstanceId(7U), NodeDescriptorId(1U)});
-    LiteralGraph.BindInput(NodeInstanceId(7U), PinIndex(0U),
+    LiteralGraph.BindInput(
+        NodeInstanceId(7U),
+        PinIndex(0U),
         LiteralValue(LiteralValue::Data{std::string("wrong")}));
     Check(HasCode(GraphIRValidator::Validate(LiteralGraph, Descriptors),
         DiagnosticCode::IncompatibleGraphIRTypes));
 
     GraphIR MultipleGraph;
     MultipleGraph.AddNode(NodeInstance{NodeInstanceId(8U), NodeDescriptorId(1U)});
-    MultipleGraph.BindInput(NodeInstanceId(8U), PinIndex(2U),
+    MultipleGraph.BindInput(
+        NodeInstanceId(8U),
+        PinIndex(2U),
         LiteralValue(LiteralValue::Data{std::int64_t{1}}));
-    MultipleGraph.BindInput(NodeInstanceId(8U), PinIndex(2U),
+    MultipleGraph.BindInput(
+        NodeInstanceId(8U),
+        PinIndex(2U),
         LiteralValue(LiteralValue::Data{std::int64_t{2}}));
     Check(GraphIRValidator::Validate(MultipleGraph, Descriptors).empty());
 

@@ -23,17 +23,23 @@ namespace MiliastraPlusPlus
                 const NodeInstance& Node = Graph.GetNodes()[Index];
                 if (!Node.Identifier.IsValid() || !Node.Descriptor.IsValid())
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidGraphIRNode,
+                    Add(
+                        Diagnostics,
+                        DiagnosticCode::InvalidGraphIRNode,
                         "GraphIR contains a node with an invalid instance or descriptor identifier.");
                 }
                 if (FindPriorNode(Graph, Node.Identifier, Index) != nullptr)
                 {
-                    Add(Diagnostics, DiagnosticCode::DuplicateGraphIRNodeIdentifier,
+                    Add(
+                        Diagnostics,
+                        DiagnosticCode::DuplicateGraphIRNodeIdentifier,
                         "GraphIR contains duplicate node instance identifiers.");
                 }
                 if (Node.Descriptor.IsValid() && Descriptors.Find(Node.Descriptor) == nullptr)
                 {
-                    Add(Diagnostics, DiagnosticCode::MissingDescriptor,
+                    Add(
+                        Diagnostics,
+                        DiagnosticCode::MissingDescriptor,
                         "GraphIR references a node descriptor that is not registered.");
                 }
             }
@@ -43,18 +49,24 @@ namespace MiliastraPlusPlus
                 const GraphVariable& Variable = Graph.GetVariables()[Index];
                 if (!Variable.IsValid())
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidGraphVariable,
+                    Add(
+                        Diagnostics,
+                        DiagnosticCode::InvalidGraphVariable,
                         "GraphIR contains an invalid graph variable.");
                 }
                 if (FindPriorVariable(Graph, Variable.Identifier, Index) != nullptr)
                 {
-                    Add(Diagnostics, DiagnosticCode::DuplicateGraphVariableIdentifier,
+                    Add(
+                        Diagnostics,
+                        DiagnosticCode::DuplicateGraphVariableIdentifier,
                         "GraphIR contains duplicate graph variable identifiers.");
                 }
                 if (Variable.DefaultValue.has_value() &&
                     !IsLiteralCompatible(*Variable.DefaultValue, Variable.Type))
                 {
-                    Add(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes,
+                    Add(
+                        Diagnostics,
+                        DiagnosticCode::IncompatibleGraphIRTypes,
                         "A graph variable default literal is incompatible with its declared type.");
                 }
             }
@@ -66,26 +78,34 @@ namespace MiliastraPlusPlus
                     DestinationNode, Record.DestinationInputPin, Descriptors);
                 if (DestinationNode == nullptr)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidInputBinding,
+                    Add(
+                        Diagnostics,
+                        DiagnosticCode::InvalidInputBinding,
                         "An input binding references a missing destination node.");
                     continue;
                 }
                 if (DestinationPin == nullptr || !Record.DestinationInputPin.IsValid())
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidGraphIRPinReference,
+                    Add(
+                        Diagnostics,
+                        DiagnosticCode::InvalidGraphIRPinReference,
                         "An input binding references an invalid destination pin.");
                     continue;
                 }
                 if (DestinationPin->GetDirection() != PinDirection::Input ||
                     DestinationPin->GetCategory() != PinCategory::Data)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidInputBinding,
+                    Add(
+                        Diagnostics,
+                        DiagnosticCode::InvalidInputBinding,
                         "An input binding destination must be a data input pin.");
                 }
                 if (DestinationPin->GetCardinality() != PinCardinality::Multiple &&
                     CountBindings(Graph, Record.DestinationNode, Record.DestinationInputPin) > 1U)
                 {
-                    Add(Diagnostics, DiagnosticCode::DuplicateInputBinding,
+                    Add(
+                        Diagnostics,
+                        DiagnosticCode::DuplicateInputBinding,
                         "A Single or Optional input pin has multiple bindings.");
                 }
                 ValidateBinding(Graph, Descriptors, Record.Binding, *DestinationPin, Diagnostics);
@@ -102,7 +122,9 @@ namespace MiliastraPlusPlus
                     SourcePin == nullptr || DestinationPin == nullptr ||
                     !Edge.SourceOutputPin.IsValid() || !Edge.DestinationInputPin.IsValid())
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidControlEdge,
+                    Add(
+                        Diagnostics,
+                        DiagnosticCode::InvalidControlEdge,
                         "A control edge contains a missing or invalid node or pin reference.");
                     continue;
                 }
@@ -111,7 +133,9 @@ namespace MiliastraPlusPlus
                     SourcePin->GetCategory() != PinCategory::Execution ||
                     DestinationPin->GetCategory() != PinCategory::Execution)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidControlEdge,
+                    Add(
+                        Diagnostics,
+                        DiagnosticCode::InvalidControlEdge,
                         "A control edge must connect an execution output to an execution input.");
                 }
             }
@@ -120,7 +144,11 @@ namespace MiliastraPlusPlus
         }
 
     private:
-        static void Add(DiagnosticCollection& Diagnostics, DiagnosticCode Code, const char* Message)
+        static void Add(
+            DiagnosticCollection& Diagnostics,
+            DiagnosticCode Code,
+            const char* Message
+        )
         {
             Diagnostics.push_back(Diagnostic{
                 .Severity = DiagnosticSeverity::Error,
@@ -130,7 +158,10 @@ namespace MiliastraPlusPlus
         }
 
         static const NodeInstance* FindPriorNode(
-            const GraphIR& Graph, NodeInstanceId Identifier, std::size_t EndIndex)
+            const GraphIR& Graph,
+            NodeInstanceId Identifier,
+            std::size_t EndIndex
+        )
         {
             for (std::size_t Index = 0U; Index < EndIndex; ++Index)
             {
@@ -143,7 +174,10 @@ namespace MiliastraPlusPlus
         }
 
         static const GraphVariable* FindPriorVariable(
-            const GraphIR& Graph, GraphVariableId Identifier, std::size_t EndIndex)
+            const GraphIR& Graph,
+            GraphVariableId Identifier,
+            std::size_t EndIndex
+        )
         {
             for (std::size_t Index = 0U; Index < EndIndex; ++Index)
             {
@@ -156,7 +190,10 @@ namespace MiliastraPlusPlus
         }
 
         static const PinSchema* FindPin(
-            const NodeInstance* Node, PinIndex Index, const NodeDescriptorRegistry& Descriptors)
+            const NodeInstance* Node,
+            PinIndex Index,
+            const NodeDescriptorRegistry& Descriptors
+        )
         {
             if (Node == nullptr || !Node->Descriptor.IsValid() || !Index.IsValid())
             {
@@ -171,7 +208,10 @@ namespace MiliastraPlusPlus
         }
 
         static std::size_t CountBindings(
-            const GraphIR& Graph, NodeInstanceId Node, PinIndex Pin)
+            const GraphIR& Graph,
+            NodeInstanceId Node,
+            PinIndex Pin
+        )
         {
             std::size_t Count = 0U;
             for (const InputBindingRecord& Record : Graph.GetInputBindings())
