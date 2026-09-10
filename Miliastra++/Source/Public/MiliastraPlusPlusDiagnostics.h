@@ -33,6 +33,8 @@ namespace MiliastraPlusPlus
         DuplicateLink,
         UnresolvedGenericPinType,
         TypePropagationConflict,
+        DuplicateDescriptor,
+        MissingDescriptor,
         FileOpenFailure,
         FileWriteFailure
     };
