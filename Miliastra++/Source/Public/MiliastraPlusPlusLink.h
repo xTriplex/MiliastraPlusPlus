@@ -1,51 +1,66 @@
 #pragma once
 
-#include <string>
+#include <utility>
 
 #include <nlohmann/json.hpp>
+
+#include "MiliastraPlusPlusIdentifiers.h"
 
 namespace MiliastraPlusPlus
 {
     class Link
     {
     public:
-        Link(uint32_t Id, uint32_t StartPinId, uint32_t EndPinId)
-            : m_Id(Id)
-            , m_StartPinId(StartPinId)
-            , m_EndPinId(EndPinId)
+        Link(
+            LinkIdentifier Identifier,
+            PinReference SourcePinReference,
+            PinReference DestinationPinReference
+        )
+            : m_Identifier(Identifier)
+            , m_SourcePinReference(std::move(SourcePinReference))
+            , m_DestinationPinReference(std::move(DestinationPinReference))
         {
         }
 
-        virtual ~Link() = default;
-
-        uint32_t GetId() const
+        [[nodiscard]] LinkIdentifier GetIdentifier() const
         {
-            return m_Id;
+            return m_Identifier;
         }
 
-        uint32_t GetStartPinId() const
+        [[nodiscard]] const PinReference& GetSourcePinReference() const
         {
-            return m_StartPinId;
+            return m_SourcePinReference;
         }
 
-        uint32_t GetEndPinId() const
+        [[nodiscard]] const PinReference& GetDestinationPinReference() const
         {
-            return m_EndPinId;
+            return m_DestinationPinReference;
         }
 
-        nlohmann::json Serialize() const
+        [[nodiscard]] nlohmann::json Serialize() const
         {
-            return
-            {
-                {"Id", m_Id},
-                {"StartPinId", m_StartPinId},
-                {"EndPinId", m_EndPinId}
+            return {
+                { "Id", m_Identifier.GetValue() },
+                {
+                    "Source Pin",
+                    {
+                        { "Node Id", m_SourcePinReference.OwningNodeIdentifier.GetValue() },
+                        { "Pin Id", m_SourcePinReference.LocalPinIdentifier.GetValue() }
+                    }
+                },
+                {
+                    "Destination Pin",
+                    {
+                        { "Node Id", m_DestinationPinReference.OwningNodeIdentifier.GetValue() },
+                        { "Pin Id", m_DestinationPinReference.LocalPinIdentifier.GetValue() }
+                    }
+                }
             };
         }
 
     private:
-        uint32_t m_Id;
-        uint32_t m_StartPinId;
-        uint32_t m_EndPinId;
+        LinkIdentifier m_Identifier;
+        PinReference m_SourcePinReference;
+        PinReference m_DestinationPinReference;
     };
 }

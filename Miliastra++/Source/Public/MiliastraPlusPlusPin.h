@@ -1,9 +1,13 @@
 #pragma once
 
+#include <cstdint>
+#include <optional>
 #include <string>
+#include <utility>
 
 #include <nlohmann/json.hpp>
 
+#include "MiliastraPlusPlusIdentifiers.h"
 
 namespace MiliastraPlusPlus
 {
@@ -16,7 +20,7 @@ namespace MiliastraPlusPlus
     enum class EPinType
     {
         Flow,
-        Bool,
+        Boolean,
         Integer,
         Float,
         String,
@@ -25,9 +29,12 @@ namespace MiliastraPlusPlus
         Vector3,
         PrefabID,
         ConfigID,
+        Faction,
         Structure,
         List,
-        Object
+        Object,
+        LocalVariable,
+        Generic
     };
 
     enum class EPinKind
@@ -36,67 +43,191 @@ namespace MiliastraPlusPlus
         Output
     };
 
+    NLOHMANN_JSON_SERIALIZE_ENUM(MiliastraPlusPlus::EPinCategory, {
+        { MiliastraPlusPlus::EPinCategory::Execution, "Execution" },
+        { MiliastraPlusPlus::EPinCategory::Data, "Data" }
+    })
+
+    NLOHMANN_JSON_SERIALIZE_ENUM(MiliastraPlusPlus::EPinType, {
+        { MiliastraPlusPlus::EPinType::Flow, "Flow" },
+        { MiliastraPlusPlus::EPinType::Boolean, "Boolean" },
+        { MiliastraPlusPlus::EPinType::Integer, "Integer" },
+        { MiliastraPlusPlus::EPinType::Float, "Floating Point Numbers" },
+        { MiliastraPlusPlus::EPinType::String, "String" },
+        { MiliastraPlusPlus::EPinType::Entity, "Entity" },
+        { MiliastraPlusPlus::EPinType::GUID, "GUID" },
+        { MiliastraPlusPlus::EPinType::Vector3, "3D Vector" },
+        { MiliastraPlusPlus::EPinType::PrefabID, "Prefab ID" },
+        { MiliastraPlusPlus::EPinType::ConfigID, "Configuration ID" },
+        { MiliastraPlusPlus::EPinType::Faction, "Faction" },
+        { MiliastraPlusPlus::EPinType::Structure, "Structure" },
+        { MiliastraPlusPlus::EPinType::List, "List" },
+        { MiliastraPlusPlus::EPinType::Object, "Object" },
+        { MiliastraPlusPlus::EPinType::LocalVariable, "Local Variable" },
+        { MiliastraPlusPlus::EPinType::Generic, "Generic" }
+    })
+
+    struct PinTypeSignature
+    {
+        EPinType PinType;
+        std::optional<EPinType> ElementType;
+
+        auto operator<=>(const PinTypeSignature&) const = default;
+    };
+
     class Pin
     {
     public:
-        Pin(uint32_t Id, const std::string& Name, EPinCategory PinCategory, EPinType PinType, EPinKind PinKind)
-            : m_Id(Id)
-            , m_Name(Name)
-            , m_PinCategory(PinCategory)
-            , m_PinType(PinType)
-            , m_PinKind(PinKind)
-        { 
+        Pin(
+            PinIdentifier Identifier,
+            std::string Name,
+            EPinCategory Category,
+            EPinType Type,
+            EPinKind Kind,
+            std::optional<EPinType> ElementType = std::nullopt,
+            std::int32_t TypeGroupIdentifier = -1
+        )
+            : m_Identifier(Identifier)
+            , m_Name(std::move(Name))
+            , m_Category(Category)
+            , m_Type(Type)
+            , m_Kind(Kind)
+            , m_ElementType(ElementType)
+            , m_TypeGroupIdentifier(TypeGroupIdentifier)
+        {
         }
 
         virtual ~Pin() = default;
 
-        uint32_t GetId() const
+        [[nodiscard]] PinIdentifier GetIdentifier() const
         {
-            return m_Id;
+            return m_Identifier;
         }
 
-        const std::string& GetName() const
+        [[nodiscard]] const std::string& GetName() const
         {
             return m_Name;
         }
 
-        EPinCategory GetPinCategory() const
+        [[nodiscard]] EPinCategory GetPinCategory() const
         {
-            return m_PinCategory;
+            return m_Category;
         }
 
-        EPinType GetPinType() const
+        [[nodiscard]] EPinType GetPinType() const
         {
-            return m_PinType;
+            return m_Type;
         }
 
-        EPinKind GetPinKind() const
+        [[nodiscard]] EPinKind GetPinKind() const
         {
-            return m_PinKind;
+            return m_Kind;
         }
 
-        bool IsExecution() const
+        [[nodiscard]] std::optional<EPinType> GetElementType() const
         {
-            return m_PinCategory == EPinCategory::Execution;
+            return m_ElementType;
         }
 
-        nlohmann::json Serialize() const
+        [[nodiscard]] std::int32_t GetTypeGroupIdentifier() const
         {
-            return
+            return m_TypeGroupIdentifier;
+        }
+
+        void SetTypeGroupIdentifier(std::int32_t TypeGroupIdentifier)
+        {
+            m_TypeGroupIdentifier = TypeGroupIdentifier;
+        }
+
+        [[nodiscard]] bool IsGeneric() const
+        {
+            return m_Type == EPinType::Generic;
+        }
+
+        [[nodiscard]] bool IsExecution() const
+        {
+            return m_Category == EPinCategory::Execution;
+        }
+
+        [[nodiscard]] PinTypeSignature GetDeclaredTypeSignature() const
+        {
+            return { m_Type, m_ElementType };
+        }
+
+        [[nodiscard]] PinTypeSignature GetEffectiveTypeSignature() const
+        {
+            if (IsGeneric() && m_ResolvedType.has_value())
             {
-                {"Id", m_Id},
-                {"Name", m_Name},
-                {"Pin Category", m_PinCategory},
-                {"Pin Type", m_PinType},
-                {"Pin Kind", m_PinKind}
+                return { m_ResolvedType.value(), m_ResolvedElementType };
+            }
+
+            return GetDeclaredTypeSignature();
+        }
+
+        [[nodiscard]] EPinType GetEffectiveType() const
+        {
+            return GetEffectiveTypeSignature().PinType;
+        }
+
+        void ResolveType(PinTypeSignature TypeSignature)
+        {
+            if (IsGeneric())
+            {
+                m_ResolvedType = TypeSignature.PinType;
+                m_ResolvedElementType = TypeSignature.ElementType;
+            }
+        }
+
+        void ClearResolvedType()
+        {
+            m_ResolvedType.reset();
+            m_ResolvedElementType.reset();
+        }
+
+        [[nodiscard]] bool IsCompatibleWith(const Pin& OtherPin) const
+        {
+            const PinTypeSignature ThisTypeSignature = GetEffectiveTypeSignature();
+            const PinTypeSignature OtherTypeSignature = OtherPin.GetEffectiveTypeSignature();
+
+            if (
+                ThisTypeSignature.PinType == EPinType::Generic ||
+                OtherTypeSignature.PinType == EPinType::Generic
+            )
+            {
+                return true;
+            }
+
+            return ThisTypeSignature == OtherTypeSignature;
+        }
+
+        [[nodiscard]] nlohmann::json Serialize() const
+        {
+            const PinTypeSignature EffectiveTypeSignature = GetEffectiveTypeSignature();
+            nlohmann::json SerializedPin = {
+                { "Id", m_Identifier.GetValue() },
+                { "Name", m_Name },
+                { "Pin Category", m_Category },
+                { "Pin Type", EffectiveTypeSignature.PinType },
+                { "Pin Kind", m_Kind }
             };
+
+            if (EffectiveTypeSignature.ElementType.has_value())
+            {
+                SerializedPin["Element Type"] = EffectiveTypeSignature.ElementType.value();
+            }
+
+            return SerializedPin;
         }
 
     private:
-        uint32_t m_Id;
+        PinIdentifier m_Identifier;
         std::string m_Name;
-        EPinCategory m_PinCategory;
-        EPinType m_PinType;
-        EPinKind m_PinKind;
+        EPinCategory m_Category;
+        EPinType m_Type;
+        EPinKind m_Kind;
+        std::optional<EPinType> m_ElementType;
+        std::int32_t m_TypeGroupIdentifier;
+        std::optional<EPinType> m_ResolvedType;
+        std::optional<EPinType> m_ResolvedElementType;
     };
 }

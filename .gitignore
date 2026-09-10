@@ -54,3 +54,6 @@ cmake-build-*/
 # OS
 Thumbs.db
 .DS_Store
+
+# Generated CTest / testing files
+Miliastra++/Testing/

@@ -2,6 +2,21 @@ cmake_minimum_required(VERSION 3.20)
 
 project(Miliastra++ CXX)
 
+# Keep the Visual Studio solution deliberately limited to the configurations
+# supported by the project.  Dist must be a real multi-configuration entry,
+# rather than only appearing in generator expressions.
+set(CMAKE_CONFIGURATION_TYPES "Debug;Release;Dist" CACHE STRING
+    "Supported build configurations" FORCE
+)
+
+# Make the application the default Visual Studio startup project.  This is
+# initialized before the Visual Studio solution is generated so utility
+# targets such as ALL_BUILD are never selected for F5 by default.
+set(CMAKE_VS_STARTUP_PROJECT "${PROJECT_NAME}")
+
+enable_testing()
+set(CMAKE_SUPPRESS_REGENERATION ON)
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -24,10 +39,19 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY
 # Gather source files
 # --------------------------------------------
 
-file(GLOB_RECURSE MILIASTRA_SOURCES
+file(GLOB_RECURSE MILIASTRA_SOURCES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/*.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/*.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/*.cpp
+)
+
+set(MILIASTRA_VENDOR_HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Vendor/nlohmann/json.hpp
+)
+
+set(MILIASTRA_PROJECT_FILES
+    ${MILIASTRA_SOURCES}
+    ${MILIASTRA_VENDOR_HEADERS}
 )
 
 # --------------------------------------------
@@ -35,8 +59,19 @@ file(GLOB_RECURSE MILIASTRA_SOURCES
 # --------------------------------------------
 
 add_executable(${PROJECT_NAME}
-    ${MILIASTRA_SOURCES}
+    ${MILIASTRA_PROJECT_FILES}
 )
+
+add_executable(Phase1Tests
+    ${CMAKE_CURRENT_SOURCE_DIR}/Tests/Phase1Tests.cpp
+)
+
+target_include_directories(Phase1Tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/Public
+    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Vendor
+)
+
+add_test(NAME Phase1Tests COMMAND Phase1Tests)
 
 # --------------------------------------------
 # Include Directories
@@ -109,5 +144,5 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 set_property(
     DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME}
+    PROPERTY VS_STARTUP_PROJECT "${PROJECT_NAME}"
 )
