@@ -73,6 +73,16 @@ target_include_directories(Phase1Tests PRIVATE
 
 add_test(NAME Phase1Tests COMMAND Phase1Tests)
 
+add_executable(Phase2Milestone1Tests
+    ${CMAKE_CURRENT_SOURCE_DIR}/Tests/Phase2Milestone1Tests.cpp
+)
+
+target_include_directories(Phase2Milestone1Tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/Public
+)
+
+add_test(NAME Phase2Milestone1Tests COMMAND Phase2Milestone1Tests)
+
 # --------------------------------------------
 # Include Directories
 # --------------------------------------------
