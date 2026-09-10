@@ -36,7 +36,17 @@ namespace MiliastraPlusPlus
         DuplicateDescriptor,
         MissingDescriptor,
         FileOpenFailure,
-        FileWriteFailure
+        FileWriteFailure,
+        InvalidGraphIRNode,
+        DuplicateGraphIRNodeIdentifier,
+        InvalidGraphVariable,
+        DuplicateGraphVariableIdentifier,
+        MissingGraphVariable,
+        InvalidGraphIRPinReference,
+        InvalidInputBinding,
+        DuplicateInputBinding,
+        IncompatibleGraphIRTypes,
+        InvalidControlEdge
     };
 
     struct Diagnostic
