@@ -56,88 +56,34 @@ add_executable(${PROJECT_NAME}
     ${MILIASTRA_PROJECT_FILES}
 )
 
-add_executable(Phase1Tests
-    ${CMAKE_CURRENT_SOURCE_DIR}/Tests/Phase1Tests.cpp
+# --------------------------------------------
+# Test Executables
+# --------------------------------------------
+
+set(TEST_TARGETS
+    Phase1Tests
+    Phase2Milestone1Tests
+    Phase2Milestone2Tests
+    Phase2Milestone3Tests
+    Phase2Milestone4Tests
+    Phase2Milestone5Tests
+    Phase2Milestone6Tests
+    Phase2Milestone7Tests
+    Phase2Milestone8Tests
 )
 
-target_include_directories(Phase1Tests PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/Public
-    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Vendor
-)
+foreach(TEST_NAME ${TEST_TARGETS})
+    add_executable(${TEST_NAME}
+        ${CMAKE_CURRENT_SOURCE_DIR}/Tests/${TEST_NAME}.cpp
+    )
 
-add_test(NAME Phase1Tests COMMAND Phase1Tests)
+    target_include_directories(${TEST_NAME} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/Public
+        ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Vendor
+    )
 
-add_executable(Phase2Milestone1Tests
-    ${CMAKE_CURRENT_SOURCE_DIR}/Tests/Phase2Milestone1Tests.cpp
-)
-
-target_include_directories(Phase2Milestone1Tests PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/Public
-)
-
-add_test(NAME Phase2Milestone1Tests COMMAND Phase2Milestone1Tests)
-
-add_executable(Phase2Milestone2Tests
-    ${CMAKE_CURRENT_SOURCE_DIR}/Tests/Phase2Milestone2Tests.cpp
-)
-
-target_include_directories(Phase2Milestone2Tests PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/Public
-)
-
-add_test(NAME Phase2Milestone2Tests COMMAND Phase2Milestone2Tests)
-
-add_executable(Phase2Milestone3Tests
-    ${CMAKE_CURRENT_SOURCE_DIR}/Tests/Phase2Milestone3Tests.cpp
-)
-
-target_include_directories(Phase2Milestone3Tests PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/Public
-)
-
-add_test(NAME Phase2Milestone3Tests COMMAND Phase2Milestone3Tests)
-
-add_executable(Phase2Milestone4Tests
-    ${CMAKE_CURRENT_SOURCE_DIR}/Tests/Phase2Milestone4Tests.cpp
-)
-
-target_include_directories(Phase2Milestone4Tests PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/Public
-)
-
-add_test(NAME Phase2Milestone4Tests COMMAND Phase2Milestone4Tests)
-
-add_executable(Phase2Milestone5Tests
-    ${CMAKE_CURRENT_SOURCE_DIR}/Tests/Phase2Milestone5Tests.cpp
-)
-
-target_include_directories(Phase2Milestone5Tests PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/Public
-)
-
-add_test(NAME Phase2Milestone5Tests COMMAND Phase2Milestone5Tests)
-
-add_executable(Phase2Milestone6Tests
-    ${CMAKE_CURRENT_SOURCE_DIR}/Tests/Phase2Milestone6Tests.cpp
-)
-
-target_include_directories(Phase2Milestone6Tests PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/Public
-    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Vendor
-)
-
-add_test(NAME Phase2Milestone6Tests COMMAND Phase2Milestone6Tests)
-
-add_executable(Phase2Milestone7Tests
-    ${CMAKE_CURRENT_SOURCE_DIR}/Tests/Phase2Milestone7Tests.cpp
-)
-
-target_include_directories(Phase2Milestone7Tests PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/Public
-    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Vendor
-)
-
-add_test(NAME Phase2Milestone7Tests COMMAND Phase2Milestone7Tests)
+    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+endforeach()
 
 # --------------------------------------------
 # Include Directories
