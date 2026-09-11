@@ -2,16 +2,10 @@ cmake_minimum_required(VERSION 3.20)
 
 project(Miliastra++ CXX)
 
-# Keep the Visual Studio solution deliberately limited to the configurations
-# supported by the project.  Dist must be a real multi-configuration entry,
-# rather than only appearing in generator expressions.
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;Dist" CACHE STRING
     "Supported build configurations" FORCE
 )
 
-# Make the application the default Visual Studio startup project.  This is
-# initialized before the Visual Studio solution is generated so utility
-# targets such as ALL_BUILD are never selected for F5 by default.
 set(CMAKE_VS_STARTUP_PROJECT "${PROJECT_NAME}")
 
 enable_testing()
@@ -133,6 +127,17 @@ target_include_directories(Phase2Milestone6Tests PRIVATE
 )
 
 add_test(NAME Phase2Milestone6Tests COMMAND Phase2Milestone6Tests)
+
+add_executable(Phase2Milestone7Tests
+    ${CMAKE_CURRENT_SOURCE_DIR}/Tests/Phase2Milestone7Tests.cpp
+)
+
+target_include_directories(Phase2Milestone7Tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/Public
+    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Vendor
+)
+
+add_test(NAME Phase2Milestone7Tests COMMAND Phase2Milestone7Tests)
 
 # --------------------------------------------
 # Include Directories

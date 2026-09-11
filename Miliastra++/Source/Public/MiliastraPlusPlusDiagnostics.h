@@ -47,7 +47,10 @@ namespace MiliastraPlusPlus
         DuplicateInputBinding,
         IncompatibleGraphIRTypes,
         InvalidControlEdge,
-        MalformedGraphIRJson
+        MalformedGraphIRJson,
+        MissingAdapterNodeMapping,
+        InvalidGraphIRAdapterLink,
+        InvalidGraphIRAdapterMapping
     };
 
     struct Diagnostic
