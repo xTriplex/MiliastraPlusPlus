@@ -45,6 +45,8 @@ namespace MiliastraPlusPlus
         InvalidGraphIRPinReference,
         InvalidInputBinding,
         DuplicateInputBinding,
+        InvalidNodeDescriptor,
+        InvalidGraphBuilderState,
         IncompatibleGraphIRTypes,
         InvalidControlEdge,
         MalformedGraphIRJson,

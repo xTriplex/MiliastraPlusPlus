@@ -208,7 +208,7 @@ namespace MiliastraPlusPlus
             {
                 return std::unexpected(Diagnostic{
                     .Severity = DiagnosticSeverity::Error,
-                    .Code = DiagnosticCode::MissingDescriptor,
+                    .Code = DiagnosticCode::InvalidNodeDescriptor,
                     .Message = "An invalid node descriptor cannot be registered."
                 });
             }
