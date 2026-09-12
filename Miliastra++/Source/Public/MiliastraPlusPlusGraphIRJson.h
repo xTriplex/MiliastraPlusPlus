@@ -5,6 +5,7 @@
 #include <expected>
 #include <initializer_list>
 #include <limits>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <variant>
@@ -383,6 +384,19 @@ namespace MiliastraPlusPlus::GraphIRJson
                     });
             }
 
+            if (Kind == "Integer" && Value["value"].is_number_unsigned())
+            {
+                const std::uint64_t Number = Value["value"].get<std::uint64_t>();
+                if (Number > static_cast<std::uint64_t>(
+                    std::numeric_limits<std::int64_t>::max()))
+                {
+                    return Fail<LiteralValue>(
+                        "Integer literal is outside the signed 64-bit graph range.");
+                }
+                return LiteralValue(
+                    LiteralValue::Data{static_cast<std::int64_t>(Number)});
+            }
+
             if (Kind == "Integer" && Value["value"].is_number_integer())
             {
                 return LiteralValue(
@@ -494,7 +508,7 @@ namespace MiliastraPlusPlus::GraphIRJson
     [[nodiscard]] inline Json Serialize(const GraphIR& Graph)
     {
         Json Result{
-            {"irVersion", 1},
+            {"irVersion", 2},
             {"nodes", Json::array()},
             {"variables", Json::array()},
             {"inputBindings", Json::array()},
@@ -530,7 +544,10 @@ namespace MiliastraPlusPlus::GraphIRJson
         {
             Json Value{
                 {"destinationNode", Record.DestinationNode.GetValue()},
-                {"destinationPin", Record.DestinationInputPin.GetValue()}
+                {"destinationPin", Record.DestinationInputPin.GetValue()},
+                {"outputTypeConstraint", Record.OutputTypeConstraint.has_value()
+                    ? Detail::TypeToJson(*Record.OutputTypeConstraint)
+                    : Json(nullptr)}
             };
 
             std::visit(
@@ -585,8 +602,6 @@ namespace MiliastraPlusPlus::GraphIRJson
         {
             if (!Root.is_object()
                 || !Root.contains("irVersion")
-                || !Root["irVersion"].is_number_integer()
-                || Root["irVersion"].get<std::int64_t>() != 1
                 || !Root.contains("nodes")
                 || !Root.contains("variables")
                 || !Root.contains("inputBindings")
@@ -598,6 +613,34 @@ namespace MiliastraPlusPlus::GraphIRJson
             {
                 return Detail::Fail<GraphIR>(
                     "Malformed GraphIR JSON root.");
+            }
+
+            const Json& VersionValue = Root["irVersion"];
+            std::uint32_t Version = 0U;
+            if (VersionValue.is_number_unsigned())
+            {
+                const std::uint64_t ParsedVersion = VersionValue.get<std::uint64_t>();
+                if (ParsedVersion < 1U || ParsedVersion > 2U)
+                {
+                    return Detail::Fail<GraphIR>(
+                        "Unsupported GraphIR JSON version.");
+                }
+                Version = static_cast<std::uint32_t>(ParsedVersion);
+            }
+            else if (VersionValue.is_number_integer())
+            {
+                const std::int64_t ParsedVersion = VersionValue.get<std::int64_t>();
+                if (ParsedVersion < 1 || ParsedVersion > 2)
+                {
+                    return Detail::Fail<GraphIR>(
+                        "Unsupported GraphIR JSON version.");
+                }
+                Version = static_cast<std::uint32_t>(ParsedVersion);
+            }
+            else
+            {
+                return Detail::Fail<GraphIR>(
+                    "Unsupported GraphIR JSON version.");
             }
 
             GraphIR Graph;
@@ -675,9 +718,20 @@ namespace MiliastraPlusPlus::GraphIRJson
 
             for (const Json& Value : Root["inputBindings"])
             {
-                if (!Detail::HasObjectFields(
-                    Value,
-                    {"destinationNode", "destinationPin", "binding"})
+                const bool HasRequiredBindingFields = Version == 1U
+                    ? Detail::HasObjectFields(
+                        Value,
+                        {"destinationNode", "destinationPin", "binding"})
+                    : Detail::HasObjectFields(
+                        Value,
+                        {
+                            "destinationNode",
+                            "destinationPin",
+                            "binding",
+                            "outputTypeConstraint"
+                        });
+                if (!HasRequiredBindingFields
+                    || (Version == 1U && Value.contains("outputTypeConstraint"))
                     || !Value["binding"].is_object())
                 {
                     return Detail::Fail<GraphIR>(
@@ -691,6 +745,18 @@ namespace MiliastraPlusPlus::GraphIRJson
                 if (!DestinationPin)
                 {
                     return std::unexpected(DestinationPin.error());
+                }
+
+                std::optional<TypeDesc> OutputTypeConstraint;
+                if (Version == 2U && !Value["outputTypeConstraint"].is_null())
+                {
+                    const auto ParsedConstraint = Detail::TypeFromJson(
+                        Value["outputTypeConstraint"]);
+                    if (!ParsedConstraint)
+                    {
+                        return std::unexpected(ParsedConstraint.error());
+                    }
+                    OutputTypeConstraint = *ParsedConstraint;
                 }
 
                 const Json& Binding = Value["binding"];
@@ -761,7 +827,8 @@ namespace MiliastraPlusPlus::GraphIRJson
                     NodeInstanceId(
                         Detail::Id(Value, "destinationNode")),
                     PinIndex(*DestinationPin),
-                    std::move(Parsed));
+                    std::move(Parsed),
+                    std::move(OutputTypeConstraint));
             }
 
             for (const Json& Value : Root["controlEdges"])

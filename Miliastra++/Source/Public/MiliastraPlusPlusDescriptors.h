@@ -151,7 +151,21 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] bool IsValid() const
         {
-            return m_Identifier.IsValid() && !m_Name.empty();
+            if (!m_Identifier.IsValid() || m_Name.empty())
+            {
+                return false;
+            }
+
+            for (const PinSchema& Pin : m_Pins)
+            {
+                if (!Pin.GetType().IsValid() ||
+                    (Pin.GetCategory() == PinCategory::Data &&
+                        ContainsFlowType(Pin.GetType())))
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         [[nodiscard]] NodeDescriptorId GetIdentifier() const
@@ -193,6 +207,26 @@ namespace MiliastraPlusPlus
         }
 
     private:
+        [[nodiscard]] static bool ContainsFlowType(const TypeDesc& Type)
+        {
+            if (!Type.IsValid())
+            {
+                return false;
+            }
+            switch (Type.GetKind())
+            {
+            case TypeDesc::Kind::Flow:
+                return true;
+            case TypeDesc::Kind::List:
+                return ContainsFlowType(*Type.GetElementType());
+            case TypeDesc::Kind::Dictionary:
+                return ContainsFlowType(*Type.GetKeyType()) ||
+                    ContainsFlowType(*Type.GetValueType());
+            default:
+                return false;
+            }
+        }
+
         NodeDescriptorId m_Identifier;
         std::string m_Name;
         std::vector<NodeAvailability> m_Availability;

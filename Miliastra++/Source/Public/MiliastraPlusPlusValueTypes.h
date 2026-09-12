@@ -100,6 +100,12 @@ namespace MiliastraPlusPlus
         auto operator<=>(const FactionValue&) const = default;
     };
 
+    // Compile-time graph type token for Entity pins and variables. It carries
+    // no runtime entity identity and is intentionally not a LiteralValue.
+    struct EntityTypeTag
+    {
+    };
+
     class LiteralValue
     {
     public:

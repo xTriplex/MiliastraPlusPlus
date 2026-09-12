@@ -183,6 +183,17 @@ namespace MiliastraPlusPlus
         }
     };
 
+    template<>
+    struct CppTypeDesc<EntityTypeTag>
+    {
+        static constexpr bool IsSupported = true;
+
+        [[nodiscard]] static std::expected<TypeDesc, DiagnosticCollection> Get()
+        {
+            return TypeDesc::Entity();
+        }
+    };
+
     template<typename T>
     struct CppTypeDesc<std::vector<T>>
     {
@@ -469,6 +480,13 @@ namespace MiliastraPlusPlus
 
             const NodeInstance* SourceNode = m_Graph.FindNode(Node.GetIdentifier());
             const NodeDescriptor* Descriptor = m_Descriptors.Find(SourceNode->Descriptor);
+            if (Descriptor == nullptr)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeMissingDescriptorDiagnostic(
+                        "The output source node descriptor is no longer registered.")
+                });
+            }
             if (!OutputPin.IsValid() || OutputPin.GetValue() >= Descriptor->GetPins().size())
             {
                 return std::unexpected(DiagnosticCollection{
@@ -572,6 +590,13 @@ namespace MiliastraPlusPlus
 
             const NodeInstance* Destination = m_Graph.FindNode(DestinationNode.GetIdentifier());
             const NodeDescriptor* Descriptor = m_Descriptors.Find(Destination->Descriptor);
+            if (Descriptor == nullptr)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeMissingDescriptorDiagnostic(
+                        "The input destination node descriptor is no longer registered.")
+                });
+            }
             if (!DestinationPin.IsValid() || DestinationPin.GetValue() >= Descriptor->GetPins().size())
             {
                 return std::unexpected(DiagnosticCollection{
@@ -584,6 +609,11 @@ namespace MiliastraPlusPlus
                 return std::unexpected(DiagnosticCollection{
                     MakeBindingDiagnostic("An input binding destination must be a data input pin.")
                 });
+            }
+            const auto TypeResult = GetCppTypeDesc<T>();
+            if (!TypeResult.has_value())
+            {
+                return std::unexpected(TypeResult.error());
             }
             if (Pin.GetCardinality() != PinCardinality::Multiple &&
                 CountBindings(DestinationNode.GetIdentifier(), DestinationPin) != 0U)
@@ -598,6 +628,7 @@ namespace MiliastraPlusPlus
             }
 
             InputBinding Binding;
+            std::optional<TypeDesc> OutputTypeConstraint;
             const auto& Value = Expression.GetValue();
             if (const LiteralValue* Literal = std::get_if<LiteralValue>(&Value))
             {
@@ -605,6 +636,13 @@ namespace MiliastraPlusPlus
                 {
                     return std::unexpected(DiagnosticCollection{
                         MakeBindingDiagnostic("The destination pin does not allow literal bindings.")
+                    });
+                }
+                if (!IsLiteralCompatible(*Literal, *TypeResult))
+                {
+                    return std::unexpected(DiagnosticCollection{
+                        MakeTypeDiagnostic(
+                            "The literal is incompatible with the ValueOrExpr C++ type.")
                     });
                 }
                 if (!IsLiteralCompatible(*Literal, Pin.GetType()))
@@ -626,6 +664,7 @@ namespace MiliastraPlusPlus
                     OutputValue->GetIdentifier(),
                     OutputValue->GetPin()
                 };
+                OutputTypeConstraint = *TypeResult;
             }
             else
             {
@@ -641,7 +680,8 @@ namespace MiliastraPlusPlus
             m_Graph.BindInput(
                 DestinationNode.GetIdentifier(),
                 DestinationPin,
-                std::move(Binding)
+                std::move(Binding),
+                std::move(OutputTypeConstraint)
             );
             return {};
         }
@@ -733,6 +773,13 @@ namespace MiliastraPlusPlus
                 };
             }
             const NodeDescriptor* Descriptor = m_Descriptors.Find(SourceNode->Descriptor);
+            if (Descriptor == nullptr)
+            {
+                return DiagnosticCollection{
+                    MakeMissingDescriptorDiagnostic(
+                        "The output source node descriptor is no longer registered.")
+                };
+            }
             if (OutputValue.GetPin().GetValue() >= Descriptor->GetPins().size())
             {
                 return DiagnosticCollection{

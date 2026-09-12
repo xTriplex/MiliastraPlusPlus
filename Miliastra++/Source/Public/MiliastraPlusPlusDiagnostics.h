@@ -49,6 +49,8 @@ namespace MiliastraPlusPlus
         InvalidGraphBuilderState,
         UnsupportedCppType,
         DuplicateGraphVariableName,
+        GenericConstraintConflict,
+        UnresolvedGenericType,
         IncompatibleGraphIRTypes,
         InvalidControlEdge,
         MalformedGraphIRJson,

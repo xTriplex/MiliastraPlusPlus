@@ -96,5 +96,52 @@ int main()
     Check(!NodeDescriptor(NodeDescriptorId(), "Invalid", {}, {}).IsValid(), 35);
     Check(!NodeDescriptor(NodeDescriptorId(11U), "", {}, {}).IsValid(), 36);
 
+    const NodeDescriptor InvalidPinTypeDescriptor(
+        NodeDescriptorId(12U),
+        "InvalidPinType",
+        {},
+        {
+            PinSchema("Invalid", TypeDesc(), PinDirection::Output, PinCategory::Data)
+        }
+    );
+    Check(!InvalidPinTypeDescriptor.IsValid(), 37);
+
+    const NodeDescriptor InvalidNestedPinTypeDescriptor(
+        NodeDescriptorId(13U),
+        "InvalidNestedPinType",
+        {},
+        {
+            PinSchema(
+                "InvalidNested",
+                TypeDesc::List(TypeDesc::Generic(GenericParameterId{})),
+                PinDirection::Output,
+                PinCategory::Data
+            )
+        }
+    );
+    Check(!InvalidNestedPinTypeDescriptor.IsValid(), 38);
+
+    NodeDescriptorRegistry InvalidPinTypeRegistry;
+    const auto InvalidPinTypeRegistration = InvalidPinTypeRegistry.Register(
+        InvalidNestedPinTypeDescriptor
+    );
+    Check(!InvalidPinTypeRegistration.has_value(), 39);
+    Check(InvalidPinTypeRegistration.error().Code == DiagnosticCode::InvalidNodeDescriptor, 40);
+
+    const NodeDescriptor FlowDataPinDescriptor(
+        NodeDescriptorId(14U),
+        "FlowDataPin",
+        {},
+        {
+            PinSchema(
+                "FlowData",
+                TypeDesc::Dictionary(TypeDesc::String(), TypeDesc::Flow()),
+                PinDirection::Output,
+                PinCategory::Data
+            )
+        }
+    );
+    Check(!FlowDataPinDescriptor.IsValid(), 41);
+
     return EXIT_SUCCESS;
 }

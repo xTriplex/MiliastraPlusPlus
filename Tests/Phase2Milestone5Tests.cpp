@@ -17,8 +17,12 @@ namespace
         }
     }
 
-    NodeDescriptor MakeDescriptor(NodeDescriptorId Id, bool Execution = false)
+    NodeDescriptor MakeDescriptor(
+        NodeDescriptorId Id,
+        bool Execution = false,
+        TypeDesc ExecutionType = TypeDesc::Flow())
     {
+        const TypeDesc PinType = Execution ? std::move(ExecutionType) : TypeDesc::Integer();
         return NodeDescriptor(
             Id,
             "TestNode",
@@ -26,7 +30,7 @@ namespace
             {
                 PinSchema(
                     "Input",
-                    TypeDesc::Integer(),
+                    PinType,
                     PinDirection::Input,
                     Execution ? PinCategory::Execution : PinCategory::Data,
                     PinCardinality::Single,
@@ -34,7 +38,7 @@ namespace
                 ),
                 PinSchema(
                     "Output",
-                    TypeDesc::Integer(),
+                    PinType,
                     PinDirection::Output,
                     Execution ? PinCategory::Execution : PinCategory::Data
                 ),
@@ -72,6 +76,14 @@ int main()
     Check(
         Descriptors.Register(MakeDescriptor(NodeDescriptorId(2U), true)).has_value()
     );
+    Check(
+        Descriptors.Register(MakeDescriptor(
+            NodeDescriptorId(3U), true, TypeDesc::Integer())).has_value()
+    );
+    Check(
+        Descriptors.Register(MakeDescriptor(
+            NodeDescriptorId(4U), true, TypeDesc::Generic(GenericParameterId(1U)))).has_value()
+    );
 
     GraphIR ValidGraph;
     const NodeInstance Source{NodeInstanceId(1U), NodeDescriptorId(1U)};
@@ -103,6 +115,61 @@ int main()
         NodeInstanceId(3U), PinIndex(1U), NodeInstanceId(4U), PinIndex(0U)
     });
     Check(GraphIRValidator::Validate(ControlGraph, Descriptors).empty());
+
+    GraphIR DuplicateControlGraph;
+    DuplicateControlGraph.AddNode(NodeInstance{NodeInstanceId(10U), NodeDescriptorId(2U)});
+    DuplicateControlGraph.AddNode(NodeInstance{NodeInstanceId(11U), NodeDescriptorId(2U)});
+    const ControlEdge FlowEdge{
+        NodeInstanceId(10U), PinIndex(1U), NodeInstanceId(11U), PinIndex(0U)
+    };
+    DuplicateControlGraph.AddControlEdge(FlowEdge);
+    DuplicateControlGraph.AddControlEdge(FlowEdge);
+    Check(HasCode(
+        GraphIRValidator::Validate(DuplicateControlGraph, Descriptors),
+        DiagnosticCode::InvalidControlEdge
+    ));
+
+    GraphIR SharedEndpointControlGraph;
+    SharedEndpointControlGraph.AddNode(NodeInstance{NodeInstanceId(12U), NodeDescriptorId(2U)});
+    SharedEndpointControlGraph.AddNode(NodeInstance{NodeInstanceId(13U), NodeDescriptorId(2U)});
+    SharedEndpointControlGraph.AddNode(NodeInstance{NodeInstanceId(14U), NodeDescriptorId(2U)});
+    SharedEndpointControlGraph.AddControlEdge(ControlEdge{
+        NodeInstanceId(12U), PinIndex(1U), NodeInstanceId(13U), PinIndex(0U)
+    });
+    SharedEndpointControlGraph.AddControlEdge(ControlEdge{
+        NodeInstanceId(12U), PinIndex(1U), NodeInstanceId(14U), PinIndex(0U)
+    });
+    Check(GraphIRValidator::Validate(SharedEndpointControlGraph, Descriptors).empty());
+
+    const auto CheckInvalidExecutionType = [&Descriptors](
+        NodeDescriptorId SourceDescriptor,
+        NodeDescriptorId DestinationDescriptor,
+        NodeInstanceId SourceId,
+        NodeInstanceId DestinationId)
+    {
+        GraphIR Graph;
+        Graph.AddNode(NodeInstance{SourceId, SourceDescriptor});
+        Graph.AddNode(NodeInstance{DestinationId, DestinationDescriptor});
+        Graph.AddControlEdge(ControlEdge{
+            SourceId, PinIndex(1U), DestinationId, PinIndex(0U)
+        });
+        Check(HasCode(
+            GraphIRValidator::Validate(Graph, Descriptors),
+            DiagnosticCode::InvalidControlEdge
+        ));
+    };
+    CheckInvalidExecutionType(
+        NodeDescriptorId(3U), NodeDescriptorId(2U),
+        NodeInstanceId(15U), NodeInstanceId(16U));
+    CheckInvalidExecutionType(
+        NodeDescriptorId(2U), NodeDescriptorId(3U),
+        NodeInstanceId(17U), NodeInstanceId(18U));
+    CheckInvalidExecutionType(
+        NodeDescriptorId(4U), NodeDescriptorId(2U),
+        NodeInstanceId(19U), NodeInstanceId(20U));
+    CheckInvalidExecutionType(
+        NodeDescriptorId(2U), NodeDescriptorId(4U),
+        NodeInstanceId(21U), NodeInstanceId(22U));
 
     GraphIR InvalidGraph;
     InvalidGraph.AddNode(NodeInstance{NodeInstanceId{}, NodeDescriptorId(99U)});
@@ -178,6 +245,15 @@ int main()
         PinIndex(2U),
         LiteralValue(LiteralValue::Data{std::int64_t{2}}));
     Check(GraphIRValidator::Validate(MultipleGraph, Descriptors).empty());
+
+    GraphIR FlowVariableGraph;
+    FlowVariableGraph.AddVariable(GraphVariable{
+        GraphVariableId(4U), "Control", TypeDesc::Flow(), std::nullopt
+    });
+    Check(HasCode(
+        GraphIRValidator::Validate(FlowVariableGraph, Descriptors),
+        DiagnosticCode::InvalidGraphVariable
+    ));
 
     return 0;
 }

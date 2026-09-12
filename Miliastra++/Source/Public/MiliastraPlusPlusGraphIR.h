@@ -41,6 +41,7 @@ namespace MiliastraPlusPlus
         NodeInstanceId DestinationNode;
         PinIndex DestinationInputPin;
         InputBinding Binding;
+        std::optional<TypeDesc> OutputTypeConstraint;
     };
 
     struct ControlEdge
@@ -91,13 +92,15 @@ namespace MiliastraPlusPlus
         void BindInput(
             NodeInstanceId DestinationNode,
             PinIndex DestinationInputPin,
-            InputBinding Binding
+            InputBinding Binding,
+            std::optional<TypeDesc> OutputTypeConstraint = std::nullopt
         )
         {
             m_InputBindings.push_back(InputBindingRecord{
                 DestinationNode,
                 DestinationInputPin,
-                std::move(Binding)
+                std::move(Binding),
+                std::move(OutputTypeConstraint)
             });
         }
 

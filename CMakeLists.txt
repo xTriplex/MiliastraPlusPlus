@@ -72,6 +72,7 @@ set(TEST_TARGETS
     Phase2Milestone8Tests
     Phase3Milestone1Tests
     Phase3Milestone2Tests
+    Phase3Milestone3Tests
 )
 
 foreach(TEST_NAME ${TEST_TARGETS})
@@ -123,9 +124,6 @@ if(MSVC)
         $<$<CONFIG:Release>:/O2>
         $<$<CONFIG:Dist>:/O2>
     )
-
-    # Enable multi-processor compilation.
-    # CMake's MSVC generator handles this through /MP.
     set_property(
         TARGET ${PROJECT_NAME}
         PROPERTY VS_USE_MSVCCLMP true

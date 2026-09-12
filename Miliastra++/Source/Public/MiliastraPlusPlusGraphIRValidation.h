@@ -1,10 +1,13 @@
 #pragma once
 
 #include <cstdint>
+#include <cstddef>
+#include <iterator>
 #include <string>
 #include <variant>
 
 #include "MiliastraPlusPlusGraphIR.h"
+#include "MiliastraPlusPlusGraphIRGenericValidation.h"
 
 namespace MiliastraPlusPlus
 {
@@ -47,12 +50,12 @@ namespace MiliastraPlusPlus
             for (std::size_t Index = 0U; Index < Graph.GetVariables().size(); ++Index)
             {
                 const GraphVariable& Variable = Graph.GetVariables()[Index];
-                if (!Variable.IsValid())
+                if (!Variable.IsValid() || ContainsFlowType(Variable.Type))
                 {
                     Add(
                         Diagnostics,
                         DiagnosticCode::InvalidGraphVariable,
-                        "GraphIR contains an invalid graph variable.");
+                        "GraphIR contains an invalid graph variable or a control Flow type used as data.");
                 }
                 if (FindPriorVariable(Graph, Variable.Identifier, Index) != nullptr)
                 {
@@ -108,11 +111,12 @@ namespace MiliastraPlusPlus
                         DiagnosticCode::DuplicateInputBinding,
                         "A Single or Optional input pin has multiple bindings.");
                 }
-                ValidateBinding(Graph, Descriptors, Record.Binding, *DestinationPin, Diagnostics);
+                ValidateBinding(Graph, Descriptors, Record, *DestinationPin, Diagnostics);
             }
 
-            for (const ControlEdge& Edge : Graph.GetControlEdges())
+            for (std::size_t Index = 0U; Index < Graph.GetControlEdges().size(); ++Index)
             {
+                const ControlEdge& Edge = Graph.GetControlEdges()[Index];
                 const NodeInstance* SourceNode = Graph.FindNode(Edge.SourceNode);
                 const NodeInstance* DestinationNode = Graph.FindNode(Edge.DestinationNode);
                 const PinSchema* SourcePin = FindPin(SourceNode, Edge.SourceOutputPin, Descriptors);
@@ -131,14 +135,31 @@ namespace MiliastraPlusPlus
                 if (SourcePin->GetDirection() != PinDirection::Output ||
                     DestinationPin->GetDirection() != PinDirection::Input ||
                     SourcePin->GetCategory() != PinCategory::Execution ||
-                    DestinationPin->GetCategory() != PinCategory::Execution)
+                    DestinationPin->GetCategory() != PinCategory::Execution ||
+                    SourcePin->GetType() != TypeDesc::Flow() ||
+                    DestinationPin->GetType() != TypeDesc::Flow())
                 {
                     Add(
                         Diagnostics,
                         DiagnosticCode::InvalidControlEdge,
-                        "A control edge must connect an execution output to an execution input.");
+                        "A control edge must connect Flow-typed execution output and input pins.");
+                }
+                if (HasPriorControlEdge(Graph, Edge, Index))
+                {
+                    Add(
+                        Diagnostics,
+                        DiagnosticCode::InvalidControlEdge,
+                        "GraphIR contains a duplicate control edge.");
                 }
             }
+
+            DiagnosticCollection GenericDiagnostics =
+                GraphIRGenericValidationDetail::ValidateGenericTypes(Graph, Descriptors);
+            Diagnostics.insert(
+                Diagnostics.end(),
+                std::make_move_iterator(GenericDiagnostics.begin()),
+                std::make_move_iterator(GenericDiagnostics.end())
+            );
 
             return Diagnostics;
         }
@@ -189,6 +210,26 @@ namespace MiliastraPlusPlus
             return nullptr;
         }
 
+        static bool HasPriorControlEdge(
+            const GraphIR& Graph,
+            const ControlEdge& Edge,
+            std::size_t EndIndex
+        )
+        {
+            for (std::size_t Index = 0U; Index < EndIndex; ++Index)
+            {
+                const ControlEdge& Prior = Graph.GetControlEdges()[Index];
+                if (Prior.SourceNode == Edge.SourceNode &&
+                    Prior.SourceOutputPin == Edge.SourceOutputPin &&
+                    Prior.DestinationNode == Edge.DestinationNode &&
+                    Prior.DestinationInputPin == Edge.DestinationInputPin)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         static const PinSchema* FindPin(
             const NodeInstance* Node,
             PinIndex Index,
@@ -227,10 +268,30 @@ namespace MiliastraPlusPlus
         static void ValidateBinding(
             const GraphIR& Graph,
             const NodeDescriptorRegistry& Descriptors,
-            const InputBinding& Binding,
+            const InputBindingRecord& Record,
             const PinSchema& DestinationPin,
             DiagnosticCollection& Diagnostics)
         {
+            const InputBinding& Binding = Record.Binding;
+            const bool HasValidOutputTypeConstraint =
+                Record.OutputTypeConstraint.has_value() &&
+                Record.OutputTypeConstraint->IsValid() &&
+                !ContainsGenericType(*Record.OutputTypeConstraint) &&
+                !ContainsFlowType(*Record.OutputTypeConstraint);
+            if (Record.OutputTypeConstraint.has_value())
+            {
+                if (!std::holds_alternative<OutputReference>(Binding))
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidInputBinding,
+                        "An output type constraint can only be attached to an output binding.");
+                }
+                if (!HasValidOutputTypeConstraint)
+                {
+                    Add(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes,
+                        "An output type constraint must be a valid concrete data type.");
+                }
+            }
+
             if (const LiteralValue* Literal = std::get_if<LiteralValue>(&Binding))
             {
                 if (!DestinationPin.AllowsLiteral())
@@ -255,12 +316,32 @@ namespace MiliastraPlusPlus
                     Add(Diagnostics, DiagnosticCode::InvalidGraphIRPinReference,
                         "An output binding references a missing or invalid source pin.");
                 }
-                else if (SourcePin->GetDirection() != PinDirection::Output ||
-                    SourcePin->GetCategory() != PinCategory::Data ||
-                    !SourcePin->GetType().IsCompatibleWith(DestinationPin.GetType()))
+                else
                 {
-                    Add(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes,
-                        "An output binding is incompatible with its destination pin.");
+                    if (SourcePin->GetDirection() != PinDirection::Output ||
+                        SourcePin->GetCategory() != PinCategory::Data ||
+                        ContainsFlowType(SourcePin->GetType()) ||
+                        ContainsFlowType(DestinationPin.GetType()) ||
+                        !SourcePin->GetType().IsCompatibleWith(DestinationPin.GetType()))
+                    {
+                        Add(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes,
+                            "An output binding is incompatible with its destination pin.");
+                    }
+                    if (HasValidOutputTypeConstraint)
+                    {
+                        if (!SourcePin->GetType().IsCompatibleWith(
+                            *Record.OutputTypeConstraint))
+                        {
+                            Add(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes,
+                                "An output type constraint is structurally incompatible with its source pin.");
+                        }
+                        else if (!ContainsGenericType(SourcePin->GetType()) &&
+                            SourcePin->GetType() != *Record.OutputTypeConstraint)
+                        {
+                            Add(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes,
+                                "A concrete output type must equal its typed-use constraint.");
+                        }
+                    }
                 }
                 return;
             }
@@ -271,7 +352,8 @@ namespace MiliastraPlusPlus
                 Add(Diagnostics, DiagnosticCode::MissingGraphVariable,
                     "An input binding references a missing or invalid graph variable.");
             }
-            else if (!SourceVariable->Type.IsCompatibleWith(DestinationPin.GetType()))
+            else if (!ContainsFlowType(SourceVariable->Type) &&
+                !SourceVariable->Type.IsCompatibleWith(DestinationPin.GetType()))
             {
                 Add(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes,
                     "A graph variable binding is incompatible with the destination pin type.");
@@ -296,6 +378,46 @@ namespace MiliastraPlusPlus
             case TypeDesc::Kind::ConfigId: return Literal.Is<ConfigIdValue>();
             case TypeDesc::Kind::Faction: return Literal.Is<FactionValue>();
             default: return false;
+            }
+        }
+
+        static bool ContainsGenericType(const TypeDesc& Type)
+        {
+            if (!Type.IsValid())
+            {
+                return false;
+            }
+            switch (Type.GetKind())
+            {
+            case TypeDesc::Kind::Generic:
+                return true;
+            case TypeDesc::Kind::List:
+                return ContainsGenericType(*Type.GetElementType());
+            case TypeDesc::Kind::Dictionary:
+                return ContainsGenericType(*Type.GetKeyType()) ||
+                    ContainsGenericType(*Type.GetValueType());
+            default:
+                return false;
+            }
+        }
+
+        static bool ContainsFlowType(const TypeDesc& Type)
+        {
+            if (!Type.IsValid())
+            {
+                return false;
+            }
+            switch (Type.GetKind())
+            {
+            case TypeDesc::Kind::Flow:
+                return true;
+            case TypeDesc::Kind::List:
+                return ContainsFlowType(*Type.GetElementType());
+            case TypeDesc::Kind::Dictionary:
+                return ContainsFlowType(*Type.GetKeyType()) ||
+                    ContainsFlowType(*Type.GetValueType());
+            default:
+                return false;
             }
         }
     };
