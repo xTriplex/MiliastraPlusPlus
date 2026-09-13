@@ -379,6 +379,425 @@ namespace MiliastraPlusPlus
         return ValueOrExpr<T>(*this);
     }
 
+    class ExecutionHandle final
+    {
+    public:
+        ExecutionHandle() = default;
+
+        [[nodiscard]] bool IsValid() const
+        {
+            return m_Node.IsValid() && m_OutputPin.IsValid() && m_Entry.IsValid() &&
+                m_Region.IsValid() && !m_Context.expired();
+        }
+
+        [[nodiscard]] NodeInstanceId GetSourceNode() const
+        {
+            return m_Node;
+        }
+
+        [[nodiscard]] PinIndex GetSourceOutputPin() const
+        {
+            return m_OutputPin;
+        }
+
+        [[nodiscard]] ExecutionEntryId GetEntry() const
+        {
+            return m_Entry;
+        }
+
+        [[nodiscard]] ExecutionRegionId GetRegion() const
+        {
+            return m_Region;
+        }
+
+    private:
+        ExecutionHandle(
+            NodeInstanceId Node,
+            PinIndex OutputPin,
+            ExecutionEntryId Entry,
+            ExecutionRegionId Region,
+            const std::shared_ptr<const NodeHandle::Context>& ContextToken
+        )
+            : m_Node(Node)
+            , m_OutputPin(OutputPin)
+            , m_Entry(Entry)
+            , m_Region(Region)
+            , m_Context(ContextToken)
+        {
+        }
+
+        friend class GraphBuilder;
+
+        NodeInstanceId m_Node;
+        PinIndex m_OutputPin;
+        ExecutionEntryId m_Entry;
+        ExecutionRegionId m_Region;
+        std::weak_ptr<const NodeHandle::Context> m_Context;
+    };
+
+    class EntryScope final
+    {
+    public:
+        EntryScope() = delete;
+        EntryScope(const EntryScope&) = delete;
+        EntryScope& operator=(const EntryScope&) = delete;
+        EntryScope& operator=(EntryScope&&) = delete;
+
+        EntryScope(EntryScope&& Other) noexcept
+            : m_Entry(Other.m_Entry)
+            , m_Region(Other.m_Region)
+            , m_Root(Other.m_Root)
+            , m_OutputPin(Other.m_OutputPin)
+            , m_Serial(std::exchange(Other.m_Serial, 0U))
+            , m_Context(std::move(Other.m_Context))
+        {
+            Other.m_Context.reset();
+        }
+
+        [[nodiscard]] bool IsValid() const
+        {
+            return m_Entry.IsValid() && m_Region.IsValid() && m_Root.IsValid() &&
+                m_OutputPin.IsValid() && m_Serial != 0U && !m_Context.expired();
+        }
+
+    private:
+        EntryScope(
+            ExecutionEntryId Entry,
+            ExecutionRegionId Region,
+            NodeInstanceId Root,
+            PinIndex OutputPin,
+            std::uint64_t Serial,
+            const std::shared_ptr<const NodeHandle::Context>& ContextToken
+        )
+            : m_Entry(Entry)
+            , m_Region(Region)
+            , m_Root(Root)
+            , m_OutputPin(OutputPin)
+            , m_Serial(Serial)
+            , m_Context(ContextToken)
+        {
+        }
+
+        friend class GraphBuilder;
+
+        ExecutionEntryId m_Entry;
+        ExecutionRegionId m_Region;
+        NodeInstanceId m_Root;
+        PinIndex m_OutputPin;
+        std::uint64_t m_Serial = 0U;
+        std::weak_ptr<const NodeHandle::Context> m_Context;
+    };
+
+    class BranchScope final
+    {
+    public:
+        BranchScope() = delete;
+        BranchScope(const BranchScope&) = delete;
+        BranchScope& operator=(const BranchScope&) = delete;
+        BranchScope& operator=(BranchScope&&) = delete;
+
+        BranchScope(BranchScope&& Other) noexcept
+            : m_Node(Other.m_Node)
+            , m_Entry(Other.m_Entry)
+            , m_ParentRegion(Other.m_ParentRegion)
+            , m_TrueRegion(Other.m_TrueRegion)
+            , m_FalseRegion(Other.m_FalseRegion)
+            , m_ParentSerial(Other.m_ParentSerial)
+            , m_Serial(std::exchange(Other.m_Serial, 0U))
+            , m_Context(std::move(Other.m_Context))
+        {
+            Other.m_Context.reset();
+        }
+
+        [[nodiscard]] bool IsValid() const
+        {
+            return m_Node.IsValid() && m_Entry.IsValid() && m_ParentRegion.IsValid() &&
+                m_TrueRegion.IsValid() && m_FalseRegion.IsValid() && m_Serial != 0U &&
+                !m_Context.expired();
+        }
+
+    private:
+        BranchScope(
+            NodeInstanceId Node,
+            ExecutionEntryId Entry,
+            ExecutionRegionId ParentRegion,
+            ExecutionRegionId TrueRegion,
+            ExecutionRegionId FalseRegion,
+            std::uint64_t ParentSerial,
+            std::uint64_t Serial,
+            const std::shared_ptr<const NodeHandle::Context>& ContextToken
+        )
+            : m_Node(Node)
+            , m_Entry(Entry)
+            , m_ParentRegion(ParentRegion)
+            , m_TrueRegion(TrueRegion)
+            , m_FalseRegion(FalseRegion)
+            , m_ParentSerial(ParentSerial)
+            , m_Serial(Serial)
+            , m_Context(ContextToken)
+        {
+        }
+
+        friend class GraphBuilder;
+
+        NodeInstanceId m_Node;
+        ExecutionEntryId m_Entry;
+        ExecutionRegionId m_ParentRegion;
+        ExecutionRegionId m_TrueRegion;
+        ExecutionRegionId m_FalseRegion;
+        std::uint64_t m_ParentSerial = 0U;
+        std::uint64_t m_Serial = 0U;
+        std::weak_ptr<const NodeHandle::Context> m_Context;
+    };
+
+    enum class BranchArm
+    {
+        True,
+        False
+    };
+
+    struct NoContinuation final
+    {
+    };
+
+    class BranchArmScope final
+    {
+    public:
+        BranchArmScope() = delete;
+        BranchArmScope(const BranchArmScope&) = delete;
+        BranchArmScope& operator=(const BranchArmScope&) = delete;
+        BranchArmScope& operator=(BranchArmScope&&) = delete;
+
+        BranchArmScope(BranchArmScope&& Other) noexcept
+            : m_Branch(Other.m_Branch)
+            , m_Entry(Other.m_Entry)
+            , m_ParentRegion(Other.m_ParentRegion)
+            , m_Region(Other.m_Region)
+            , m_OutputPin(Other.m_OutputPin)
+            , m_Arm(Other.m_Arm)
+            , m_BranchSerial(Other.m_BranchSerial)
+            , m_Serial(std::exchange(Other.m_Serial, 0U))
+            , m_Context(std::move(Other.m_Context))
+        {
+            Other.m_Context.reset();
+        }
+
+        [[nodiscard]] bool IsValid() const
+        {
+            return m_Branch.IsValid() && m_Entry.IsValid() && m_ParentRegion.IsValid() &&
+                m_Region.IsValid() && m_OutputPin.IsValid() && m_Serial != 0U &&
+                !m_Context.expired();
+        }
+
+    private:
+        BranchArmScope(
+            NodeInstanceId Branch,
+            ExecutionEntryId Entry,
+            ExecutionRegionId ParentRegion,
+            ExecutionRegionId Region,
+            PinIndex OutputPin,
+            BranchArm Arm,
+            std::uint64_t BranchSerial,
+            std::uint64_t Serial,
+            const std::shared_ptr<const NodeHandle::Context>& ContextToken
+        )
+            : m_Branch(Branch)
+            , m_Entry(Entry)
+            , m_ParentRegion(ParentRegion)
+            , m_Region(Region)
+            , m_OutputPin(OutputPin)
+            , m_Arm(Arm)
+            , m_BranchSerial(BranchSerial)
+            , m_Serial(Serial)
+            , m_Context(ContextToken)
+        {
+        }
+
+        friend class GraphBuilder;
+
+        NodeInstanceId m_Branch;
+        ExecutionEntryId m_Entry;
+        ExecutionRegionId m_ParentRegion;
+        ExecutionRegionId m_Region;
+        PinIndex m_OutputPin;
+        BranchArm m_Arm = BranchArm::True;
+        std::uint64_t m_BranchSerial = 0U;
+        std::uint64_t m_Serial = 0U;
+        std::weak_ptr<const NodeHandle::Context> m_Context;
+    };
+
+    class BranchArmOutcome final
+    {
+    public:
+        BranchArmOutcome() = delete;
+        BranchArmOutcome(const BranchArmOutcome&) = delete;
+        BranchArmOutcome& operator=(const BranchArmOutcome&) = delete;
+        BranchArmOutcome& operator=(BranchArmOutcome&&) = delete;
+
+        BranchArmOutcome(BranchArmOutcome&& Other) noexcept
+            : m_Branch(Other.m_Branch)
+            , m_Entry(Other.m_Entry)
+            , m_ParentRegion(Other.m_ParentRegion)
+            , m_Region(Other.m_Region)
+            , m_Arm(Other.m_Arm)
+            , m_LiveTail(std::move(Other.m_LiveTail))
+            , m_BranchSerial(Other.m_BranchSerial)
+            , m_Serial(std::exchange(Other.m_Serial, 0U))
+            , m_Context(std::move(Other.m_Context))
+        {
+            Other.m_Context.reset();
+        }
+
+        [[nodiscard]] bool IsValid() const
+        {
+            return m_Branch.IsValid() && m_Entry.IsValid() && m_ParentRegion.IsValid() &&
+                m_Region.IsValid() && m_Serial != 0U && !m_Context.expired();
+        }
+
+    private:
+        BranchArmOutcome(
+            NodeInstanceId Branch,
+            ExecutionEntryId Entry,
+            ExecutionRegionId ParentRegion,
+            ExecutionRegionId Region,
+            BranchArm Arm,
+            std::optional<ExecutionHandle> LiveTail,
+            std::uint64_t BranchSerial,
+            std::uint64_t Serial,
+            const std::shared_ptr<const NodeHandle::Context>& ContextToken
+        )
+            : m_Branch(Branch)
+            , m_Entry(Entry)
+            , m_ParentRegion(ParentRegion)
+            , m_Region(Region)
+            , m_Arm(Arm)
+            , m_LiveTail(std::move(LiveTail))
+            , m_BranchSerial(BranchSerial)
+            , m_Serial(Serial)
+            , m_Context(ContextToken)
+        {
+        }
+
+        friend class GraphBuilder;
+
+        NodeInstanceId m_Branch;
+        ExecutionEntryId m_Entry;
+        ExecutionRegionId m_ParentRegion;
+        ExecutionRegionId m_Region;
+        BranchArm m_Arm = BranchArm::True;
+        std::optional<ExecutionHandle> m_LiveTail;
+        std::uint64_t m_BranchSerial = 0U;
+        std::uint64_t m_Serial = 0U;
+        std::weak_ptr<const NodeHandle::Context> m_Context;
+    };
+
+    class BranchOutcome final
+    {
+    public:
+        BranchOutcome() = delete;
+        BranchOutcome(const BranchOutcome&) = delete;
+        BranchOutcome& operator=(const BranchOutcome&) = delete;
+        BranchOutcome& operator=(BranchOutcome&&) = delete;
+
+        BranchOutcome(BranchOutcome&& Other) noexcept
+            : m_Branch(Other.m_Branch)
+            , m_Entry(Other.m_Entry)
+            , m_ParentRegion(Other.m_ParentRegion)
+            , m_TrueRegion(Other.m_TrueRegion)
+            , m_FalseRegion(Other.m_FalseRegion)
+            , m_TrueTail(std::move(Other.m_TrueTail))
+            , m_FalseTail(std::move(Other.m_FalseTail))
+            , m_BranchSerial(Other.m_BranchSerial)
+            , m_Serial(std::exchange(Other.m_Serial, 0U))
+            , m_Context(std::move(Other.m_Context))
+        {
+            Other.m_Context.reset();
+        }
+
+        [[nodiscard]] bool IsValid() const
+        {
+            return m_Branch.IsValid() && m_Entry.IsValid() && m_ParentRegion.IsValid() &&
+                m_TrueRegion.IsValid() && m_FalseRegion.IsValid() && m_Serial != 0U &&
+                !m_Context.expired();
+        }
+
+        [[nodiscard]] std::size_t GetLiveArmCount() const
+        {
+            return static_cast<std::size_t>(m_TrueTail.has_value()) +
+                static_cast<std::size_t>(m_FalseTail.has_value());
+        }
+
+    private:
+        BranchOutcome(
+            NodeInstanceId Branch,
+            ExecutionEntryId Entry,
+            ExecutionRegionId ParentRegion,
+            ExecutionRegionId TrueRegion,
+            ExecutionRegionId FalseRegion,
+            std::optional<ExecutionHandle> TrueTail,
+            std::optional<ExecutionHandle> FalseTail,
+            std::uint64_t BranchSerial,
+            std::uint64_t Serial,
+            const std::shared_ptr<const NodeHandle::Context>& ContextToken
+        )
+            : m_Branch(Branch)
+            , m_Entry(Entry)
+            , m_ParentRegion(ParentRegion)
+            , m_TrueRegion(TrueRegion)
+            , m_FalseRegion(FalseRegion)
+            , m_TrueTail(std::move(TrueTail))
+            , m_FalseTail(std::move(FalseTail))
+            , m_BranchSerial(BranchSerial)
+            , m_Serial(Serial)
+            , m_Context(ContextToken)
+        {
+        }
+
+        friend class GraphBuilder;
+
+        NodeInstanceId m_Branch;
+        ExecutionEntryId m_Entry;
+        ExecutionRegionId m_ParentRegion;
+        ExecutionRegionId m_TrueRegion;
+        ExecutionRegionId m_FalseRegion;
+        std::optional<ExecutionHandle> m_TrueTail;
+        std::optional<ExecutionHandle> m_FalseTail;
+        std::uint64_t m_BranchSerial = 0U;
+        std::uint64_t m_Serial = 0U;
+        std::weak_ptr<const NodeHandle::Context> m_Context;
+    };
+
+    struct EntryStart final
+    {
+        EntryScope Scope;
+        NodeHandle Root;
+        ExecutionHandle RootOutput;
+    };
+
+    struct ExecutionNodeResult final
+    {
+        NodeHandle Node;
+        ExecutionHandle Output;
+    };
+
+    struct BranchStart final
+    {
+        BranchScope Scope;
+        NodeHandle Node;
+    };
+
+    struct BranchArmStart final
+    {
+        BranchArmScope Scope;
+        ExecutionHandle ArmOutput;
+    };
+
+    struct JoinResult final
+    {
+        NodeHandle Node;
+        ExecutionHandle Output;
+    };
+
     class GraphBuilder
     {
     public:
@@ -396,6 +815,13 @@ namespace MiliastraPlusPlus
             , m_Graph(std::move(Other.m_Graph))
             , m_NextNodeIdentifier(Other.m_NextNodeIdentifier)
             , m_NextGraphVariableIdentifier(Other.m_NextGraphVariableIdentifier)
+            , m_NextExecutionEntryIdentifier(Other.m_NextExecutionEntryIdentifier)
+            , m_NextExecutionRegionIdentifier(Other.m_NextExecutionRegionIdentifier)
+            , m_NextExecutionScopeSerial(Other.m_NextExecutionScopeSerial)
+            , m_NextBranchOutcomeSerial(Other.m_NextBranchOutcomeSerial)
+            , m_ExecutionScopes(std::move(Other.m_ExecutionScopes))
+            , m_BranchStates(std::move(Other.m_BranchStates))
+            , m_OpenBranchOutcomes(std::move(Other.m_OpenBranchOutcomes))
             , m_Context(std::move(Other.m_Context))
             , m_IsClosed(Other.m_IsClosed)
         {
@@ -404,6 +830,336 @@ namespace MiliastraPlusPlus
         }
 
         GraphBuilder& operator=(GraphBuilder&&) = delete;
+
+        [[nodiscard]] std::expected<EntryStart, DiagnosticCollection> BeginEntry(
+            NodeDescriptorId EntryDescriptorIdentifier
+        )
+        {
+            if (m_IsClosed)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeLifecycleDiagnostic("A closed graph builder cannot begin an execution entry.")
+                });
+            }
+            if (!m_ExecutionScopes.empty() || !m_OpenBranchOutcomes.empty())
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionScopeDiagnostic("Only one execution entry scope may be active at a time.")
+                });
+            }
+            const NodeDescriptor* Descriptor = FindValidDescriptor(EntryDescriptorIdentifier);
+            if (Descriptor == nullptr)
+            {
+                return std::unexpected(DescriptorFailure(EntryDescriptorIdentifier,
+                    "The requested Entry descriptor is missing or invalid."));
+            }
+            const EntryControlSchema* Schema = GetControlSchema<EntryControlSchema>(*Descriptor);
+            if (Schema == nullptr)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionRoleDiagnostic("BeginEntry requires a trusted Entry control schema.")
+                });
+            }
+            for (const NodeInstance& Node : m_Graph.GetNodes())
+            {
+                const NodeDescriptor* ExistingDescriptor = Node.Descriptor.IsValid()
+                    ? m_Descriptors.Find(Node.Descriptor) : nullptr;
+                if (m_Graph.GetExecutionModel() == ExecutionModel::Unstructured &&
+                    ExistingDescriptor != nullptr && HasFlowPins(*ExistingDescriptor))
+                {
+                    return std::unexpected(DiagnosticCollection{
+                        MakeExecutionOwnershipDiagnostic(
+                            "Existing Flow nodes cannot be adopted when structured construction begins.")
+                    });
+                }
+            }
+            if (m_NextNodeIdentifier == 0U || m_NextExecutionEntryIdentifier == 0U ||
+                m_NextExecutionRegionIdentifier == 0U || m_NextExecutionScopeSerial == 0U)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeLifecycleDiagnostic("The graph builder exhausted an identifier range.")
+                });
+            }
+
+            const NodeInstanceId NodeIdentifier(m_NextNodeIdentifier);
+            const ExecutionEntryId EntryIdentifier(m_NextExecutionEntryIdentifier);
+            const ExecutionRegionId RegionIdentifier(m_NextExecutionRegionIdentifier);
+            const std::uint64_t ScopeSerial = m_NextExecutionScopeSerial;
+
+            m_Graph.SetExecutionModel(ExecutionModel::Structured);
+            m_Graph.AddNode(NodeInstance{NodeIdentifier, EntryDescriptorIdentifier, RegionIdentifier});
+            m_Graph.AddExecutionEntry(ExecutionEntry{EntryIdentifier, NodeIdentifier});
+            m_Graph.AddExecutionRegion(ExecutionRegion{
+                RegionIdentifier,
+                EntryIdentifier,
+                ExecutionRegionKind::Entry,
+                std::nullopt,
+                std::nullopt,
+                std::nullopt
+            });
+            m_ExecutionScopes.push_back(ExecutionScopeFrame{
+                ExecutionScopeKind::Entry,
+                ScopeSerial,
+                0U,
+                EntryIdentifier,
+                RegionIdentifier,
+                NodeIdentifier
+            });
+            AdvanceIdentifier(m_NextNodeIdentifier);
+            AdvanceIdentifier(m_NextExecutionEntryIdentifier);
+            AdvanceIdentifier(m_NextExecutionRegionIdentifier);
+            AdvanceIdentifier(m_NextExecutionScopeSerial);
+
+            EntryScope Scope(EntryIdentifier, RegionIdentifier, NodeIdentifier,
+                Schema->ExecutionOutput, ScopeSerial, m_Context);
+            NodeHandle Root(NodeIdentifier, EntryDescriptorIdentifier, m_Context);
+            ExecutionHandle RootOutput(NodeIdentifier, Schema->ExecutionOutput,
+                EntryIdentifier, RegionIdentifier, m_Context);
+            return EntryStart{std::move(Scope), std::move(Root), std::move(RootOutput)};
+        }
+
+        [[nodiscard]] std::expected<void, DiagnosticCollection> EndEntry(EntryScope&& Scope)
+        {
+            if (!IsBuilderOpen())
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeLifecycleDiagnostic("A closed graph builder cannot end an execution entry.")
+                });
+            }
+            if (!Scope.IsValid())
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionScopeDiagnostic("The EntryScope is invalid or already closed.")
+                });
+            }
+            if (!HasSameContext(Scope.m_Context))
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeForeignContextDiagnostic("The EntryScope belongs to another builder.")
+                });
+            }
+            if (!IsTopScope(ExecutionScopeKind::Entry, Scope.m_Serial) ||
+                m_ExecutionScopes.back().Entry != Scope.m_Entry ||
+                m_ExecutionScopes.back().Region != Scope.m_Region)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionScopeDiagnostic("The EntryScope is not the active innermost scope.")
+                });
+            }
+            if (HasOpenBranchOutcome(Scope.m_Entry))
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeBranchOutcomeDiagnostic("A branch outcome must be joined, continued, or closed before EndEntry.")
+                });
+            }
+            const std::size_t SuccessorCount = CountOutgoingEdges(Scope.m_Root, Scope.m_OutputPin);
+            if (SuccessorCount == 0U)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionReachabilityDiagnostic(
+                        "A structured Entry root must connect to an execution node before EndEntry.")
+                });
+            }
+
+            m_ExecutionScopes.pop_back();
+            Scope.m_Serial = 0U;
+            Scope.m_Context.reset();
+            return {};
+        }
+
+        [[nodiscard]] std::expected<ExecutionNodeResult, DiagnosticCollection>
+        AppendExecutionNode(
+            EntryScope& Scope,
+            const ExecutionHandle& Predecessor,
+            NodeDescriptorId SequenceDescriptorIdentifier
+        )
+        {
+            return AppendSequence(Scope.m_Entry, Scope.m_Region, Scope.m_Serial,
+                Scope.m_Context, Predecessor, SequenceDescriptorIdentifier);
+        }
+
+        [[nodiscard]] std::expected<ExecutionNodeResult, DiagnosticCollection>
+        AppendExecutionNode(
+            BranchArmScope& Scope,
+            const ExecutionHandle& Predecessor,
+            NodeDescriptorId SequenceDescriptorIdentifier
+        )
+        {
+            return AppendSequence(Scope.m_Entry, Scope.m_Region, Scope.m_Serial,
+                Scope.m_Context, Predecessor, SequenceDescriptorIdentifier);
+        }
+
+        [[nodiscard]] std::expected<BranchStart, DiagnosticCollection> BeginBranch(
+            EntryScope& Parent,
+            const ExecutionHandle& Predecessor,
+            NodeDescriptorId BranchDescriptorIdentifier,
+            const ValueOrExpr<bool>& Condition
+        )
+        {
+            return BeginBranchInScope(Parent.m_Entry, Parent.m_Region, Parent.m_Serial,
+                Parent.m_Context, Predecessor, BranchDescriptorIdentifier, Condition);
+        }
+
+        [[nodiscard]] std::expected<BranchStart, DiagnosticCollection> BeginBranch(
+            BranchArmScope& Parent,
+            const ExecutionHandle& Predecessor,
+            NodeDescriptorId BranchDescriptorIdentifier,
+            const ValueOrExpr<bool>& Condition
+        )
+        {
+            return BeginBranchInScope(Parent.m_Entry, Parent.m_Region, Parent.m_Serial,
+                Parent.m_Context, Predecessor, BranchDescriptorIdentifier, Condition);
+        }
+
+        [[nodiscard]] std::expected<BranchArmStart, DiagnosticCollection> BeginArm(
+            BranchScope& Branch,
+            BranchArm Arm
+        )
+        {
+            if (!IsBuilderOpen())
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeLifecycleDiagnostic("A closed graph builder cannot begin a branch arm.")
+                });
+            }
+            if (!Branch.IsValid())
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionScopeDiagnostic("The BranchScope is invalid or already closed.")
+                });
+            }
+            if (!HasSameContext(Branch.m_Context))
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeForeignContextDiagnostic("The BranchScope belongs to another builder.")
+                });
+            }
+            if (!IsTopScope(ExecutionScopeKind::Branch, Branch.m_Serial))
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionScopeDiagnostic("The BranchScope is not the active innermost scope.")
+                });
+            }
+            BranchConstructionState* State = FindBranchState(Branch.m_Serial);
+            if (State == nullptr || !IsValidBranchArm(Arm))
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeBranchArmDiagnostic("The BranchScope or semantic arm identity is invalid.")
+                });
+            }
+            bool& WasOpened = Arm == BranchArm::True ? State->TrueOpened : State->FalseOpened;
+            bool& WasResolved = Arm == BranchArm::True ? State->TrueResolved : State->FalseResolved;
+            if (WasOpened || WasResolved)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeBranchArmDiagnostic("Each semantic branch arm may be opened exactly once.")
+                });
+            }
+            if (m_NextExecutionScopeSerial == 0U)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeLifecycleDiagnostic("The graph builder exhausted its execution scope serial range.")
+                });
+            }
+
+            const NodeInstance* BranchNode = m_Graph.FindNode(Branch.m_Node);
+            const NodeDescriptor* Descriptor = BranchNode == nullptr
+                ? nullptr : m_Descriptors.Find(BranchNode->Descriptor);
+            const BranchControlSchema* Schema = Descriptor == nullptr
+                ? nullptr : GetControlSchema<BranchControlSchema>(*Descriptor);
+            if (Schema == nullptr)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionRoleDiagnostic("The Branch descriptor no longer has a valid Branch control schema.")
+                });
+            }
+            const ExecutionRegionId Region = Arm == BranchArm::True
+                ? Branch.m_TrueRegion : Branch.m_FalseRegion;
+            const PinIndex OutputPin = Arm == BranchArm::True
+                ? Schema->TrueOutput : Schema->FalseOutput;
+            const std::uint64_t ScopeSerial = m_NextExecutionScopeSerial;
+            WasOpened = true;
+            m_ExecutionScopes.push_back(ExecutionScopeFrame{
+                ExecutionScopeKind::BranchArm,
+                ScopeSerial,
+                Branch.m_Serial,
+                Branch.m_Entry,
+                Region,
+                Branch.m_Node
+            });
+            AdvanceIdentifier(m_NextExecutionScopeSerial);
+
+            BranchArmScope Scope(Branch.m_Node, Branch.m_Entry, Branch.m_ParentRegion,
+                Region, OutputPin, Arm, Branch.m_Serial, ScopeSerial, m_Context);
+            ExecutionHandle ArmOutput(Branch.m_Node, OutputPin, Branch.m_Entry,
+                Region, m_Context);
+            return BranchArmStart{std::move(Scope), std::move(ArmOutput)};
+        }
+
+        [[nodiscard]] std::expected<BranchArmOutcome, DiagnosticCollection> EndArm(
+            BranchArmScope&& Arm,
+            const ExecutionHandle& LiveTail
+        )
+        {
+            return EndBranchArm(std::move(Arm), &LiveTail);
+        }
+
+        [[nodiscard]] std::expected<BranchArmOutcome, DiagnosticCollection> EndArm(
+            BranchArmScope&& Arm,
+            NoContinuation
+        )
+        {
+            return EndBranchArm(std::move(Arm), nullptr);
+        }
+
+        [[nodiscard]] std::expected<BranchOutcome, DiagnosticCollection> EndBranch(
+            BranchScope&& Branch,
+            BranchArmOutcome&& TrueArm,
+            BranchArmOutcome&& FalseArm
+        )
+        {
+            return EndBranchConstruction(std::move(Branch), std::move(TrueArm), std::move(FalseArm));
+        }
+
+        [[nodiscard]] std::expected<JoinResult, DiagnosticCollection> Join(
+            EntryScope& Parent,
+            BranchOutcome&& TwoLiveArms,
+            NodeDescriptorId JoinDescriptorIdentifier
+        )
+        {
+            return JoinBranchOutcome(Parent.m_Entry, Parent.m_Region, Parent.m_Serial,
+                Parent.m_Context, std::move(TwoLiveArms), JoinDescriptorIdentifier);
+        }
+
+        [[nodiscard]] std::expected<JoinResult, DiagnosticCollection> Join(
+            BranchArmScope& Parent,
+            BranchOutcome&& TwoLiveArms,
+            NodeDescriptorId JoinDescriptorIdentifier
+        )
+        {
+            return JoinBranchOutcome(Parent.m_Entry, Parent.m_Region, Parent.m_Serial,
+                Parent.m_Context, std::move(TwoLiveArms), JoinDescriptorIdentifier);
+        }
+
+        [[nodiscard]] std::expected<ExecutionNodeResult, DiagnosticCollection> ContinueWith(
+            EntryScope& Parent,
+            BranchOutcome&& OneLiveArm,
+            NodeDescriptorId SequenceDescriptorIdentifier
+        )
+        {
+            return ContinueBranchOutcome(Parent.m_Entry, Parent.m_Region, Parent.m_Serial,
+                Parent.m_Context, std::move(OneLiveArm), SequenceDescriptorIdentifier);
+        }
+
+        [[nodiscard]] std::expected<ExecutionNodeResult, DiagnosticCollection> ContinueWith(
+            BranchArmScope& Parent,
+            BranchOutcome&& OneLiveArm,
+            NodeDescriptorId SequenceDescriptorIdentifier
+        )
+        {
+            return ContinueBranchOutcome(Parent.m_Entry, Parent.m_Region, Parent.m_Serial,
+                Parent.m_Context, std::move(OneLiveArm), SequenceDescriptorIdentifier);
+        }
 
         [[nodiscard]] std::expected<NodeHandle, DiagnosticCollection> AddNode(
             NodeDescriptorId DescriptorIdentifier
@@ -435,6 +1191,14 @@ namespace MiliastraPlusPlus
             {
                 return std::unexpected(DiagnosticCollection{
                     MakeDescriptorDiagnostic("The requested node descriptor is invalid.")
+                });
+            }
+            if (m_Graph.GetExecutionModel() == ExecutionModel::Structured &&
+                HasFlowPins(*Descriptor))
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionOwnershipDiagnostic(
+                        "Flow-bearing nodes in a Structured graph must use the execution construction API.")
                 });
             }
 
@@ -706,7 +1470,12 @@ namespace MiliastraPlusPlus
                 };
             }
 
-            return GraphIRValidator::Validate(m_Graph, m_Descriptors);
+            DiagnosticCollection Diagnostics = ValidateOpenExecutionState();
+            DiagnosticCollection GraphDiagnostics = GraphIRValidator::Validate(m_Graph, m_Descriptors);
+            Diagnostics.insert(Diagnostics.end(),
+                std::make_move_iterator(GraphDiagnostics.begin()),
+                std::make_move_iterator(GraphDiagnostics.end()));
+            return Diagnostics;
         }
 
         [[nodiscard]] std::expected<GraphIR, DiagnosticCollection> Finalize() &&
@@ -721,7 +1490,11 @@ namespace MiliastraPlusPlus
             m_IsClosed = true;
             m_Context.reset();
 
-            DiagnosticCollection Diagnostics = GraphIRValidator::Validate(m_Graph, m_Descriptors);
+            DiagnosticCollection Diagnostics = ValidateOpenExecutionState();
+            DiagnosticCollection GraphDiagnostics = GraphIRValidator::Validate(m_Graph, m_Descriptors);
+            Diagnostics.insert(Diagnostics.end(),
+                std::make_move_iterator(GraphDiagnostics.begin()),
+                std::make_move_iterator(GraphDiagnostics.end()));
             if (ContainsError(Diagnostics))
             {
                 return std::unexpected(std::move(Diagnostics));
@@ -731,6 +1504,1067 @@ namespace MiliastraPlusPlus
         }
 
     private:
+#ifdef MILIASTRA_PHASE4_M2_TEST_ACCESS
+        friend struct GraphBuilderPhase4TestAccess;
+#endif
+
+        enum class ExecutionScopeKind
+        {
+            Entry,
+            Branch,
+            BranchArm
+        };
+
+        struct ExecutionScopeFrame
+        {
+            ExecutionScopeKind Kind;
+            std::uint64_t Serial;
+            std::uint64_t ParentSerial;
+            ExecutionEntryId Entry;
+            ExecutionRegionId Region;
+            NodeInstanceId OwnerNode;
+        };
+
+        struct BranchConstructionState
+        {
+            NodeInstanceId Node;
+            ExecutionEntryId Entry;
+            ExecutionRegionId ParentRegion;
+            ExecutionRegionId TrueRegion;
+            ExecutionRegionId FalseRegion;
+            std::uint64_t ParentSerial;
+            std::uint64_t Serial;
+            bool TrueOpened = false;
+            bool FalseOpened = false;
+            bool TrueResolved = false;
+            bool FalseResolved = false;
+            std::uint64_t TrueOutcomeSerial = 0U;
+            std::uint64_t FalseOutcomeSerial = 0U;
+        };
+
+        struct OpenBranchOutcome
+        {
+            std::uint64_t Serial;
+            std::uint64_t BranchSerial;
+            std::uint64_t ParentScopeSerial;
+            ExecutionEntryId Entry;
+            ExecutionRegionId ParentRegion;
+        };
+
+        [[nodiscard]] bool IsBuilderOpen() const
+        {
+            return !m_IsClosed && m_Context != nullptr;
+        }
+
+        [[nodiscard]] bool HasSameContext(
+            const std::weak_ptr<const NodeHandle::Context>& HandleContext
+        ) const
+        {
+            if (m_Context == nullptr || HandleContext.expired())
+            {
+                return false;
+            }
+            const std::weak_ptr<const NodeHandle::Context> BuilderContext = m_Context;
+            return !BuilderContext.owner_before(HandleContext) &&
+                !HandleContext.owner_before(BuilderContext);
+        }
+
+        [[nodiscard]] bool IsTopScope(ExecutionScopeKind Kind, std::uint64_t Serial) const
+        {
+            return !m_ExecutionScopes.empty() &&
+                m_ExecutionScopes.back().Kind == Kind &&
+                m_ExecutionScopes.back().Serial == Serial;
+        }
+
+        [[nodiscard]] bool IsValidActiveScope(
+            ExecutionScopeKind Kind,
+            std::uint64_t Serial,
+            std::weak_ptr<const NodeHandle::Context> ScopeContext,
+            ExecutionEntryId Entry,
+            ExecutionRegionId Region
+        ) const
+        {
+            if (!IsBuilderOpen() || Serial == 0U || !HasSameContext(ScopeContext) ||
+                !IsTopScope(Kind, Serial))
+            {
+                return false;
+            }
+            const ExecutionScopeFrame& Frame = m_ExecutionScopes.back();
+            return Frame.Entry == Entry && Frame.Region == Region;
+        }
+
+        [[nodiscard]] const NodeDescriptor* FindValidDescriptor(
+            NodeDescriptorId Identifier
+        ) const
+        {
+            if (!Identifier.IsValid())
+            {
+                return nullptr;
+            }
+            const NodeDescriptor* Descriptor = m_Descriptors.Find(Identifier);
+            return Descriptor != nullptr && Descriptor->IsValid() ? Descriptor : nullptr;
+        }
+
+        template<typename Schema>
+        [[nodiscard]] static const Schema* GetControlSchema(const NodeDescriptor& Descriptor)
+        {
+            const std::optional<ExecutionControlSchema>& ControlSchema =
+                Descriptor.GetExecutionControlSchema();
+            return ControlSchema.has_value() ? std::get_if<Schema>(&*ControlSchema) : nullptr;
+        }
+
+        [[nodiscard]] static bool HasFlowPins(const NodeDescriptor& Descriptor)
+        {
+            for (const PinSchema& Pin : Descriptor.GetPins())
+            {
+                if (Pin.GetCategory() == PinCategory::Execution ||
+                    Pin.GetType() == TypeDesc::Flow())
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        [[nodiscard]] static bool IsValidBranchArm(BranchArm Arm)
+        {
+            switch (Arm)
+            {
+            case BranchArm::True:
+            case BranchArm::False:
+                return true;
+            }
+            return false;
+        }
+
+        [[nodiscard]] BranchConstructionState* FindBranchState(std::uint64_t Serial)
+        {
+            for (BranchConstructionState& State : m_BranchStates)
+            {
+                if (State.Serial == Serial)
+                {
+                    return &State;
+                }
+            }
+            return nullptr;
+        }
+
+        [[nodiscard]] const BranchConstructionState* FindBranchState(
+            std::uint64_t Serial
+        ) const
+        {
+            for (const BranchConstructionState& State : m_BranchStates)
+            {
+                if (State.Serial == Serial)
+                {
+                    return &State;
+                }
+            }
+            return nullptr;
+        }
+
+        [[nodiscard]] bool HasOpenBranchOutcome(ExecutionEntryId Entry) const
+        {
+            for (const OpenBranchOutcome& Outcome : m_OpenBranchOutcomes)
+            {
+                if (Outcome.Entry == Entry)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        [[nodiscard]] const OpenBranchOutcome* FindOpenBranchOutcome(
+            std::uint64_t Serial
+        ) const
+        {
+            for (const OpenBranchOutcome& Outcome : m_OpenBranchOutcomes)
+            {
+                if (Outcome.Serial == Serial)
+                {
+                    return &Outcome;
+                }
+            }
+            return nullptr;
+        }
+
+        void ConsumeOpenBranchOutcome(std::uint64_t Serial)
+        {
+            for (std::size_t Index = 0U; Index < m_OpenBranchOutcomes.size(); ++Index)
+            {
+                if (m_OpenBranchOutcomes[Index].Serial == Serial)
+                {
+                    m_OpenBranchOutcomes.erase(m_OpenBranchOutcomes.begin() +
+                        static_cast<std::ptrdiff_t>(Index));
+                    return;
+                }
+            }
+        }
+
+        [[nodiscard]] std::size_t CountOutgoingEdges(
+            NodeInstanceId Node,
+            PinIndex OutputPin
+        ) const
+        {
+            std::size_t Count = 0U;
+            for (const ControlEdge& Edge : m_Graph.GetControlEdges())
+            {
+                if (Edge.SourceNode == Node && Edge.SourceOutputPin == OutputPin)
+                {
+                    ++Count;
+                }
+            }
+            return Count;
+        }
+
+        [[nodiscard]] bool IsBranchArmOutput(
+            NodeInstanceId Node,
+            PinIndex OutputPin,
+            ExecutionRegionId Region
+        ) const
+        {
+            const ExecutionRegion* ArmRegion = m_Graph.FindExecutionRegion(Region);
+            return ArmRegion != nullptr && ArmRegion->Kind == ExecutionRegionKind::BranchArm &&
+                ArmRegion->OwnerNode == Node && ArmRegion->OwnerOutputPin == OutputPin;
+        }
+
+        [[nodiscard]] DiagnosticCollection ValidateExecutionHandle(
+            const ExecutionHandle& Handle,
+            ExecutionEntryId Entry,
+            ExecutionRegionId Region
+        ) const
+        {
+            if (!Handle.IsValid())
+            {
+                return DiagnosticCollection{
+                    MakeExecutionHandleDiagnostic("The execution handle is invalid or stale.")
+                };
+            }
+            if (!HasSameContext(Handle.m_Context))
+            {
+                return DiagnosticCollection{
+                    MakeForeignContextDiagnostic("The execution handle belongs to another builder.")
+                };
+            }
+            if (Handle.m_Entry != Entry || Handle.m_Region != Region)
+            {
+                return DiagnosticCollection{
+                    MakeExecutionHandleDiagnostic("The execution handle belongs to a different entry or region.")
+                };
+            }
+            const NodeInstance* Node = m_Graph.FindNode(Handle.m_Node);
+            const NodeDescriptor* Descriptor = Node == nullptr
+                ? nullptr : m_Descriptors.Find(Node->Descriptor);
+            if (Node == nullptr || Descriptor == nullptr || !Descriptor->IsValid() ||
+                Handle.m_OutputPin.GetValue() >= Descriptor->GetPins().size())
+            {
+                return DiagnosticCollection{
+                    MakeExecutionHandleDiagnostic("The execution endpoint no longer resolves to a valid node pin.")
+                };
+            }
+            const PinSchema& Pin = Descriptor->GetPins()[Handle.m_OutputPin.GetValue()];
+            if (Pin.GetDirection() != PinDirection::Output ||
+                Pin.GetCategory() != PinCategory::Execution || Pin.GetType() != TypeDesc::Flow())
+            {
+                return DiagnosticCollection{
+                    MakeExecutionRoleDiagnostic("An execution handle must identify a descriptor-declared Flow output.")
+                };
+            }
+            const ExecutionRegion* HandleRegion = m_Graph.FindExecutionRegion(Region);
+            if (HandleRegion == nullptr || HandleRegion->Entry != Entry)
+            {
+                return DiagnosticCollection{
+                    MakeExecutionHandleDiagnostic("The execution handle region is missing or belongs to another entry.")
+                };
+            }
+            if (const BranchControlSchema* Branch = GetControlSchema<BranchControlSchema>(*Descriptor))
+            {
+                const bool IsDeclaredArmOutput = Handle.m_OutputPin == Branch->TrueOutput ||
+                    Handle.m_OutputPin == Branch->FalseOutput;
+                if (!IsDeclaredArmOutput || !IsBranchArmOutput(Handle.m_Node,
+                    Handle.m_OutputPin, Region))
+                {
+                    return DiagnosticCollection{
+                        MakeExecutionHandleDiagnostic("A Branch output handle must carry its exact owned arm region.")
+                    };
+                }
+            }
+            else if (!Node->ExecutionRegion.has_value() || *Node->ExecutionRegion != Region)
+            {
+                return DiagnosticCollection{
+                    MakeExecutionHandleDiagnostic("The execution handle region does not match its source node ownership.")
+                };
+            }
+            if (CountOutgoingEdges(Handle.m_Node, Handle.m_OutputPin) != 0U)
+            {
+                return DiagnosticCollection{
+                    MakeEndpointConsumedDiagnostic("The execution output endpoint already has a successor.")
+                };
+            }
+            return {};
+        }
+
+        [[nodiscard]] DiagnosticCollection ValidateParentScope(
+            ExecutionScopeKind Kind,
+            std::uint64_t Serial,
+            std::weak_ptr<const NodeHandle::Context> ScopeContext,
+            ExecutionEntryId Entry,
+            ExecutionRegionId Region,
+            std::uint64_t AllowedOutcomeSerial = 0U
+        ) const
+        {
+            if (!IsBuilderOpen())
+            {
+                return DiagnosticCollection{
+                    MakeLifecycleDiagnostic("A closed graph builder cannot construct execution nodes.")
+                };
+            }
+            if (Serial == 0U || ScopeContext.expired())
+            {
+                return DiagnosticCollection{
+                    MakeExecutionScopeDiagnostic("The execution scope is invalid or stale.")
+                };
+            }
+            if (!HasSameContext(ScopeContext))
+            {
+                return DiagnosticCollection{
+                    MakeForeignContextDiagnostic("The execution scope belongs to another builder.")
+                };
+            }
+            if (!IsTopScope(Kind, Serial) || m_ExecutionScopes.back().Entry != Entry ||
+                m_ExecutionScopes.back().Region != Region)
+            {
+                return DiagnosticCollection{
+                    MakeExecutionScopeDiagnostic("The execution scope is not the active innermost region.")
+                };
+            }
+            for (const OpenBranchOutcome& Outcome : m_OpenBranchOutcomes)
+            {
+                if (Outcome.Entry == Entry && Outcome.Serial != AllowedOutcomeSerial)
+                {
+                    return DiagnosticCollection{
+                        MakeBranchOutcomeDiagnostic(
+                            "Resolve the current branch outcome before appending another node.")
+                    };
+                }
+            }
+            return {};
+        }
+
+        [[nodiscard]] DiagnosticCollection DescriptorFailure(
+            NodeDescriptorId Identifier,
+            const char* Message
+        ) const
+        {
+            if (!Identifier.IsValid())
+            {
+                return DiagnosticCollection{MakeDescriptorDiagnostic(Message)};
+            }
+            if (m_Descriptors.Find(Identifier) == nullptr)
+            {
+                return DiagnosticCollection{MakeMissingDescriptorDiagnostic(Message)};
+            }
+            return DiagnosticCollection{MakeDescriptorDiagnostic(Message)};
+        }
+
+        [[nodiscard]] static Diagnostic MakeExecutionHandleDiagnostic(const char* Message)
+        {
+            return MakeDiagnostic(DiagnosticCode::InvalidExecutionHandle, Message);
+        }
+
+        [[nodiscard]] static Diagnostic MakeForeignContextDiagnostic(const char* Message)
+        {
+            return MakeDiagnostic(DiagnosticCode::ForeignBuilderContext, Message);
+        }
+
+        [[nodiscard]] static Diagnostic MakeEndpointConsumedDiagnostic(const char* Message)
+        {
+            return MakeDiagnostic(DiagnosticCode::ExecutionEndpointAlreadyConsumed, Message);
+        }
+
+        [[nodiscard]] static Diagnostic MakeExecutionScopeDiagnostic(const char* Message)
+        {
+            return MakeDiagnostic(DiagnosticCode::InvalidExecutionScope, Message);
+        }
+
+        [[nodiscard]] static Diagnostic MakeExecutionRoleDiagnostic(const char* Message)
+        {
+            return MakeDiagnostic(DiagnosticCode::InvalidExecutionControlRole, Message);
+        }
+
+        [[nodiscard]] static Diagnostic MakeBranchArmDiagnostic(const char* Message)
+        {
+            return MakeDiagnostic(DiagnosticCode::InvalidBranchArmState, Message);
+        }
+
+        [[nodiscard]] static Diagnostic MakeBranchOutcomeDiagnostic(const char* Message)
+        {
+            return MakeDiagnostic(DiagnosticCode::InvalidBranchOutcome, Message);
+        }
+
+        [[nodiscard]] static Diagnostic MakeMissingJoinDiagnostic(const char* Message)
+        {
+            return MakeDiagnostic(DiagnosticCode::MissingExplicitJoin, Message);
+        }
+
+        [[nodiscard]] static Diagnostic MakeOpenExecutionScopeDiagnostic(const char* Message)
+        {
+            return MakeDiagnostic(DiagnosticCode::OpenExecutionScope, Message);
+        }
+
+        [[nodiscard]] static Diagnostic MakeExecutionReachabilityDiagnostic(const char* Message)
+        {
+            return MakeDiagnostic(DiagnosticCode::InvalidExecutionReachability, Message);
+        }
+
+        [[nodiscard]] static Diagnostic MakeExecutionOwnershipDiagnostic(const char* Message)
+        {
+            return MakeDiagnostic(DiagnosticCode::InvalidExecutionOwnership, Message);
+        }
+
+        [[nodiscard]] static Diagnostic MakeDiagnostic(DiagnosticCode Code, const char* Message)
+        {
+            return Diagnostic{
+                .Severity = DiagnosticSeverity::Error,
+                .Code = Code,
+                .Message = Message
+            };
+        }
+
+        [[nodiscard]] std::expected<ExecutionNodeResult, DiagnosticCollection> AppendSequence(
+            ExecutionEntryId Entry,
+            ExecutionRegionId Region,
+            std::uint64_t ScopeSerial,
+            std::weak_ptr<const NodeHandle::Context> ScopeContext,
+            const ExecutionHandle& Predecessor,
+            NodeDescriptorId SequenceDescriptorIdentifier
+        )
+        {
+            const ExecutionScopeKind ScopeKind = !m_ExecutionScopes.empty() &&
+                m_ExecutionScopes.back().Kind == ExecutionScopeKind::BranchArm
+                ? ExecutionScopeKind::BranchArm : ExecutionScopeKind::Entry;
+            DiagnosticCollection ScopeDiagnostics = ValidateParentScope(ScopeKind,
+                ScopeSerial, std::move(ScopeContext), Entry, Region);
+            if (!ScopeDiagnostics.empty())
+            {
+                return std::unexpected(std::move(ScopeDiagnostics));
+            }
+            DiagnosticCollection HandleDiagnostics = ValidateExecutionHandle(
+                Predecessor, Entry, Region);
+            if (!HandleDiagnostics.empty())
+            {
+                return std::unexpected(std::move(HandleDiagnostics));
+            }
+            const NodeDescriptor* Descriptor = FindValidDescriptor(SequenceDescriptorIdentifier);
+            if (Descriptor == nullptr)
+            {
+                return std::unexpected(DescriptorFailure(SequenceDescriptorIdentifier,
+                    "The requested Sequence descriptor is missing or invalid."));
+            }
+            const SequenceControlSchema* Schema = GetControlSchema<SequenceControlSchema>(*Descriptor);
+            if (Schema == nullptr)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionRoleDiagnostic("AppendExecutionNode requires a trusted Sequence control schema.")
+                });
+            }
+            if (m_NextNodeIdentifier == 0U)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeLifecycleDiagnostic("The graph builder exhausted its node identifier range.")
+                });
+            }
+
+            const NodeInstanceId NodeIdentifier(m_NextNodeIdentifier);
+            m_Graph.AddNode(NodeInstance{NodeIdentifier, SequenceDescriptorIdentifier, Region});
+            m_Graph.AddControlEdge(ControlEdge{
+                Predecessor.m_Node,
+                Predecessor.m_OutputPin,
+                NodeIdentifier,
+                Schema->ExecutionInput
+            });
+            AdvanceIdentifier(m_NextNodeIdentifier);
+
+            NodeHandle Node(NodeIdentifier, SequenceDescriptorIdentifier, m_Context);
+            ExecutionHandle Output(NodeIdentifier, Schema->ExecutionOutput, Entry,
+                Region, m_Context);
+            return ExecutionNodeResult{std::move(Node), std::move(Output)};
+        }
+
+        template<typename T>
+        [[nodiscard]] std::expected<InputBindingRecord, DiagnosticCollection>
+        PrepareInputBindingRecord(
+            NodeInstanceId DestinationNode,
+            PinIndex DestinationPin,
+            const PinSchema& Pin,
+            const ValueOrExpr<T>& Expression
+        ) const
+        {
+            if (Pin.GetDirection() != PinDirection::Input || Pin.GetCategory() != PinCategory::Data)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeBindingDiagnostic("An input binding destination must be a data input pin.")
+                });
+            }
+            const auto TypeResult = GetCppTypeDesc<T>();
+            if (!TypeResult.has_value())
+            {
+                return std::unexpected(TypeResult.error());
+            }
+            if (Pin.GetCardinality() != PinCardinality::Multiple &&
+                CountBindings(DestinationNode, DestinationPin) != 0U)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeDiagnostic(DiagnosticCode::DuplicateInputBinding,
+                        "A Single or Optional input pin already has a binding.")
+                });
+            }
+
+            InputBinding Binding;
+            std::optional<TypeDesc> OutputTypeConstraint;
+            const auto& Value = Expression.GetValue();
+            if (const LiteralValue* Literal = std::get_if<LiteralValue>(&Value))
+            {
+                if (!Pin.AllowsLiteral())
+                {
+                    return std::unexpected(DiagnosticCollection{
+                        MakeBindingDiagnostic("The destination pin does not allow literal bindings.")
+                    });
+                }
+                if (!IsLiteralCompatible(*Literal, *TypeResult) ||
+                    !IsLiteralCompatible(*Literal, Pin.GetType()))
+                {
+                    return std::unexpected(DiagnosticCollection{
+                        MakeTypeDiagnostic("The literal is incompatible with its ValueOrExpr or destination type.")
+                    });
+                }
+                Binding = *Literal;
+            }
+            else if (const Output<T>* OutputValue = std::get_if<Output<T>>(&Value))
+            {
+                const DiagnosticCollection Validation = ValidateOutput(*OutputValue, Pin.GetType());
+                if (!Validation.empty())
+                {
+                    return std::unexpected(Validation);
+                }
+                Binding = OutputReference{OutputValue->GetIdentifier(), OutputValue->GetPin()};
+                OutputTypeConstraint = *TypeResult;
+            }
+            else
+            {
+                const Variable<T>& VariableValue = std::get<Variable<T>>(Value);
+                const DiagnosticCollection Validation = ValidateVariable(VariableValue, Pin.GetType());
+                if (!Validation.empty())
+                {
+                    return std::unexpected(Validation);
+                }
+                Binding = GraphVariableReference{VariableValue.GetIdentifier()};
+            }
+
+            return InputBindingRecord{
+                DestinationNode,
+                DestinationPin,
+                std::move(Binding),
+                std::move(OutputTypeConstraint)
+            };
+        }
+
+        [[nodiscard]] std::expected<BranchStart, DiagnosticCollection> BeginBranchInScope(
+            ExecutionEntryId Entry,
+            ExecutionRegionId ParentRegion,
+            std::uint64_t ParentSerial,
+            std::weak_ptr<const NodeHandle::Context> ParentContext,
+            const ExecutionHandle& Predecessor,
+            NodeDescriptorId BranchDescriptorIdentifier,
+            const ValueOrExpr<bool>& Condition
+        )
+        {
+            const ExecutionScopeKind ParentKind = !m_ExecutionScopes.empty() &&
+                m_ExecutionScopes.back().Kind == ExecutionScopeKind::BranchArm
+                ? ExecutionScopeKind::BranchArm : ExecutionScopeKind::Entry;
+            DiagnosticCollection ScopeDiagnostics = ValidateParentScope(ParentKind,
+                ParentSerial, std::move(ParentContext), Entry, ParentRegion);
+            if (!ScopeDiagnostics.empty())
+            {
+                return std::unexpected(std::move(ScopeDiagnostics));
+            }
+            DiagnosticCollection HandleDiagnostics = ValidateExecutionHandle(
+                Predecessor, Entry, ParentRegion);
+            if (!HandleDiagnostics.empty())
+            {
+                return std::unexpected(std::move(HandleDiagnostics));
+            }
+            const NodeDescriptor* Descriptor = FindValidDescriptor(BranchDescriptorIdentifier);
+            if (Descriptor == nullptr)
+            {
+                return std::unexpected(DescriptorFailure(BranchDescriptorIdentifier,
+                    "The requested Branch descriptor is missing or invalid."));
+            }
+            const BranchControlSchema* Schema = GetControlSchema<BranchControlSchema>(*Descriptor);
+            if (Schema == nullptr)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionRoleDiagnostic("BeginBranch requires a trusted Branch control schema.")
+                });
+            }
+            if (m_NextNodeIdentifier == 0U || m_NextExecutionRegionIdentifier == 0U ||
+                m_NextExecutionScopeSerial == 0U)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeLifecycleDiagnostic("The graph builder exhausted an identifier range.")
+                });
+            }
+
+            const NodeInstanceId NodeIdentifier(m_NextNodeIdentifier);
+            const ExecutionRegionId TrueRegion(m_NextExecutionRegionIdentifier);
+            const std::uint64_t RegionAfterTrue = NextIdentifier(m_NextExecutionRegionIdentifier);
+            if (RegionAfterTrue == 0U)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeLifecycleDiagnostic("The graph builder cannot allocate a second branch region.")
+                });
+            }
+            const ExecutionRegionId FalseRegion(RegionAfterTrue);
+            const std::uint64_t BranchSerial = m_NextExecutionScopeSerial;
+            const std::uint64_t ScopeAfterBranch = NextIdentifier(BranchSerial);
+            if (ScopeAfterBranch == 0U)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeLifecycleDiagnostic("The graph builder exhausted its execution scope serial range.")
+                });
+            }
+            if (m_NextBranchOutcomeSerial == 0U)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeLifecycleDiagnostic("The graph builder exhausted its branch outcome serial range.")
+                });
+            }
+            const auto PreparedBinding = PrepareInputBindingRecord(
+                NodeIdentifier, Schema->ConditionInput,
+                Descriptor->GetPins()[Schema->ConditionInput.GetValue()], Condition);
+            if (!PreparedBinding.has_value())
+            {
+                return std::unexpected(PreparedBinding.error());
+            }
+
+            m_Graph.AddNode(NodeInstance{NodeIdentifier, BranchDescriptorIdentifier, ParentRegion});
+            m_Graph.BindInput(PreparedBinding->DestinationNode,
+                PreparedBinding->DestinationInputPin, PreparedBinding->Binding,
+                PreparedBinding->OutputTypeConstraint);
+            m_Graph.AddControlEdge(ControlEdge{
+                Predecessor.m_Node,
+                Predecessor.m_OutputPin,
+                NodeIdentifier,
+                Schema->ExecutionInput
+            });
+            m_Graph.AddExecutionRegion(ExecutionRegion{
+                TrueRegion, Entry, ExecutionRegionKind::BranchArm, ParentRegion,
+                NodeIdentifier, Schema->TrueOutput
+            });
+            m_Graph.AddExecutionRegion(ExecutionRegion{
+                FalseRegion, Entry, ExecutionRegionKind::BranchArm, ParentRegion,
+                NodeIdentifier, Schema->FalseOutput
+            });
+            m_BranchStates.push_back(BranchConstructionState{
+                NodeIdentifier, Entry, ParentRegion, TrueRegion, FalseRegion,
+                ParentSerial, BranchSerial
+            });
+            m_ExecutionScopes.push_back(ExecutionScopeFrame{
+                ExecutionScopeKind::Branch, BranchSerial, ParentSerial, Entry,
+                ParentRegion, NodeIdentifier
+            });
+            AdvanceIdentifier(m_NextNodeIdentifier);
+            AdvanceIdentifier(m_NextExecutionRegionIdentifier);
+            AdvanceIdentifier(m_NextExecutionRegionIdentifier);
+            AdvanceIdentifier(m_NextExecutionScopeSerial);
+
+            BranchScope Scope(NodeIdentifier, Entry, ParentRegion, TrueRegion, FalseRegion,
+                ParentSerial, BranchSerial, m_Context);
+            NodeHandle Node(NodeIdentifier, BranchDescriptorIdentifier, m_Context);
+            return BranchStart{std::move(Scope), std::move(Node)};
+        }
+
+        [[nodiscard]] std::expected<BranchArmOutcome, DiagnosticCollection> EndBranchArm(
+            BranchArmScope&& Arm,
+            const ExecutionHandle* LiveTail
+        )
+        {
+            if (!IsBuilderOpen())
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeLifecycleDiagnostic("A closed graph builder cannot end a branch arm.")
+                });
+            }
+            if (!Arm.IsValid())
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionScopeDiagnostic("The BranchArmScope is invalid or already closed.")
+                });
+            }
+            if (!HasSameContext(Arm.m_Context))
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeForeignContextDiagnostic("The BranchArmScope belongs to another builder.")
+                });
+            }
+            if (!IsTopScope(ExecutionScopeKind::BranchArm, Arm.m_Serial))
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionScopeDiagnostic("The BranchArmScope is not the active innermost scope.")
+                });
+            }
+            BranchConstructionState* State = FindBranchState(Arm.m_BranchSerial);
+            if (State == nullptr || State->Node != Arm.m_Branch || State->Entry != Arm.m_Entry)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeBranchArmDiagnostic("The arm no longer belongs to an active branch.")
+                });
+            }
+            const bool AlreadyResolved = Arm.m_Arm == BranchArm::True
+                ? State->TrueResolved : State->FalseResolved;
+            if (AlreadyResolved)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeBranchArmDiagnostic("The semantic branch arm has already been resolved.")
+                });
+            }
+            std::optional<ExecutionHandle> Tail;
+            if (LiveTail != nullptr)
+            {
+                DiagnosticCollection HandleDiagnostics = ValidateExecutionHandle(
+                    *LiveTail, Arm.m_Entry, Arm.m_Region);
+                if (!HandleDiagnostics.empty())
+                {
+                    return std::unexpected(std::move(HandleDiagnostics));
+                }
+                Tail = *LiveTail;
+            }
+            if (m_NextBranchOutcomeSerial == 0U)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeLifecycleDiagnostic("The graph builder exhausted its branch outcome serial range.")
+                });
+            }
+
+            const std::uint64_t OutcomeSerial = m_NextBranchOutcomeSerial;
+            if (Arm.m_Arm == BranchArm::True)
+            {
+                State->TrueResolved = true;
+                State->TrueOutcomeSerial = OutcomeSerial;
+            }
+            else
+            {
+                State->FalseResolved = true;
+                State->FalseOutcomeSerial = OutcomeSerial;
+            }
+            m_ExecutionScopes.pop_back();
+            AdvanceIdentifier(m_NextBranchOutcomeSerial);
+            BranchArmOutcome Outcome(Arm.m_Branch, Arm.m_Entry, Arm.m_ParentRegion,
+                Arm.m_Region, Arm.m_Arm, std::move(Tail), Arm.m_BranchSerial,
+                OutcomeSerial, m_Context);
+            Arm.m_Serial = 0U;
+            Arm.m_Context.reset();
+            return Outcome;
+        }
+
+        [[nodiscard]] std::expected<BranchOutcome, DiagnosticCollection> EndBranchConstruction(
+            BranchScope&& Branch,
+            BranchArmOutcome&& TrueArm,
+            BranchArmOutcome&& FalseArm
+        )
+        {
+            if (!IsBuilderOpen())
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeLifecycleDiagnostic("A closed graph builder cannot end a branch.")
+                });
+            }
+            if (!Branch.IsValid() || !TrueArm.IsValid() || !FalseArm.IsValid())
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeBranchOutcomeDiagnostic("EndBranch requires an active branch and two resolved arm outcomes.")
+                });
+            }
+            if (!HasSameContext(Branch.m_Context) || !HasSameContext(TrueArm.m_Context) ||
+                !HasSameContext(FalseArm.m_Context))
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeForeignContextDiagnostic("The branch or arm outcome belongs to another builder.")
+                });
+            }
+            if (!IsTopScope(ExecutionScopeKind::Branch, Branch.m_Serial))
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionScopeDiagnostic("The BranchScope is not the active innermost scope.")
+                });
+            }
+            const BranchConstructionState* State = FindBranchState(Branch.m_Serial);
+            if (State == nullptr || !State->TrueResolved || !State->FalseResolved ||
+                State->TrueOutcomeSerial != TrueArm.m_Serial ||
+                State->FalseOutcomeSerial != FalseArm.m_Serial ||
+                TrueArm.m_Arm != BranchArm::True || FalseArm.m_Arm != BranchArm::False ||
+                TrueArm.m_BranchSerial != Branch.m_Serial ||
+                FalseArm.m_BranchSerial != Branch.m_Serial ||
+                TrueArm.m_Branch != Branch.m_Node || FalseArm.m_Branch != Branch.m_Node)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeBranchOutcomeDiagnostic("EndBranch requires the semantic True and False outcomes of this branch.")
+                });
+            }
+            if (m_NextBranchOutcomeSerial == 0U)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeLifecycleDiagnostic("The graph builder exhausted its branch outcome serial range.")
+                });
+            }
+
+            const std::uint64_t OutcomeSerial = m_NextBranchOutcomeSerial;
+            const std::optional<ExecutionHandle> TrueTail = TrueArm.m_LiveTail;
+            const std::optional<ExecutionHandle> FalseTail = FalseArm.m_LiveTail;
+            const BranchConstructionState SavedState = *State;
+            for (std::size_t Index = 0U; Index < m_BranchStates.size(); ++Index)
+            {
+                if (m_BranchStates[Index].Serial == Branch.m_Serial)
+                {
+                    m_BranchStates.erase(m_BranchStates.begin() +
+                        static_cast<std::ptrdiff_t>(Index));
+                    break;
+                }
+            }
+            m_ExecutionScopes.pop_back();
+            AdvanceIdentifier(m_NextBranchOutcomeSerial);
+
+            BranchOutcome Outcome(Branch.m_Node, Branch.m_Entry, Branch.m_ParentRegion,
+                Branch.m_TrueRegion, Branch.m_FalseRegion, TrueTail, FalseTail,
+                Branch.m_Serial, OutcomeSerial, m_Context);
+            if (Outcome.GetLiveArmCount() != 0U)
+            {
+                m_OpenBranchOutcomes.push_back(OpenBranchOutcome{
+                    OutcomeSerial, SavedState.Serial, SavedState.ParentSerial,
+                    SavedState.Entry, SavedState.ParentRegion
+                });
+            }
+            Branch.m_Serial = 0U;
+            Branch.m_Context.reset();
+            TrueArm.m_Serial = 0U;
+            TrueArm.m_Context.reset();
+            FalseArm.m_Serial = 0U;
+            FalseArm.m_Context.reset();
+            return Outcome;
+        }
+
+        [[nodiscard]] std::expected<JoinResult, DiagnosticCollection> JoinBranchOutcome(
+            ExecutionEntryId Entry,
+            ExecutionRegionId ParentRegion,
+            std::uint64_t ParentSerial,
+            std::weak_ptr<const NodeHandle::Context> ParentContext,
+            BranchOutcome&& Outcome,
+            NodeDescriptorId JoinDescriptorIdentifier
+        )
+        {
+            if (!Outcome.IsValid())
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeBranchOutcomeDiagnostic("Join requires a valid unconsumed BranchOutcome.")
+                });
+            }
+            const OpenBranchOutcome* OpenOutcome = FindOpenBranchOutcome(Outcome.m_Serial);
+            if (OpenOutcome == nullptr)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeBranchOutcomeDiagnostic("The BranchOutcome is stale or has already been consumed.")
+                });
+            }
+            DiagnosticCollection ScopeDiagnostics = ValidateParentScope(
+                !m_ExecutionScopes.empty() && m_ExecutionScopes.back().Kind == ExecutionScopeKind::BranchArm
+                    ? ExecutionScopeKind::BranchArm : ExecutionScopeKind::Entry,
+                ParentSerial, std::move(ParentContext), Entry, ParentRegion, Outcome.m_Serial);
+            if (!ScopeDiagnostics.empty())
+            {
+                return std::unexpected(std::move(ScopeDiagnostics));
+            }
+            if (!HasSameContext(Outcome.m_Context))
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeForeignContextDiagnostic("The BranchOutcome belongs to another builder.")
+                });
+            }
+            if (OpenOutcome->ParentScopeSerial != ParentSerial || Outcome.m_Entry != Entry ||
+                Outcome.m_ParentRegion != ParentRegion || Outcome.GetLiveArmCount() != 2U ||
+                !Outcome.m_TrueTail.has_value() || !Outcome.m_FalseTail.has_value())
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeBranchOutcomeDiagnostic("Join requires two live arms from a branch in this parent region.")
+                });
+            }
+            DiagnosticCollection TrueValidation = ValidateExecutionHandle(
+                *Outcome.m_TrueTail, Entry, Outcome.m_TrueRegion);
+            if (!TrueValidation.empty())
+            {
+                return std::unexpected(std::move(TrueValidation));
+            }
+            DiagnosticCollection FalseValidation = ValidateExecutionHandle(
+                *Outcome.m_FalseTail, Entry, Outcome.m_FalseRegion);
+            if (!FalseValidation.empty())
+            {
+                return std::unexpected(std::move(FalseValidation));
+            }
+            const NodeDescriptor* Descriptor = FindValidDescriptor(JoinDescriptorIdentifier);
+            if (Descriptor == nullptr)
+            {
+                return std::unexpected(DescriptorFailure(JoinDescriptorIdentifier,
+                    "The requested Join descriptor is missing or invalid."));
+            }
+            const JoinControlSchema* Schema = GetControlSchema<JoinControlSchema>(*Descriptor);
+            if (Schema == nullptr)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionRoleDiagnostic("Join requires a trusted Join control schema.")
+                });
+            }
+            if (m_NextNodeIdentifier == 0U)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeLifecycleDiagnostic("The graph builder exhausted its node identifier range.")
+                });
+            }
+
+            const NodeInstanceId NodeIdentifier(m_NextNodeIdentifier);
+            m_Graph.AddNode(NodeInstance{NodeIdentifier, JoinDescriptorIdentifier, ParentRegion});
+            m_Graph.AddControlEdge(ControlEdge{
+                Outcome.m_TrueTail->m_Node, Outcome.m_TrueTail->m_OutputPin,
+                NodeIdentifier, Schema->ExecutionInput
+            });
+            m_Graph.AddControlEdge(ControlEdge{
+                Outcome.m_FalseTail->m_Node, Outcome.m_FalseTail->m_OutputPin,
+                NodeIdentifier, Schema->ExecutionInput
+            });
+            AdvanceIdentifier(m_NextNodeIdentifier);
+            ConsumeOpenBranchOutcome(Outcome.m_Serial);
+            Outcome.m_Serial = 0U;
+            Outcome.m_Context.reset();
+            NodeHandle Node(NodeIdentifier, JoinDescriptorIdentifier, m_Context);
+            ExecutionHandle Output(NodeIdentifier, Schema->ExecutionOutput, Entry,
+                ParentRegion, m_Context);
+            return JoinResult{std::move(Node), std::move(Output)};
+        }
+
+        [[nodiscard]] std::expected<ExecutionNodeResult, DiagnosticCollection>
+        ContinueBranchOutcome(
+            ExecutionEntryId Entry,
+            ExecutionRegionId ParentRegion,
+            std::uint64_t ParentSerial,
+            std::weak_ptr<const NodeHandle::Context> ParentContext,
+            BranchOutcome&& Outcome,
+            NodeDescriptorId SequenceDescriptorIdentifier
+        )
+        {
+            if (!Outcome.IsValid())
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeBranchOutcomeDiagnostic("ContinueWith requires a valid unconsumed BranchOutcome.")
+                });
+            }
+            const OpenBranchOutcome* OpenOutcome = FindOpenBranchOutcome(Outcome.m_Serial);
+            if (OpenOutcome == nullptr)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeBranchOutcomeDiagnostic("The BranchOutcome is stale or has already been consumed.")
+                });
+            }
+            DiagnosticCollection ScopeDiagnostics = ValidateParentScope(
+                !m_ExecutionScopes.empty() && m_ExecutionScopes.back().Kind == ExecutionScopeKind::BranchArm
+                    ? ExecutionScopeKind::BranchArm : ExecutionScopeKind::Entry,
+                ParentSerial, std::move(ParentContext), Entry, ParentRegion, Outcome.m_Serial);
+            if (!ScopeDiagnostics.empty())
+            {
+                return std::unexpected(std::move(ScopeDiagnostics));
+            }
+            if (!HasSameContext(Outcome.m_Context))
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeForeignContextDiagnostic("The BranchOutcome belongs to another builder.")
+                });
+            }
+            if (OpenOutcome->ParentScopeSerial != ParentSerial || Outcome.m_Entry != Entry ||
+                Outcome.m_ParentRegion != ParentRegion || Outcome.GetLiveArmCount() != 1U)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeBranchOutcomeDiagnostic("ContinueWith requires exactly one live arm in this parent region.")
+                });
+            }
+            const ExecutionHandle& Tail = Outcome.m_TrueTail.has_value()
+                ? *Outcome.m_TrueTail : *Outcome.m_FalseTail;
+            const ExecutionRegionId TailRegion = Outcome.m_TrueTail.has_value()
+                ? Outcome.m_TrueRegion : Outcome.m_FalseRegion;
+            DiagnosticCollection HandleDiagnostics = ValidateExecutionHandle(Tail, Entry, TailRegion);
+            if (!HandleDiagnostics.empty())
+            {
+                return std::unexpected(std::move(HandleDiagnostics));
+            }
+            const NodeDescriptor* Descriptor = FindValidDescriptor(SequenceDescriptorIdentifier);
+            if (Descriptor == nullptr)
+            {
+                return std::unexpected(DescriptorFailure(SequenceDescriptorIdentifier,
+                    "The requested continuation Sequence descriptor is missing or invalid."));
+            }
+            const SequenceControlSchema* Schema = GetControlSchema<SequenceControlSchema>(*Descriptor);
+            if (Schema == nullptr)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionRoleDiagnostic("ContinueWith requires a trusted Sequence control schema.")
+                });
+            }
+            if (m_NextNodeIdentifier == 0U)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeLifecycleDiagnostic("The graph builder exhausted its node identifier range.")
+                });
+            }
+
+            const NodeInstanceId NodeIdentifier(m_NextNodeIdentifier);
+            m_Graph.AddNode(NodeInstance{NodeIdentifier, SequenceDescriptorIdentifier, ParentRegion});
+            m_Graph.AddControlEdge(ControlEdge{
+                Tail.m_Node, Tail.m_OutputPin, NodeIdentifier, Schema->ExecutionInput
+            });
+            AdvanceIdentifier(m_NextNodeIdentifier);
+            ConsumeOpenBranchOutcome(Outcome.m_Serial);
+            Outcome.m_Serial = 0U;
+            Outcome.m_Context.reset();
+            NodeHandle Node(NodeIdentifier, SequenceDescriptorIdentifier, m_Context);
+            ExecutionHandle Output(NodeIdentifier, Schema->ExecutionOutput, Entry,
+                ParentRegion, m_Context);
+            return ExecutionNodeResult{std::move(Node), std::move(Output)};
+        }
+
+        [[nodiscard]] DiagnosticCollection ValidateOpenExecutionState() const
+        {
+            if (!m_ExecutionScopes.empty() || !m_BranchStates.empty() ||
+                !m_OpenBranchOutcomes.empty())
+            {
+                return DiagnosticCollection{
+                    MakeOpenExecutionScopeDiagnostic(
+                        "The graph builder has an open execution scope or unresolved branch outcome.")
+                };
+            }
+            return {};
+        }
+
+        [[nodiscard]] static std::uint64_t NextIdentifier(std::uint64_t Current)
+        {
+            if (Current == 0U || Current == std::numeric_limits<std::uint64_t>::max())
+            {
+                return 0U;
+            }
+            return Current + 1U;
+        }
+
+        static void AdvanceIdentifier(std::uint64_t& Current)
+        {
+            Current = NextIdentifier(Current);
+        }
+
         [[nodiscard]] std::size_t CountBindings(
             NodeInstanceId DestinationNode,
             PinIndex DestinationPin
@@ -988,6 +2822,13 @@ namespace MiliastraPlusPlus
         GraphIR m_Graph;
         std::uint64_t m_NextNodeIdentifier = 1U;
         std::uint64_t m_NextGraphVariableIdentifier = 1U;
+        std::uint64_t m_NextExecutionEntryIdentifier = 1U;
+        std::uint64_t m_NextExecutionRegionIdentifier = 1U;
+        std::uint64_t m_NextExecutionScopeSerial = 1U;
+        std::uint64_t m_NextBranchOutcomeSerial = 1U;
+        std::vector<ExecutionScopeFrame> m_ExecutionScopes;
+        std::vector<BranchConstructionState> m_BranchStates;
+        std::vector<OpenBranchOutcome> m_OpenBranchOutcomes;
         std::shared_ptr<const NodeHandle::Context> m_Context;
         bool m_IsClosed = false;
     };

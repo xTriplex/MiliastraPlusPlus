@@ -194,6 +194,12 @@ namespace
         Graph.AddNode({NodeInstanceId(3U), BranchId, ExecutionRegionId(1U)});
         Graph.AddNode({NodeInstanceId(4U), SequenceId, ExecutionRegionId(2U)});
         Graph.AddNode({NodeInstanceId(5U), SequenceId, ExecutionRegionId(3U)});
+        Graph.AddControlEdge({NodeInstanceId(2U), PinIndex(1U),
+            NodeInstanceId(3U), PinIndex(0U)});
+        Graph.AddControlEdge({NodeInstanceId(3U), PinIndex(2U),
+            NodeInstanceId(4U), PinIndex(0U)});
+        Graph.AddControlEdge({NodeInstanceId(3U), PinIndex(3U),
+            NodeInstanceId(5U), PinIndex(0U)});
         return Graph;
     }
 

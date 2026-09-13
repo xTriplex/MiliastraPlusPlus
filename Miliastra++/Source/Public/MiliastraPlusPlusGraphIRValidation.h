@@ -169,6 +169,7 @@ namespace MiliastraPlusPlus
             }
 
             ValidateExecutionMetadata(Graph, Descriptors, Diagnostics);
+            ValidateStructuredExecution(Graph, Descriptors, Diagnostics);
 
             DiagnosticCollection GenericDiagnostics =
                 GraphIRGenericValidationDetail::ValidateGenericTypes(Graph, Descriptors);
@@ -726,6 +727,844 @@ namespace MiliastraPlusPlus
                 {
                     Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
                         "A structured control edge cannot cross execution-entry ownership.");
+                }
+            }
+        }
+
+        template<typename Schema>
+        static const Schema* GetControlSchema(const NodeDescriptor* Descriptor)
+        {
+            if (Descriptor == nullptr || !Descriptor->GetExecutionControlSchema().has_value())
+            {
+                return nullptr;
+            }
+            return std::get_if<Schema>(&*Descriptor->GetExecutionControlSchema());
+        }
+
+        static const ExecutionRegion* FindBranchArmRegion(
+            const GraphIR& Graph,
+            NodeInstanceId BranchNode,
+            PinIndex OutputPin
+        )
+        {
+            for (const ExecutionRegion& Region : Graph.GetExecutionRegions())
+            {
+                if (Region.Kind == ExecutionRegionKind::BranchArm &&
+                    Region.OwnerNode == BranchNode && Region.OwnerOutputPin == OutputPin)
+                {
+                    return &Region;
+                }
+            }
+            return nullptr;
+        }
+
+        static const ExecutionRegion* EffectiveSourceRegion(
+            const GraphIR& Graph,
+            const NodeDescriptorRegistry& Descriptors,
+            const ControlEdge& Edge
+        )
+        {
+            const NodeInstance* Source = Graph.FindNode(Edge.SourceNode);
+            const NodeDescriptor* Descriptor = Source == nullptr
+                ? nullptr : Descriptors.Find(Source->Descriptor);
+            const BranchControlSchema* Branch = GetControlSchema<BranchControlSchema>(Descriptor);
+            if (Branch != nullptr && (Edge.SourceOutputPin == Branch->TrueOutput ||
+                Edge.SourceOutputPin == Branch->FalseOutput))
+            {
+                return FindBranchArmRegion(Graph, Edge.SourceNode, Edge.SourceOutputPin);
+            }
+            return Source != nullptr && Source->ExecutionRegion.has_value()
+                ? Graph.FindExecutionRegion(*Source->ExecutionRegion) : nullptr;
+        }
+
+        static bool IsInsideLoopBody(
+            const GraphIR& Graph,
+            const NodeInstance& Node
+        )
+        {
+            if (!Node.ExecutionRegion.has_value())
+            {
+                return false;
+            }
+            const ExecutionRegion* Region = Graph.FindExecutionRegion(*Node.ExecutionRegion);
+            std::vector<ExecutionRegionId> VisitedRegions;
+            while (Region != nullptr)
+            {
+                if (std::find(VisitedRegions.begin(), VisitedRegions.end(), Region->Identifier) !=
+                    VisitedRegions.end())
+                {
+                    // The region-tree validation reports this malformed cycle. Stop ancestry
+                    // queries here so later branch/loop checks cannot hang on the bad graph.
+                    return false;
+                }
+                VisitedRegions.push_back(Region->Identifier);
+                if (Region->Kind == ExecutionRegionKind::LoopBody)
+                {
+                    return true;
+                }
+                if (!Region->Parent.has_value())
+                {
+                    break;
+                }
+                Region = Graph.FindExecutionRegion(*Region->Parent);
+            }
+            return false;
+        }
+
+        static bool IsLoopControlNode(
+            const NodeInstance& Node,
+            const NodeDescriptorRegistry& Descriptors
+        )
+        {
+            const NodeDescriptor* Descriptor = Node.Descriptor.IsValid()
+                ? Descriptors.Find(Node.Descriptor) : nullptr;
+            return GetControlSchema<LoopControlSchema>(Descriptor) != nullptr;
+        }
+
+        static bool IsLoopTransferEdge(
+            const GraphIR& Graph,
+            const NodeDescriptorRegistry& Descriptors,
+            const ControlEdge& Edge
+        )
+        {
+            const NodeInstance* Source = Graph.FindNode(Edge.SourceNode);
+            const NodeInstance* Destination = Graph.FindNode(Edge.DestinationNode);
+            if (Source == nullptr || Destination == nullptr)
+            {
+                return false;
+            }
+            if (IsInsideLoopBody(Graph, *Source) || IsInsideLoopBody(Graph, *Destination))
+            {
+                return true;
+            }
+            const NodeDescriptor* SourceDescriptor = Descriptors.Find(Source->Descriptor);
+            const NodeDescriptor* DestinationDescriptor = Descriptors.Find(Destination->Descriptor);
+            const LoopControlSchema* SourceLoop =
+                GetControlSchema<LoopControlSchema>(SourceDescriptor);
+            if (SourceLoop != nullptr && Edge.SourceOutputPin == SourceLoop->BodyOutput)
+            {
+                return true;
+            }
+            const LoopControlSchema* DestinationLoop =
+                GetControlSchema<LoopControlSchema>(DestinationDescriptor);
+            return DestinationLoop != nullptr &&
+                (Edge.DestinationInputPin == DestinationLoop->RepeatInput ||
+                    Edge.DestinationInputPin == DestinationLoop->BreakInput);
+        }
+
+        static std::size_t CountOutgoingEndpoint(
+            const GraphIR& Graph,
+            NodeInstanceId Node,
+            PinIndex Pin
+        )
+        {
+            std::size_t Count = 0U;
+            for (const ControlEdge& Edge : Graph.GetControlEdges())
+            {
+                if (Edge.SourceNode == Node && Edge.SourceOutputPin == Pin)
+                {
+                    ++Count;
+                }
+            }
+            return Count;
+        }
+
+        static std::size_t CountIncomingEndpoint(
+            const GraphIR& Graph,
+            NodeInstanceId Node,
+            PinIndex Pin
+        )
+        {
+            std::size_t Count = 0U;
+            for (const ControlEdge& Edge : Graph.GetControlEdges())
+            {
+                if (Edge.DestinationNode == Node && Edge.DestinationInputPin == Pin)
+                {
+                    ++Count;
+                }
+            }
+            return Count;
+        }
+
+        static void ValidateStructuredExecution(
+            const GraphIR& Graph,
+            const NodeDescriptorRegistry& Descriptors,
+            DiagnosticCollection& Diagnostics
+        )
+        {
+            if (Graph.GetExecutionModel() != ExecutionModel::Structured)
+            {
+                return;
+            }
+            const std::size_t InitialDiagnosticCount = Diagnostics.size();
+
+            for (const ControlEdge& Edge : Graph.GetControlEdges())
+            {
+                const NodeInstance* Source = Graph.FindNode(Edge.SourceNode);
+                const NodeInstance* Destination = Graph.FindNode(Edge.DestinationNode);
+                if (Source == nullptr || Destination == nullptr)
+                {
+                    continue;
+                }
+                const PinSchema* SourcePin = FindPin(Source, Edge.SourceOutputPin, Descriptors);
+                const PinSchema* DestinationPin = FindPin(
+                    Destination, Edge.DestinationInputPin, Descriptors);
+                if (SourcePin == nullptr || DestinationPin == nullptr ||
+                    SourcePin->GetCategory() != PinCategory::Execution ||
+                    DestinationPin->GetCategory() != PinCategory::Execution)
+                {
+                    continue;
+                }
+                if (CountOutgoingEndpoint(Graph, Edge.SourceNode, Edge.SourceOutputPin) > 1U)
+                {
+                    Add(Diagnostics, DiagnosticCode::ExecutionEndpointAlreadyConsumed,
+                        "A structured Flow output endpoint may have at most one successor.");
+                }
+                if (DestinationPin->GetCardinality() != PinCardinality::Multiple &&
+                    CountIncomingEndpoint(Graph, Edge.DestinationNode,
+                        Edge.DestinationInputPin) > 1U)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidControlEdge,
+                        "A structured Flow input with Single or Optional cardinality has multiple predecessors.");
+                }
+            }
+
+            for (const ControlEdge& Edge : Graph.GetControlEdges())
+            {
+                const NodeInstance* Source = Graph.FindNode(Edge.SourceNode);
+                const NodeInstance* Destination = Graph.FindNode(Edge.DestinationNode);
+                if (Source == nullptr || Destination == nullptr ||
+                    !Source->ExecutionRegion.has_value() ||
+                    !Destination->ExecutionRegion.has_value() ||
+                    IsLoopTransferEdge(Graph, Descriptors, Edge))
+                {
+                    continue;
+                }
+                const ExecutionRegion* SourceRegion =
+                    EffectiveSourceRegion(Graph, Descriptors, Edge);
+                const ExecutionRegion* DestinationRegion =
+                    Graph.FindExecutionRegion(*Destination->ExecutionRegion);
+                if (SourceRegion == nullptr || DestinationRegion == nullptr)
+                {
+                    continue;
+                }
+                if (SourceRegion->Entry != DestinationRegion->Entry)
+                {
+                    continue;
+                }
+                if (SourceRegion->Identifier == DestinationRegion->Identifier)
+                {
+                    continue;
+                }
+                const bool IsParentExit = SourceRegion->Parent.has_value() &&
+                    *SourceRegion->Parent == DestinationRegion->Identifier;
+                const NodeDescriptor* DestinationDescriptor = Descriptors.Find(Destination->Descriptor);
+                const bool ParentContinuation =
+                    GetControlSchema<JoinControlSchema>(DestinationDescriptor) != nullptr ||
+                    GetControlSchema<SequenceControlSchema>(DestinationDescriptor) != nullptr;
+                if (IsParentExit && ParentContinuation)
+                {
+                    continue;
+                }
+                const NodeDescriptor* SourceDescriptor = Descriptors.Find(Source->Descriptor);
+                const BranchControlSchema* Branch =
+                    GetControlSchema<BranchControlSchema>(SourceDescriptor);
+                const ExecutionRegion* DestinationParent = DestinationRegion->Parent.has_value()
+                    ? Graph.FindExecutionRegion(*DestinationRegion->Parent) : nullptr;
+                const bool IsOwnedArmEntry = Branch != nullptr &&
+                    (Edge.SourceOutputPin == Branch->TrueOutput ||
+                        Edge.SourceOutputPin == Branch->FalseOutput) &&
+                    DestinationRegion->Kind == ExecutionRegionKind::BranchArm &&
+                    DestinationRegion->OwnerNode == Source->Identifier &&
+                    DestinationRegion->OwnerOutputPin == Edge.SourceOutputPin &&
+                    DestinationParent != nullptr &&
+                    Source->ExecutionRegion == DestinationParent->Identifier;
+                if (!IsOwnedArmEntry)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
+                        "A structured control edge crosses an execution region boundary without its owning Branch role.");
+                }
+            }
+
+            for (const ExecutionEntry& Entry : Graph.GetExecutionEntries())
+            {
+                if (!Entry.Identifier.IsValid() || !Entry.RootNode.IsValid() ||
+                    CountEntries(Graph, Entry.Identifier) != 1U)
+                {
+                    continue;
+                }
+                const NodeInstance* Root = Graph.FindNode(Entry.RootNode);
+                const NodeDescriptor* RootDescriptor = Root == nullptr
+                    ? nullptr : Descriptors.Find(Root->Descriptor);
+                const EntryControlSchema* EntrySchema =
+                    GetControlSchema<EntryControlSchema>(RootDescriptor);
+                if (Root == nullptr || EntrySchema == nullptr)
+                {
+                    continue;
+                }
+                if (CountOutgoingEndpoint(Graph, Root->Identifier,
+                    EntrySchema->ExecutionOutput) == 0U)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability,
+                        "A structured Entry root must have an explicit execution successor.");
+                }
+
+                std::vector<NodeInstanceId> Reachable;
+                Reachable.push_back(Root->Identifier);
+                for (std::size_t Cursor = 0U; Cursor < Reachable.size(); ++Cursor)
+                {
+                    const NodeInstanceId Current = Reachable[Cursor];
+                    for (const ControlEdge& Edge : Graph.GetControlEdges())
+                    {
+                        if (Edge.SourceNode != Current ||
+                            IsLoopTransferEdge(Graph, Descriptors, Edge))
+                        {
+                            continue;
+                        }
+                        const NodeInstance* Destination = Graph.FindNode(Edge.DestinationNode);
+                        const ExecutionRegion* Region = Destination != nullptr &&
+                            Destination->ExecutionRegion.has_value()
+                            ? Graph.FindExecutionRegion(*Destination->ExecutionRegion) : nullptr;
+                        if (Destination == nullptr || Region == nullptr || Region->Entry != Entry.Identifier ||
+                            IsInsideLoopBody(Graph, *Destination))
+                        {
+                            continue;
+                        }
+                        bool Seen = false;
+                        for (const NodeInstanceId Prior : Reachable)
+                        {
+                            if (Prior == Destination->Identifier)
+                            {
+                                Seen = true;
+                                break;
+                            }
+                        }
+                        if (!Seen)
+                        {
+                            Reachable.push_back(Destination->Identifier);
+                        }
+                    }
+                }
+
+                for (const NodeInstance& Node : Graph.GetNodes())
+                {
+                    const ExecutionRegion* Region = Node.ExecutionRegion.has_value()
+                        ? Graph.FindExecutionRegion(*Node.ExecutionRegion) : nullptr;
+                    const NodeDescriptor* Descriptor = Node.Descriptor.IsValid()
+                        ? Descriptors.Find(Node.Descriptor) : nullptr;
+                    if (Region == nullptr || Region->Entry != Entry.Identifier ||
+                        Descriptor == nullptr || !Descriptor->GetExecutionControlSchema().has_value() ||
+                        IsInsideLoopBody(Graph, Node) || IsLoopControlNode(Node, Descriptors))
+                    {
+                        continue;
+                    }
+                    bool IsReachable = false;
+                    for (const NodeInstanceId ReachableNode : Reachable)
+                    {
+                        IsReachable = IsReachable || ReachableNode == Node.Identifier;
+                    }
+                    if (!IsReachable)
+                    {
+                        Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability,
+                            "A structured execution node is unreachable from its explicit Entry root.");
+                    }
+                }
+
+                ValidateBranchOutcomes(Graph, Descriptors, Entry.Identifier, Diagnostics);
+                ValidateStructuredCycles(Graph, Descriptors, Entry.Identifier, Reachable, Diagnostics);
+            }
+
+            if (Diagnostics.size() == InitialDiagnosticCount && !ContainsError(Diagnostics))
+            {
+                ValidateExecutionDataDominance(Graph, Descriptors, Diagnostics);
+            }
+        }
+
+        static void ValidateBranchOutcomes(
+            const GraphIR& Graph,
+            const NodeDescriptorRegistry& Descriptors,
+            ExecutionEntryId Entry,
+            DiagnosticCollection& Diagnostics
+        )
+        {
+            for (const NodeInstance& Node : Graph.GetNodes())
+            {
+                const ExecutionRegion* ParentRegion = Node.ExecutionRegion.has_value()
+                    ? Graph.FindExecutionRegion(*Node.ExecutionRegion) : nullptr;
+                const NodeDescriptor* Descriptor = Node.Descriptor.IsValid()
+                    ? Descriptors.Find(Node.Descriptor) : nullptr;
+                const BranchControlSchema* Branch = GetControlSchema<BranchControlSchema>(Descriptor);
+                if (ParentRegion == nullptr || ParentRegion->Entry != Entry || Branch == nullptr ||
+                    IsInsideLoopBody(Graph, Node))
+                {
+                    continue;
+                }
+                const ExecutionRegion* TrueRegion = FindBranchArmRegion(
+                    Graph, Node.Identifier, Branch->TrueOutput);
+                const ExecutionRegion* FalseRegion = FindBranchArmRegion(
+                    Graph, Node.Identifier, Branch->FalseOutput);
+                if (TrueRegion == nullptr || FalseRegion == nullptr ||
+                    !TrueRegion->Parent.has_value() || !FalseRegion->Parent.has_value())
+                {
+                    continue;
+                }
+                std::vector<const ControlEdge*> TrueExits;
+                std::vector<const ControlEdge*> FalseExits;
+                for (const ControlEdge& Edge : Graph.GetControlEdges())
+                {
+                    const ExecutionRegion* SourceRegion = EffectiveSourceRegion(Graph, Descriptors, Edge);
+                    const NodeInstance* Destination = Graph.FindNode(Edge.DestinationNode);
+                    if (SourceRegion == nullptr || Destination == nullptr ||
+                        !Destination->ExecutionRegion.has_value())
+                    {
+                        continue;
+                    }
+                    const bool ExitsToParent = *Destination->ExecutionRegion == *TrueRegion->Parent;
+                    if (!ExitsToParent)
+                    {
+                        continue;
+                    }
+                    if (SourceRegion->Identifier == TrueRegion->Identifier)
+                    {
+                        TrueExits.push_back(&Edge);
+                    }
+                    else if (SourceRegion->Identifier == FalseRegion->Identifier)
+                    {
+                        FalseExits.push_back(&Edge);
+                    }
+                }
+                if (TrueExits.size() > 1U || FalseExits.size() > 1U)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability,
+                        "Each BranchArm may have at most one live parent-region outcome.");
+                    continue;
+                }
+                const std::size_t LiveCount = TrueExits.size() + FalseExits.size();
+                if (LiveCount == 1U)
+                {
+                    const ControlEdge* Exit = TrueExits.empty()
+                        ? FalseExits.front() : TrueExits.front();
+                    const NodeInstance* Destination = Graph.FindNode(Exit->DestinationNode);
+                    const NodeDescriptor* DestinationDescriptor = Destination == nullptr
+                        ? nullptr : Descriptors.Find(Destination->Descriptor);
+                    if (GetControlSchema<SequenceControlSchema>(DestinationDescriptor) == nullptr)
+                    {
+                        Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability,
+                            "A single live BranchArm must continue through a parent-region Sequence.");
+                    }
+                }
+                else if (LiveCount == 2U)
+                {
+                    const NodeInstance* TrueDestination = Graph.FindNode(TrueExits.front()->DestinationNode);
+                    const NodeInstance* FalseDestination = Graph.FindNode(FalseExits.front()->DestinationNode);
+                    const NodeDescriptor* JoinDescriptor = TrueDestination == nullptr
+                        ? nullptr : Descriptors.Find(TrueDestination->Descriptor);
+                    if (TrueDestination == nullptr || FalseDestination == nullptr ||
+                        TrueDestination->Identifier != FalseDestination->Identifier ||
+                        TrueDestination->ExecutionRegion != ParentRegion->Identifier ||
+                        GetControlSchema<JoinControlSchema>(JoinDescriptor) == nullptr)
+                    {
+                        Add(Diagnostics, DiagnosticCode::MissingExplicitJoin,
+                            "Two live BranchArms must reconverge at one explicit parent-region Join.");
+                    }
+                }
+            }
+
+            for (const NodeInstance& JoinNode : Graph.GetNodes())
+            {
+                const NodeDescriptor* Descriptor = JoinNode.Descriptor.IsValid()
+                    ? Descriptors.Find(JoinNode.Descriptor) : nullptr;
+                const JoinControlSchema* Join = GetControlSchema<JoinControlSchema>(Descriptor);
+                if (Join == nullptr || !JoinNode.ExecutionRegion.has_value())
+                {
+                    continue;
+                }
+                const ExecutionRegion* JoinRegion = Graph.FindExecutionRegion(*JoinNode.ExecutionRegion);
+                if (JoinRegion == nullptr || JoinRegion->Entry != Entry || IsInsideLoopBody(Graph, JoinNode))
+                {
+                    continue;
+                }
+                std::vector<const ControlEdge*> Incoming;
+                for (const ControlEdge& Edge : Graph.GetControlEdges())
+                {
+                    if (Edge.DestinationNode == JoinNode.Identifier &&
+                        Edge.DestinationInputPin == Join->ExecutionInput)
+                    {
+                        Incoming.push_back(&Edge);
+                    }
+                }
+                bool ValidPair = Incoming.size() == 2U;
+                const ExecutionRegion* FirstRegion = nullptr;
+                const ExecutionRegion* SecondRegion = nullptr;
+                if (ValidPair)
+                {
+                    FirstRegion = EffectiveSourceRegion(Graph, Descriptors, *Incoming[0U]);
+                    SecondRegion = EffectiveSourceRegion(Graph, Descriptors, *Incoming[1U]);
+                    ValidPair = FirstRegion != nullptr && SecondRegion != nullptr &&
+                        FirstRegion->Kind == ExecutionRegionKind::BranchArm &&
+                        SecondRegion->Kind == ExecutionRegionKind::BranchArm &&
+                        FirstRegion->Identifier != SecondRegion->Identifier &&
+                        FirstRegion->Parent == JoinNode.ExecutionRegion &&
+                        SecondRegion->Parent == JoinNode.ExecutionRegion &&
+                        FirstRegion->OwnerNode == SecondRegion->OwnerNode;
+                    const NodeInstance* Owner = ValidPair && FirstRegion->OwnerNode.has_value()
+                        ? Graph.FindNode(*FirstRegion->OwnerNode) : nullptr;
+                    const NodeDescriptor* OwnerDescriptor = Owner == nullptr
+                        ? nullptr : Descriptors.Find(Owner->Descriptor);
+                    const BranchControlSchema* Branch =
+                        GetControlSchema<BranchControlSchema>(OwnerDescriptor);
+                    ValidPair = ValidPair && Branch != nullptr &&
+                        ((FirstRegion->OwnerOutputPin == Branch->TrueOutput &&
+                            SecondRegion->OwnerOutputPin == Branch->FalseOutput) ||
+                         (FirstRegion->OwnerOutputPin == Branch->FalseOutput &&
+                            SecondRegion->OwnerOutputPin == Branch->TrueOutput));
+                }
+                if (!ValidPair)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidControlEdge,
+                        "A structured Join must have exactly one incoming tail from each arm of one binary Branch.");
+                }
+            }
+        }
+
+        static void ValidateStructuredCycles(
+            const GraphIR& Graph,
+            const NodeDescriptorRegistry& Descriptors,
+            ExecutionEntryId Entry,
+            const std::vector<NodeInstanceId>& Reachable,
+            DiagnosticCollection& Diagnostics
+        )
+        {
+            std::vector<NodeInstanceId> Ordered;
+            for (const NodeInstanceId NodeId : Reachable)
+            {
+                const NodeInstance* Node = Graph.FindNode(NodeId);
+                if (Node != nullptr && !IsInsideLoopBody(Graph, *Node))
+                {
+                    Ordered.push_back(NodeId);
+                }
+            }
+            std::vector<NodeInstanceId> Removed;
+            bool Progress = true;
+            while (Progress)
+            {
+                Progress = false;
+                for (const NodeInstanceId NodeId : Ordered)
+                {
+                    bool AlreadyRemoved = false;
+                    for (const NodeInstanceId RemovedId : Removed)
+                    {
+                        AlreadyRemoved = AlreadyRemoved || RemovedId == NodeId;
+                    }
+                    if (AlreadyRemoved)
+                    {
+                        continue;
+                    }
+                    bool HasRemainingSuccessor = false;
+                    for (const ControlEdge& Edge : Graph.GetControlEdges())
+                    {
+                        if (Edge.SourceNode != NodeId || IsLoopTransferEdge(Graph, Descriptors, Edge))
+                        {
+                            continue;
+                        }
+                        const NodeInstance* Destination = Graph.FindNode(Edge.DestinationNode);
+                        const ExecutionRegion* Region = Destination != nullptr &&
+                            Destination->ExecutionRegion.has_value()
+                            ? Graph.FindExecutionRegion(*Destination->ExecutionRegion) : nullptr;
+                        if (Destination != nullptr && Region != nullptr && Region->Entry == Entry &&
+                            !IsInsideLoopBody(Graph, *Destination))
+                        {
+                            bool DestinationRemoved = false;
+                            for (const NodeInstanceId RemovedId : Removed)
+                            {
+                                DestinationRemoved = DestinationRemoved || RemovedId == Destination->Identifier;
+                            }
+                            HasRemainingSuccessor = HasRemainingSuccessor || !DestinationRemoved;
+                        }
+                    }
+                    if (!HasRemainingSuccessor)
+                    {
+                        Removed.push_back(NodeId);
+                        Progress = true;
+                    }
+                }
+            }
+            if (Removed.size() != Ordered.size())
+            {
+                Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability,
+                    "A structured execution cycle outside LoopBody is not authorized in M4.2.");
+            }
+        }
+
+        static void ValidateExecutionDataDominance(
+            const GraphIR& Graph,
+            const NodeDescriptorRegistry& Descriptors,
+            DiagnosticCollection& Diagnostics
+        )
+        {
+            struct ProvenanceRecord
+            {
+                NodeInstanceId Node;
+                bool Unknown = false;
+                std::vector<NodeInstanceId> Origins;
+            };
+
+            std::vector<ProvenanceRecord> Provenance;
+            Provenance.reserve(Graph.GetNodes().size());
+            for (const NodeInstance& Node : Graph.GetNodes())
+            {
+                const NodeDescriptor* Descriptor = Node.Descriptor.IsValid()
+                    ? Descriptors.Find(Node.Descriptor) : nullptr;
+                const bool IsExecutionOwned = Descriptor != nullptr &&
+                    Descriptor->GetExecutionControlSchema().has_value() &&
+                    Node.ExecutionRegion.has_value();
+                ProvenanceRecord Record{Node.Identifier};
+                if (IsExecutionOwned)
+                {
+                    Record.Origins.push_back(Node.Identifier);
+                }
+                Provenance.push_back(std::move(Record));
+            }
+
+            bool Changed = true;
+            std::size_t Iterations = 0U;
+            const std::size_t IterationLimit = Graph.GetNodes().size() + 1U;
+            while (Changed && Iterations <= IterationLimit)
+            {
+                Changed = false;
+                ++Iterations;
+                for (const InputBindingRecord& Binding : Graph.GetInputBindings())
+                {
+                    const NodeInstance* Destination = Graph.FindNode(Binding.DestinationNode);
+                    const NodeDescriptor* DestinationDescriptor = Destination == nullptr
+                        ? nullptr : Descriptors.Find(Destination->Descriptor);
+                    if (Destination == nullptr || Destination->ExecutionRegion.has_value() ||
+                        (DestinationDescriptor != nullptr &&
+                            DestinationDescriptor->GetExecutionControlSchema().has_value()))
+                    {
+                        continue;
+                    }
+                    const OutputReference* Output = std::get_if<OutputReference>(&Binding.Binding);
+                    if (Output == nullptr)
+                    {
+                        continue;
+                    }
+                    const NodeInstance* Source = Graph.FindNode(Output->SourceNode);
+                    if (Source == nullptr)
+                    {
+                        continue;
+                    }
+                    ProvenanceRecord* DestinationRecord = nullptr;
+                    ProvenanceRecord* SourceRecord = nullptr;
+                    for (ProvenanceRecord& Record : Provenance)
+                    {
+                        if (Record.Node == Destination->Identifier)
+                        {
+                            DestinationRecord = &Record;
+                        }
+                        if (Record.Node == Source->Identifier)
+                        {
+                            SourceRecord = &Record;
+                        }
+                    }
+                    if (DestinationRecord == nullptr || SourceRecord == nullptr)
+                    {
+                        continue;
+                    }
+                    if (SourceRecord->Unknown && !DestinationRecord->Unknown)
+                    {
+                        DestinationRecord->Unknown = true;
+                        Changed = true;
+                    }
+                    for (const NodeInstanceId Origin : SourceRecord->Origins)
+                    {
+                        bool Exists = false;
+                        for (const NodeInstanceId Prior : DestinationRecord->Origins)
+                        {
+                            Exists = Exists || Prior == Origin;
+                        }
+                        if (!Exists)
+                        {
+                            DestinationRecord->Origins.push_back(Origin);
+                            Changed = true;
+                        }
+                    }
+                }
+            }
+
+            for (const ExecutionEntry& Entry : Graph.GetExecutionEntries())
+            {
+                const NodeInstance* Root = Graph.FindNode(Entry.RootNode);
+                if (Root == nullptr || !Root->ExecutionRegion.has_value())
+                {
+                    continue;
+                }
+                std::vector<NodeInstanceId> Nodes;
+                Nodes.push_back(Root->Identifier);
+                for (std::size_t Cursor = 0U; Cursor < Nodes.size(); ++Cursor)
+                {
+                    const NodeInstanceId Current = Nodes[Cursor];
+                    for (const ControlEdge& Edge : Graph.GetControlEdges())
+                    {
+                        if (Edge.SourceNode != Current ||
+                            IsLoopTransferEdge(Graph, Descriptors, Edge))
+                        {
+                            continue;
+                        }
+                        const NodeInstance* Destination = Graph.FindNode(Edge.DestinationNode);
+                        const ExecutionRegion* DestinationRegion = Destination != nullptr &&
+                            Destination->ExecutionRegion.has_value()
+                            ? Graph.FindExecutionRegion(*Destination->ExecutionRegion) : nullptr;
+                        if (Destination == nullptr || DestinationRegion == nullptr ||
+                            DestinationRegion->Entry != Entry.Identifier ||
+                            IsInsideLoopBody(Graph, *Destination))
+                        {
+                            continue;
+                        }
+                        bool Seen = false;
+                        for (const NodeInstanceId Prior : Nodes)
+                        {
+                            Seen = Seen || Prior == Destination->Identifier;
+                        }
+                        if (!Seen)
+                        {
+                            Nodes.push_back(Destination->Identifier);
+                        }
+                    }
+                }
+
+                if (Nodes.empty())
+                {
+                    continue;
+                }
+                const std::size_t RootIndex = 0U;
+                std::vector<std::vector<bool>> Dominators(
+                    Nodes.size(), std::vector<bool>(Nodes.size(), true));
+                for (std::size_t Candidate = 0U; Candidate < Nodes.size(); ++Candidate)
+                {
+                    Dominators[RootIndex][Candidate] = Candidate == RootIndex;
+                }
+                bool DominatorsChanged = true;
+                while (DominatorsChanged)
+                {
+                    DominatorsChanged = false;
+                    for (std::size_t NodeIndex = 1U; NodeIndex < Nodes.size(); ++NodeIndex)
+                    {
+                        std::vector<std::size_t> Predecessors;
+                        for (const ControlEdge& Edge : Graph.GetControlEdges())
+                        {
+                            if (Edge.DestinationNode != Nodes[NodeIndex] ||
+                                IsLoopTransferEdge(Graph, Descriptors, Edge))
+                            {
+                                continue;
+                            }
+                            for (std::size_t SourceIndex = 0U; SourceIndex < Nodes.size(); ++SourceIndex)
+                            {
+                                if (Nodes[SourceIndex] == Edge.SourceNode)
+                                {
+                                    Predecessors.push_back(SourceIndex);
+                                    break;
+                                }
+                            }
+                        }
+                        std::vector<bool> NewDominators(Nodes.size(), false);
+                        NewDominators[NodeIndex] = true;
+                        if (!Predecessors.empty())
+                        {
+                            for (std::size_t Candidate = 0U; Candidate < Nodes.size(); ++Candidate)
+                            {
+                                bool InEveryPredecessor = true;
+                                for (const std::size_t Predecessor : Predecessors)
+                                {
+                                    InEveryPredecessor = InEveryPredecessor &&
+                                        Dominators[Predecessor][Candidate];
+                                }
+                                NewDominators[Candidate] = NewDominators[Candidate] ||
+                                    InEveryPredecessor;
+                            }
+                        }
+                        if (NewDominators != Dominators[NodeIndex])
+                        {
+                            Dominators[NodeIndex] = std::move(NewDominators);
+                            DominatorsChanged = true;
+                        }
+                    }
+                }
+
+                for (const InputBindingRecord& Binding : Graph.GetInputBindings())
+                {
+                    const OutputReference* Output = std::get_if<OutputReference>(&Binding.Binding);
+                    if (Output == nullptr)
+                    {
+                        continue;
+                    }
+                    const NodeInstance* Destination = Graph.FindNode(Binding.DestinationNode);
+                    const ExecutionRegion* DestinationRegion = Destination != nullptr &&
+                        Destination->ExecutionRegion.has_value()
+                        ? Graph.FindExecutionRegion(*Destination->ExecutionRegion) : nullptr;
+                    const NodeDescriptor* DestinationDescriptor = Destination == nullptr
+                        ? nullptr : Descriptors.Find(Destination->Descriptor);
+                    if (Destination == nullptr || DestinationRegion == nullptr ||
+                        DestinationRegion->Entry != Entry.Identifier || DestinationDescriptor == nullptr ||
+                        !DestinationDescriptor->GetExecutionControlSchema().has_value() ||
+                        IsInsideLoopBody(Graph, *Destination))
+                    {
+                        continue;
+                    }
+                    const ProvenanceRecord* SourceRecord = nullptr;
+                    for (const ProvenanceRecord& Record : Provenance)
+                    {
+                        if (Record.Node == Output->SourceNode)
+                        {
+                            SourceRecord = &Record;
+                            break;
+                        }
+                    }
+                    if (SourceRecord == nullptr || SourceRecord->Unknown)
+                    {
+                        continue;
+                    }
+                    std::size_t ConsumerIndex = Nodes.size();
+                    for (std::size_t Index = 0U; Index < Nodes.size(); ++Index)
+                    {
+                        if (Nodes[Index] == Destination->Identifier)
+                        {
+                            ConsumerIndex = Index;
+                            break;
+                        }
+                    }
+                    if (ConsumerIndex == Nodes.size())
+                    {
+                        continue;
+                    }
+                    for (const NodeInstanceId Origin : SourceRecord->Origins)
+                    {
+                        const NodeInstance* Producer = Graph.FindNode(Origin);
+                        const ExecutionRegion* ProducerRegion = Producer != nullptr &&
+                            Producer->ExecutionRegion.has_value()
+                            ? Graph.FindExecutionRegion(*Producer->ExecutionRegion) : nullptr;
+                        if (ProducerRegion == nullptr)
+                        {
+                            continue;
+                        }
+                        std::size_t ProducerIndex = Nodes.size();
+                        for (std::size_t Index = 0U; Index < Nodes.size(); ++Index)
+                        {
+                            if (Nodes[Index] == Origin)
+                            {
+                                ProducerIndex = Index;
+                                break;
+                            }
+                        }
+                        if (ProducerRegion->Entry != Entry.Identifier ||
+                            ProducerIndex == Nodes.size() ||
+                            !Dominators[ConsumerIndex][ProducerIndex])
+                        {
+                            Add(Diagnostics, DiagnosticCode::ExecutionDataNotDominated,
+                                "A structured data use depends on an execution producer that does not dominate it in the same entry.");
+                            break;
+                        }
+                    }
                 }
             }
         }
