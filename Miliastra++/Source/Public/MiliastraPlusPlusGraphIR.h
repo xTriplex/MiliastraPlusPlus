@@ -14,6 +14,7 @@ namespace MiliastraPlusPlus
     {
         NodeInstanceId Identifier;
         NodeDescriptorId Descriptor;
+        std::optional<ExecutionRegionId> ExecutionRegion;
 
         [[nodiscard]] bool IsValid() const
         {
@@ -52,9 +53,96 @@ namespace MiliastraPlusPlus
         PinIndex DestinationInputPin;
     };
 
+    enum class ExecutionModel
+    {
+        Unstructured,
+        Structured
+    };
+
+    enum class ExecutionRegionKind
+    {
+        Entry,
+        BranchArm,
+        LoopBody
+    };
+
+    struct ExecutionEntry
+    {
+        ExecutionEntryId Identifier;
+        NodeInstanceId RootNode;
+
+        auto operator<=>(const ExecutionEntry&) const = default;
+    };
+
+    struct ExecutionRegion
+    {
+        ExecutionRegionId Identifier;
+        ExecutionEntryId Entry;
+        ExecutionRegionKind Kind;
+        std::optional<ExecutionRegionId> Parent;
+        std::optional<NodeInstanceId> OwnerNode;
+        std::optional<PinIndex> OwnerOutputPin;
+
+        auto operator<=>(const ExecutionRegion&) const = default;
+    };
+
     class GraphIR
     {
     public:
+        [[nodiscard]] ExecutionModel GetExecutionModel() const
+        {
+            return m_ExecutionModel;
+        }
+
+        void SetExecutionModel(ExecutionModel Model)
+        {
+            m_ExecutionModel = Model;
+        }
+
+        void AddExecutionEntry(ExecutionEntry Entry)
+        {
+            m_ExecutionEntries.push_back(std::move(Entry));
+        }
+
+        [[nodiscard]] const std::vector<ExecutionEntry>& GetExecutionEntries() const
+        {
+            return m_ExecutionEntries;
+        }
+
+        [[nodiscard]] const ExecutionEntry* FindExecutionEntry(ExecutionEntryId Identifier) const
+        {
+            for (const ExecutionEntry& Entry : m_ExecutionEntries)
+            {
+                if (Entry.Identifier == Identifier)
+                {
+                    return &Entry;
+                }
+            }
+            return nullptr;
+        }
+
+        void AddExecutionRegion(ExecutionRegion Region)
+        {
+            m_ExecutionRegions.push_back(std::move(Region));
+        }
+
+        [[nodiscard]] const std::vector<ExecutionRegion>& GetExecutionRegions() const
+        {
+            return m_ExecutionRegions;
+        }
+
+        [[nodiscard]] const ExecutionRegion* FindExecutionRegion(ExecutionRegionId Identifier) const
+        {
+            for (const ExecutionRegion& Region : m_ExecutionRegions)
+            {
+                if (Region.Identifier == Identifier)
+                {
+                    return &Region;
+                }
+            }
+            return nullptr;
+        }
+
         void AddNode(NodeInstance Node)
         {
             m_Nodes.push_back(std::move(Node));
@@ -165,10 +253,23 @@ namespace MiliastraPlusPlus
             return m_ControlEdges.size();
         }
 
+        [[nodiscard]] std::size_t GetExecutionEntryCount() const
+        {
+            return m_ExecutionEntries.size();
+        }
+
+        [[nodiscard]] std::size_t GetExecutionRegionCount() const
+        {
+            return m_ExecutionRegions.size();
+        }
+
     private:
+        ExecutionModel m_ExecutionModel = ExecutionModel::Unstructured;
         std::vector<NodeInstance> m_Nodes;
         std::vector<GraphVariable> m_Variables;
         std::vector<InputBindingRecord> m_InputBindings;
         std::vector<ControlEdge> m_ControlEdges;
+        std::vector<ExecutionEntry> m_ExecutionEntries;
+        std::vector<ExecutionRegion> m_ExecutionRegions;
     };
 }

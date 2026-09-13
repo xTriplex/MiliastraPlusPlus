@@ -23,6 +23,9 @@ namespace
         TypeDesc ExecutionType = TypeDesc::Flow())
     {
         const TypeDesc PinType = Execution ? std::move(ExecutionType) : TypeDesc::Integer();
+        const bool HasFlowPins = Execution && PinType == TypeDesc::Flow();
+        const PinCategory Category = HasFlowPins
+            ? PinCategory::Execution : PinCategory::Data;
         return NodeDescriptor(
             Id,
             "TestNode",
@@ -32,15 +35,15 @@ namespace
                     "Input",
                     PinType,
                     PinDirection::Input,
-                    Execution ? PinCategory::Execution : PinCategory::Data,
+                    Category,
                     PinCardinality::Single,
-                    !Execution
+                    !HasFlowPins
                 ),
                 PinSchema(
                     "Output",
                     PinType,
                     PinDirection::Output,
-                    Execution ? PinCategory::Execution : PinCategory::Data
+                    Category
                 ),
                 PinSchema(
                     "Many",

@@ -61,6 +61,27 @@ namespace MiliastraPlusPlus::GraphIRJson
             const Json& Value,
             const char* Name);
 
+        inline const char* ExecutionModelToString(ExecutionModel Model)
+        {
+            switch (Model)
+            {
+            case ExecutionModel::Unstructured: return "Unstructured";
+            case ExecutionModel::Structured: return "Structured";
+            }
+            return "Invalid";
+        }
+
+        inline const char* RegionKindToString(ExecutionRegionKind Kind)
+        {
+            switch (Kind)
+            {
+            case ExecutionRegionKind::Entry: return "Entry";
+            case ExecutionRegionKind::BranchArm: return "BranchArm";
+            case ExecutionRegionKind::LoopBody: return "LoopBody";
+            }
+            return "Invalid";
+        }
+
         inline Json TypeToJson(const TypeDesc& Type)
         {
             using Kind = TypeDesc::Kind;
@@ -481,11 +502,52 @@ namespace MiliastraPlusPlus::GraphIRJson
                 "Malformed or unknown LiteralValue kind: " + Kind);
         }
 
-        inline std::uint64_t Id(
+        inline std::expected<std::uint64_t, DiagnosticCollection> Id(
             const Json& Value,
             const char* Name)
         {
+            if (!Value.contains(Name) || !Value[Name].is_number_unsigned())
+            {
+                return Fail<std::uint64_t>(
+                    std::string("Invalid unsigned 64-bit identifier field: ") + Name);
+            }
             return Value.at(Name).get<std::uint64_t>();
+        }
+
+        template<typename Identifier>
+        inline std::expected<Identifier, DiagnosticCollection> StrongId(
+            const Json& Value,
+            const char* Name)
+        {
+            const auto Parsed = Id(Value, Name);
+            if (!Parsed)
+            {
+                return std::unexpected(Parsed.error());
+            }
+            return Identifier(*Parsed);
+        }
+
+        template<typename Identifier>
+        inline std::expected<std::optional<Identifier>, DiagnosticCollection> OptionalId(
+            const Json& Value,
+            const char* Name)
+        {
+            if (!Value.contains(Name))
+            {
+                return Fail<std::optional<Identifier>>(
+                    std::string("Missing optional identifier field: ") + Name);
+            }
+            if (Value[Name].is_null())
+            {
+                return std::optional<Identifier>{};
+            }
+
+            const auto Parsed = StrongId<Identifier>(Value, Name);
+            if (!Parsed)
+            {
+                return std::unexpected(Parsed.error());
+            }
+            return std::optional<Identifier>(*Parsed);
         }
 
         inline std::expected<std::uint32_t, DiagnosticCollection> UInt32(
@@ -508,18 +570,23 @@ namespace MiliastraPlusPlus::GraphIRJson
     [[nodiscard]] inline Json Serialize(const GraphIR& Graph)
     {
         Json Result{
-            {"irVersion", 2},
+            {"irVersion", 3},
+            {"executionModel", Detail::ExecutionModelToString(Graph.GetExecutionModel())},
             {"nodes", Json::array()},
             {"variables", Json::array()},
             {"inputBindings", Json::array()},
-            {"controlEdges", Json::array()}
+            {"controlEdges", Json::array()},
+            {"executionEntries", Json::array()},
+            {"executionRegions", Json::array()}
         };
 
         for (const NodeInstance& Node : Graph.GetNodes())
         {
             Result["nodes"].push_back({
                 {"id", Node.Identifier.GetValue()},
-                {"descriptor", Node.Descriptor.GetValue()}
+                {"descriptor", Node.Descriptor.GetValue()},
+                {"executionRegion", Node.ExecutionRegion.has_value()
+                    ? Json(Node.ExecutionRegion->GetValue()) : Json(nullptr)}
                                       });
         }
 
@@ -593,6 +660,29 @@ namespace MiliastraPlusPlus::GraphIRJson
                                              });
         }
 
+        for (const ExecutionEntry& Entry : Graph.GetExecutionEntries())
+        {
+            Result["executionEntries"].push_back({
+                {"id", Entry.Identifier.GetValue()},
+                {"rootNode", Entry.RootNode.GetValue()}
+            });
+        }
+
+        for (const ExecutionRegion& Region : Graph.GetExecutionRegions())
+        {
+            Result["executionRegions"].push_back({
+                {"id", Region.Identifier.GetValue()},
+                {"entry", Region.Entry.GetValue()},
+                {"kind", Detail::RegionKindToString(Region.Kind)},
+                {"parent", Region.Parent.has_value()
+                    ? Json(Region.Parent->GetValue()) : Json(nullptr)},
+                {"ownerNode", Region.OwnerNode.has_value()
+                    ? Json(Region.OwnerNode->GetValue()) : Json(nullptr)},
+                {"ownerOutputPin", Region.OwnerOutputPin.has_value()
+                    ? Json(Region.OwnerOutputPin->GetValue()) : Json(nullptr)}
+            });
+        }
+
         return Result;
     }
 
@@ -620,7 +710,7 @@ namespace MiliastraPlusPlus::GraphIRJson
             if (VersionValue.is_number_unsigned())
             {
                 const std::uint64_t ParsedVersion = VersionValue.get<std::uint64_t>();
-                if (ParsedVersion < 1U || ParsedVersion > 2U)
+                if (ParsedVersion < 1U || ParsedVersion > 3U)
                 {
                     return Detail::Fail<GraphIR>(
                         "Unsupported GraphIR JSON version.");
@@ -630,7 +720,7 @@ namespace MiliastraPlusPlus::GraphIRJson
             else if (VersionValue.is_number_integer())
             {
                 const std::int64_t ParsedVersion = VersionValue.get<std::int64_t>();
-                if (ParsedVersion < 1 || ParsedVersion > 2)
+                if (ParsedVersion < 1 || ParsedVersion > 3)
                 {
                     return Detail::Fail<GraphIR>(
                         "Unsupported GraphIR JSON version.");
@@ -643,17 +733,56 @@ namespace MiliastraPlusPlus::GraphIRJson
                     "Unsupported GraphIR JSON version.");
             }
 
+            if (Version < 3U && (Root.contains("executionModel") ||
+                Root.contains("executionEntries") || Root.contains("executionRegions")))
+            {
+                return Detail::Fail<GraphIR>(
+                    "Legacy GraphIR JSON versions cannot carry structured execution fields.");
+            }
+            if (Version == 3U && (!Root.contains("executionModel") ||
+                !Root["executionModel"].is_string() ||
+                !Root.contains("executionEntries") || !Root["executionEntries"].is_array() ||
+                !Root.contains("executionRegions") || !Root["executionRegions"].is_array()))
+            {
+                return Detail::Fail<GraphIR>(
+                    "GraphIR JSON version 3 requires executionModel, executionEntries, and executionRegions.");
+            }
+
             GraphIR Graph;
+            if (Version == 3U)
+            {
+                const std::string Model = Root["executionModel"].get<std::string>();
+                if (Model == "Unstructured")
+                {
+                    Graph.SetExecutionModel(ExecutionModel::Unstructured);
+                }
+                else if (Model == "Structured")
+                {
+                    Graph.SetExecutionModel(ExecutionModel::Structured);
+                }
+                else
+                {
+                    return Detail::Fail<GraphIR>(
+                        "GraphIR JSON version 3 has an invalid executionModel.");
+                }
+            }
 
             for (const Json& Value : Root["nodes"])
             {
                 if (!Detail::HasObjectFields(
                     Value,
-                    {"id", "descriptor"})
+                    Version == 3U
+                        ? std::initializer_list<const char*>{"id", "descriptor", "executionRegion"}
+                        : std::initializer_list<const char*>{"id", "descriptor"})
                     || !Value["id"].is_number_unsigned())
                 {
                     return Detail::Fail<GraphIR>(
                         "Malformed node entry.");
+                }
+                if (Version < 3U && Value.contains("executionRegion"))
+                {
+                    return Detail::Fail<GraphIR>(
+                        "Legacy GraphIR JSON nodes cannot carry executionRegion membership.");
                 }
 
                 const auto Descriptor = Detail::UInt32(
@@ -665,11 +794,29 @@ namespace MiliastraPlusPlus::GraphIRJson
                     return std::unexpected(Descriptor.error());
                 }
 
+                const auto Identifier = Detail::StrongId<NodeInstanceId>(Value, "id");
+                if (!Identifier)
+                {
+                    return std::unexpected(Identifier.error());
+                }
+
+                std::optional<ExecutionRegionId> Region;
+                if (Version == 3U && !Value["executionRegion"].is_null())
+                {
+                    const auto ParsedRegion = Detail::StrongId<ExecutionRegionId>(
+                        Value, "executionRegion");
+                    if (!ParsedRegion)
+                    {
+                        return std::unexpected(ParsedRegion.error());
+                    }
+                    Region = *ParsedRegion;
+                }
+
                 Graph.AddNode({
-                    NodeInstanceId(
-                        Detail::Id(Value, "id")),
-                    NodeDescriptorId(*Descriptor)
-                              });
+                    *Identifier,
+                    NodeDescriptorId(*Descriptor),
+                    Region
+                });
             }
 
             for (const Json& Value : Root["variables"])
@@ -692,6 +839,12 @@ namespace MiliastraPlusPlus::GraphIRJson
                     return std::unexpected(Type.error());
                 }
 
+                const auto Identifier = Detail::StrongId<GraphVariableId>(Value, "id");
+                if (!Identifier)
+                {
+                    return std::unexpected(Identifier.error());
+                }
+
                 std::optional<LiteralValue> Default;
 
                 if (Value.contains("default"))
@@ -708,8 +861,7 @@ namespace MiliastraPlusPlus::GraphIRJson
                 }
 
                 Graph.AddVariable({
-                    GraphVariableId(
-                        Detail::Id(Value, "id")),
+                    *Identifier,
                     Value["name"].get<std::string>(),
                     *Type,
                     Default
@@ -748,7 +900,7 @@ namespace MiliastraPlusPlus::GraphIRJson
                 }
 
                 std::optional<TypeDesc> OutputTypeConstraint;
-                if (Version == 2U && !Value["outputTypeConstraint"].is_null())
+                if (Version >= 2U && !Value["outputTypeConstraint"].is_null())
                 {
                     const auto ParsedConstraint = Detail::TypeFromJson(
                         Value["outputTypeConstraint"]);
@@ -801,9 +953,15 @@ namespace MiliastraPlusPlus::GraphIRJson
                         return std::unexpected(SourcePin.error());
                     }
 
+                    const auto SourceNode = Detail::StrongId<NodeInstanceId>(
+                        Binding, "sourceNode");
+                    if (!SourceNode)
+                    {
+                        return std::unexpected(SourceNode.error());
+                    }
+
                     Parsed = OutputReference{
-                        NodeInstanceId(
-                            Detail::Id(Binding, "sourceNode")),
+                        *SourceNode,
                         PinIndex(*SourcePin)
                     };
                 }
@@ -812,9 +970,14 @@ namespace MiliastraPlusPlus::GraphIRJson
                     && Binding.contains("variable")
                     && Binding["variable"].is_number_unsigned())
                 {
+                    const auto Variable = Detail::StrongId<GraphVariableId>(
+                        Binding, "variable");
+                    if (!Variable)
+                    {
+                        return std::unexpected(Variable.error());
+                    }
                     Parsed = GraphVariableReference{
-                        GraphVariableId(
-                            Detail::Id(Binding, "variable"))
+                        *Variable
                     };
                 }
                 else
@@ -823,9 +986,14 @@ namespace MiliastraPlusPlus::GraphIRJson
                         "Malformed or unknown input binding kind.");
                 }
 
+                const auto DestinationNode = Detail::StrongId<NodeInstanceId>(
+                    Value, "destinationNode");
+                if (!DestinationNode)
+                {
+                    return std::unexpected(DestinationNode.error());
+                }
                 Graph.BindInput(
-                    NodeInstanceId(
-                        Detail::Id(Value, "destinationNode")),
+                    *DestinationNode,
                     PinIndex(*DestinationPin),
                     std::move(Parsed),
                     std::move(OutputTypeConstraint));
@@ -864,14 +1032,123 @@ namespace MiliastraPlusPlus::GraphIRJson
                     return std::unexpected(DestinationPin.error());
                 }
 
+                const auto SourceNode = Detail::StrongId<NodeInstanceId>(
+                    Value, "sourceNode");
+                const auto DestinationNode = Detail::StrongId<NodeInstanceId>(
+                    Value, "destinationNode");
+                if (!SourceNode)
+                {
+                    return std::unexpected(SourceNode.error());
+                }
+                if (!DestinationNode)
+                {
+                    return std::unexpected(DestinationNode.error());
+                }
+
                 Graph.AddControlEdge({
-                    NodeInstanceId(
-                        Detail::Id(Value, "sourceNode")),
+                    *SourceNode,
                     PinIndex(*SourcePin),
-                    NodeInstanceId(
-                        Detail::Id(Value, "destinationNode")),
+                    *DestinationNode,
                     PinIndex(*DestinationPin)
-                                     });
+                });
+            }
+
+            if (Version == 3U)
+            {
+                for (const Json& Value : Root["executionEntries"])
+                {
+                    if (!Detail::HasObjectFields(Value, {"id", "rootNode"}))
+                    {
+                        return Detail::Fail<GraphIR>(
+                            "Malformed execution entry record.");
+                    }
+                    const auto Identifier = Detail::StrongId<ExecutionEntryId>(Value, "id");
+                    const auto RootNode = Detail::StrongId<NodeInstanceId>(Value, "rootNode");
+                    if (!Identifier)
+                    {
+                        return std::unexpected(Identifier.error());
+                    }
+                    if (!RootNode)
+                    {
+                        return std::unexpected(RootNode.error());
+                    }
+                    Graph.AddExecutionEntry(ExecutionEntry{
+                        *Identifier,
+                        *RootNode
+                    });
+                }
+
+                for (const Json& Value : Root["executionRegions"])
+                {
+                    if (!Detail::HasObjectFields(Value, {
+                        "id", "entry", "kind", "parent", "ownerNode", "ownerOutputPin"
+                    }) || !Value["kind"].is_string())
+                    {
+                        return Detail::Fail<GraphIR>(
+                            "Malformed execution region record.");
+                    }
+
+                    const auto Identifier = Detail::StrongId<ExecutionRegionId>(Value, "id");
+                    const auto Entry = Detail::StrongId<ExecutionEntryId>(Value, "entry");
+                    if (!Identifier)
+                    {
+                        return std::unexpected(Identifier.error());
+                    }
+                    if (!Entry)
+                    {
+                        return std::unexpected(Entry.error());
+                    }
+
+                    ExecutionRegionKind Kind;
+                    const std::string KindName = Value["kind"].get<std::string>();
+                    if (KindName == "Entry")
+                    {
+                        Kind = ExecutionRegionKind::Entry;
+                    }
+                    else if (KindName == "BranchArm")
+                    {
+                        Kind = ExecutionRegionKind::BranchArm;
+                    }
+                    else if (KindName == "LoopBody")
+                    {
+                        Kind = ExecutionRegionKind::LoopBody;
+                    }
+                    else
+                    {
+                        return Detail::Fail<GraphIR>(
+                            "Unknown execution region kind.");
+                    }
+
+                    const auto Parent = Detail::OptionalId<ExecutionRegionId>(
+                        Value, "parent");
+                    const auto OwnerNode = Detail::OptionalId<NodeInstanceId>(
+                        Value, "ownerNode");
+                    if (!Parent || !OwnerNode)
+                    {
+                        return Detail::Fail<GraphIR>(
+                            "Execution region parent and ownerNode must be unsigned integers or null.");
+                    }
+
+                    std::optional<PinIndex> OwnerOutputPin;
+                    if (!Value["ownerOutputPin"].is_null())
+                    {
+                        const auto Pin = Detail::UInt32(Value, "ownerOutputPin");
+                        if (!Pin)
+                        {
+                            return std::unexpected(Pin.error());
+                        }
+                        OwnerOutputPin = PinIndex(*Pin);
+                    }
+
+                    Graph.AddExecutionRegion(ExecutionRegion{
+                        *Identifier,
+                        *Entry,
+                        Kind,
+                        *Parent,
+                        *OwnerNode,
+                        OwnerOutputPin
+                    });
+                }
             }
 
             return Graph;

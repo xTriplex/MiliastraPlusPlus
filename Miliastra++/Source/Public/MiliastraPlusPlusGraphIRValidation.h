@@ -1,10 +1,14 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <cstddef>
 #include <iterator>
+#include <optional>
 #include <string>
+#include <type_traits>
 #include <variant>
+#include <vector>
 
 #include "MiliastraPlusPlusGraphIR.h"
 #include "MiliastraPlusPlusGraphIRGenericValidation.h"
@@ -44,6 +48,17 @@ namespace MiliastraPlusPlus
                         Diagnostics,
                         DiagnosticCode::MissingDescriptor,
                         "GraphIR references a node descriptor that is not registered.");
+                }
+                else if (Node.Descriptor.IsValid())
+                {
+                    const NodeDescriptor* Descriptor = Descriptors.Find(Node.Descriptor);
+                    if (Descriptor != nullptr && !Descriptor->IsValid())
+                    {
+                        Add(
+                            Diagnostics,
+                            DiagnosticCode::InvalidNodeDescriptor,
+                            "GraphIR references a registered descriptor with an invalid trusted schema.");
+                    }
                 }
             }
 
@@ -153,6 +168,8 @@ namespace MiliastraPlusPlus
                 }
             }
 
+            ValidateExecutionMetadata(Graph, Descriptors, Diagnostics);
+
             DiagnosticCollection GenericDiagnostics =
                 GraphIRGenericValidationDetail::ValidateGenericTypes(Graph, Descriptors);
             Diagnostics.insert(
@@ -165,6 +182,554 @@ namespace MiliastraPlusPlus
         }
 
     private:
+        static bool IsValidExecutionModel(ExecutionModel Model)
+        {
+            switch (Model)
+            {
+            case ExecutionModel::Unstructured:
+            case ExecutionModel::Structured:
+                return true;
+            }
+            return false;
+        }
+
+        static bool IsValidRegionKind(ExecutionRegionKind Kind)
+        {
+            switch (Kind)
+            {
+            case ExecutionRegionKind::Entry:
+            case ExecutionRegionKind::BranchArm:
+            case ExecutionRegionKind::LoopBody:
+                return true;
+            }
+            return false;
+        }
+
+        static bool HasFlowPins(const NodeDescriptor& Descriptor)
+        {
+            for (const PinSchema& Pin : Descriptor.GetPins())
+            {
+                if (Pin.GetCategory() == PinCategory::Execution ||
+                    Pin.GetType() == TypeDesc::Flow())
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        static std::size_t CountEntries(
+            const GraphIR& Graph,
+            ExecutionEntryId Identifier
+        )
+        {
+            std::size_t Count = 0U;
+            for (const ExecutionEntry& Entry : Graph.GetExecutionEntries())
+            {
+                if (Entry.Identifier == Identifier)
+                {
+                    ++Count;
+                }
+            }
+            return Count;
+        }
+
+        static std::size_t CountRegions(
+            const GraphIR& Graph,
+            ExecutionRegionId Identifier
+        )
+        {
+            std::size_t Count = 0U;
+            for (const ExecutionRegion& Region : Graph.GetExecutionRegions())
+            {
+                if (Region.Identifier == Identifier)
+                {
+                    ++Count;
+                }
+            }
+            return Count;
+        }
+
+        static std::size_t CountRegionsForEntry(
+            const GraphIR& Graph,
+            ExecutionEntryId Entry,
+            ExecutionRegionKind Kind
+        )
+        {
+            std::size_t Count = 0U;
+            for (const ExecutionRegion& Region : Graph.GetExecutionRegions())
+            {
+                if (Region.Entry == Entry && Region.Kind == Kind)
+                {
+                    ++Count;
+                }
+            }
+            return Count;
+        }
+
+        static std::size_t CountOwnerRegions(
+            const GraphIR& Graph,
+            NodeInstanceId Owner,
+            ExecutionRegionKind Kind
+        )
+        {
+            std::size_t Count = 0U;
+            for (const ExecutionRegion& Region : Graph.GetExecutionRegions())
+            {
+                if (Region.OwnerNode == Owner && Region.Kind == Kind)
+                {
+                    ++Count;
+                }
+            }
+            return Count;
+        }
+
+        static std::size_t CountOwnerRegionsAtPin(
+            const GraphIR& Graph,
+            NodeInstanceId Owner,
+            ExecutionRegionKind Kind,
+            PinIndex Pin
+        )
+        {
+            std::size_t Count = 0U;
+            for (const ExecutionRegion& Region : Graph.GetExecutionRegions())
+            {
+                if (Region.OwnerNode == Owner && Region.Kind == Kind &&
+                    Region.OwnerOutputPin == Pin)
+                {
+                    ++Count;
+                }
+            }
+            return Count;
+        }
+
+        static std::size_t CountRootReferences(
+            const GraphIR& Graph,
+            NodeInstanceId Root
+        )
+        {
+            std::size_t Count = 0U;
+            for (const ExecutionEntry& Entry : Graph.GetExecutionEntries())
+            {
+                if (Entry.RootNode == Root)
+                {
+                    ++Count;
+                }
+            }
+            return Count;
+        }
+
+        static bool RegionOwnerPinMatches(
+            const NodeDescriptor& Descriptor,
+            ExecutionRegionKind Kind,
+            PinIndex OwnerPin
+        )
+        {
+            if (!Descriptor.GetExecutionControlSchema().has_value())
+            {
+                return false;
+            }
+            return std::visit([Kind, OwnerPin](const auto& Schema)
+            {
+                using SchemaType = std::decay_t<decltype(Schema)>;
+                if constexpr (std::is_same_v<SchemaType, BranchControlSchema>)
+                {
+                    return Kind == ExecutionRegionKind::BranchArm &&
+                        (Schema.TrueOutput == OwnerPin || Schema.FalseOutput == OwnerPin);
+                }
+                else if constexpr (std::is_same_v<SchemaType, LoopControlSchema>)
+                {
+                    return Kind == ExecutionRegionKind::LoopBody &&
+                        Schema.BodyOutput == OwnerPin;
+                }
+                else
+                {
+                    return false;
+                }
+            }, *Descriptor.GetExecutionControlSchema());
+        }
+
+        static void ValidateExecutionMetadata(
+            const GraphIR& Graph,
+            const NodeDescriptorRegistry& Descriptors,
+            DiagnosticCollection& Diagnostics
+        )
+        {
+            if (!IsValidExecutionModel(Graph.GetExecutionModel()))
+            {
+                Add(Diagnostics, DiagnosticCode::InvalidExecutionModel,
+                    "GraphIR contains an invalid execution-model discriminant.");
+                return;
+            }
+
+            if (Graph.GetExecutionModel() == ExecutionModel::Unstructured)
+            {
+                if (!Graph.GetExecutionEntries().empty() ||
+                    !Graph.GetExecutionRegions().empty())
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionModel,
+                        "An Unstructured graph cannot contain execution entries or regions.");
+                }
+                for (const NodeInstance& Node : Graph.GetNodes())
+                {
+                    if (Node.ExecutionRegion.has_value())
+                    {
+                        Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
+                            "An Unstructured node cannot carry execution-region membership.");
+                    }
+                }
+                return;
+            }
+
+            if (Graph.GetExecutionEntries().empty())
+            {
+                Add(Diagnostics, DiagnosticCode::InvalidExecutionModel,
+                    "A Structured graph must contain at least one execution entry.");
+            }
+
+            for (std::size_t Index = 0U; Index < Graph.GetExecutionEntries().size(); ++Index)
+            {
+                const ExecutionEntry& Entry = Graph.GetExecutionEntries()[Index];
+                if (!Entry.Identifier.IsValid() || !Entry.RootNode.IsValid())
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionEntry,
+                        "A structured execution entry has an invalid identifier or root node.");
+                }
+                for (std::size_t Prior = 0U; Prior < Index; ++Prior)
+                {
+                    if (Graph.GetExecutionEntries()[Prior].Identifier == Entry.Identifier)
+                    {
+                        Add(Diagnostics, DiagnosticCode::DuplicateExecutionEntryIdentifier,
+                            "Structured execution entry identifiers must be unique.");
+                        break;
+                    }
+                }
+            }
+
+            for (std::size_t Index = 0U; Index < Graph.GetExecutionRegions().size(); ++Index)
+            {
+                const ExecutionRegion& Region = Graph.GetExecutionRegions()[Index];
+                if (!Region.Identifier.IsValid() || !Region.Entry.IsValid() ||
+                    !IsValidRegionKind(Region.Kind))
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
+                        "A structured execution region has an invalid identifier, entry, or kind.");
+                }
+                for (std::size_t Prior = 0U; Prior < Index; ++Prior)
+                {
+                    if (Graph.GetExecutionRegions()[Prior].Identifier == Region.Identifier)
+                    {
+                        Add(Diagnostics, DiagnosticCode::DuplicateExecutionRegionIdentifier,
+                            "Structured execution region identifiers must be unique.");
+                        break;
+                    }
+                }
+            }
+
+            // Entry roots and their unique parentless Entry regions are persisted independently.
+            for (const ExecutionEntry& Entry : Graph.GetExecutionEntries())
+            {
+                if (!Entry.Identifier.IsValid() || CountEntries(Graph, Entry.Identifier) != 1U)
+                {
+                    continue;
+                }
+                if (!Entry.RootNode.IsValid() ||
+                    std::count_if(Graph.GetNodes().begin(), Graph.GetNodes().end(),
+                        [&Entry](const NodeInstance& Node)
+                        {
+                            return Node.Identifier == Entry.RootNode;
+                        }) != 1)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionEntry,
+                        "An execution entry root must reference exactly one graph node.");
+                    continue;
+                }
+                const NodeInstance* RootNode = Graph.FindNode(Entry.RootNode);
+                const NodeDescriptor* RootDescriptor = RootNode == nullptr
+                    ? nullptr : Descriptors.Find(RootNode->Descriptor);
+                if (RootDescriptor == nullptr ||
+                    !RootDescriptor->GetExecutionControlSchema().has_value() ||
+                    !std::holds_alternative<EntryControlSchema>(
+                        *RootDescriptor->GetExecutionControlSchema()))
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionEntry,
+                        "An execution entry root must use a descriptor with the Entry control role.");
+                }
+                if (CountRootReferences(Graph, Entry.RootNode) != 1U)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionEntry,
+                        "An Entry-role node can be the root of exactly one execution entry.");
+                }
+                const ExecutionRegion* RootRegion = nullptr;
+                std::size_t RootRegionCount = 0U;
+                for (const ExecutionRegion& Region : Graph.GetExecutionRegions())
+                {
+                    if (Region.Entry == Entry.Identifier &&
+                        Region.Kind == ExecutionRegionKind::Entry)
+                    {
+                        RootRegion = &Region;
+                        ++RootRegionCount;
+                    }
+                }
+                if (RootRegionCount != 1U || RootRegion == nullptr)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionEntry,
+                        "Each execution entry must own exactly one Entry region.");
+                }
+                else if (RootNode != nullptr &&
+                    RootNode->ExecutionRegion != RootRegion->Identifier)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
+                        "An execution entry root must belong to its entry region.");
+                }
+            }
+
+            for (const ExecutionRegion& Region : Graph.GetExecutionRegions())
+            {
+                if (!Region.Identifier.IsValid() || CountRegions(Graph, Region.Identifier) != 1U ||
+                    !IsValidRegionKind(Region.Kind))
+                {
+                    continue;
+                }
+                if (!Region.Entry.IsValid() || CountEntries(Graph, Region.Entry) != 1U)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
+                        "An execution region must reference exactly one declared entry.");
+                    continue;
+                }
+
+                if (Region.Kind == ExecutionRegionKind::Entry)
+                {
+                    if (Region.Parent.has_value() || Region.OwnerNode.has_value() ||
+                        Region.OwnerOutputPin.has_value())
+                    {
+                        Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
+                            "An Entry region cannot have a parent or child-owner metadata.");
+                    }
+                    continue;
+                }
+
+                if (!Region.Parent.has_value() || !Region.Parent->IsValid() ||
+                    !Region.OwnerNode.has_value() || !Region.OwnerNode->IsValid() ||
+                    !Region.OwnerOutputPin.has_value() || !Region.OwnerOutputPin->IsValid())
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
+                        "A child execution region requires a parent, owner node, and owner output pin.");
+                    continue;
+                }
+                if (CountRegions(Graph, *Region.Parent) != 1U)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
+                        "A child execution region references a missing or ambiguous parent region.");
+                    continue;
+                }
+                const ExecutionRegion* Parent = Graph.FindExecutionRegion(*Region.Parent);
+                if (Parent == nullptr || Parent->Entry != Region.Entry)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
+                        "A child execution region and its parent must belong to the same entry.");
+                }
+                if (std::count_if(Graph.GetNodes().begin(), Graph.GetNodes().end(),
+                    [&Region](const NodeInstance& Node)
+                    {
+                        return Node.Identifier == *Region.OwnerNode;
+                    }) != 1)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
+                        "A child execution region owner must reference exactly one graph node.");
+                    continue;
+                }
+                const NodeInstance* OwnerNode = Graph.FindNode(*Region.OwnerNode);
+                if (OwnerNode == nullptr || OwnerNode->ExecutionRegion != Region.Parent)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
+                        "A child-region owner node must belong to the declared parent region.");
+                }
+                const NodeDescriptor* OwnerDescriptor = OwnerNode == nullptr
+                    ? nullptr : Descriptors.Find(OwnerNode->Descriptor);
+                if (OwnerDescriptor == nullptr ||
+                    !RegionOwnerPinMatches(*OwnerDescriptor, Region.Kind,
+                        *Region.OwnerOutputPin))
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
+                        "A child-region owner pin must match the trusted Branch or Loop role schema.");
+                }
+                if (CountOwnerRegionsAtPin(Graph, *Region.OwnerNode, Region.Kind,
+                    *Region.OwnerOutputPin) > 1U)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
+                        "A construct cannot own duplicate child regions for the same output role.");
+                }
+            }
+
+            // Every parent chain must be a finite path ending at one Entry region.
+            for (const ExecutionRegion& Start : Graph.GetExecutionRegions())
+            {
+                if (!Start.Identifier.IsValid() || CountRegions(Graph, Start.Identifier) != 1U)
+                {
+                    continue;
+                }
+                std::vector<ExecutionRegionId> Visited;
+                const ExecutionRegion* Current = &Start;
+                bool Broken = false;
+                bool HasCycle = false;
+                while (Current != nullptr)
+                {
+                    bool Repeated = false;
+                    for (const ExecutionRegionId Prior : Visited)
+                    {
+                        if (Prior == Current->Identifier)
+                        {
+                            Repeated = true;
+                            break;
+                        }
+                    }
+                    if (Repeated)
+                    {
+                        HasCycle = true;
+                        break;
+                    }
+                    Visited.push_back(Current->Identifier);
+                    if (Current->Kind == ExecutionRegionKind::Entry)
+                    {
+                        break;
+                    }
+                    if (!Current->Parent.has_value() ||
+                        CountRegions(Graph, *Current->Parent) != 1U)
+                    {
+                        Broken = true;
+                        break;
+                    }
+                    Current = Graph.FindExecutionRegion(*Current->Parent);
+                }
+                if (HasCycle)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
+                        "Execution-region parent relationships must be acyclic.");
+                }
+                else if (Broken || Current == nullptr ||
+                    Current->Kind != ExecutionRegionKind::Entry ||
+                    Current->Entry != Start.Entry)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
+                        "Every execution-region hierarchy must terminate at its owning Entry region.");
+                }
+            }
+
+            // Verify region counts required by each descriptor-backed construct and every node's owner.
+            for (const NodeInstance& Node : Graph.GetNodes())
+            {
+                const NodeDescriptor* Descriptor = Node.Descriptor.IsValid()
+                    ? Descriptors.Find(Node.Descriptor) : nullptr;
+                if (Descriptor == nullptr)
+                {
+                    continue;
+                }
+                const bool HasSchema = Descriptor->GetExecutionControlSchema().has_value();
+                const bool HasFlow = HasFlowPins(*Descriptor);
+                if (!HasSchema)
+                {
+                    if (HasFlow)
+                    {
+                        Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
+                            "A Flow-bearing descriptor without a trusted control schema is Unstructured-only.");
+                    }
+                    if (Node.ExecutionRegion.has_value())
+                    {
+                        Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
+                            "A data-only node cannot belong to an execution region.");
+                    }
+                    continue;
+                }
+
+                if (!Node.ExecutionRegion.has_value() || !Node.ExecutionRegion->IsValid())
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
+                        "Every structured execution-capable node must belong to exactly one region.");
+                }
+                else if (CountRegions(Graph, *Node.ExecutionRegion) != 1U)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
+                        "A node execution-region membership must reference exactly one region.");
+                }
+
+                if (Descriptor->GetExecutionControlSchema().has_value())
+                {
+                    const ExecutionControlSchema& Schema =
+                        *Descriptor->GetExecutionControlSchema();
+                    if (std::holds_alternative<EntryControlSchema>(Schema))
+                    {
+                        if (CountRootReferences(Graph, Node.Identifier) != 1U)
+                        {
+                            Add(Diagnostics, DiagnosticCode::InvalidExecutionEntry,
+                                "Every Entry-role node must be the root of exactly one execution entry.");
+                        }
+                    }
+                    else if (std::holds_alternative<BranchControlSchema>(Schema))
+                    {
+                        const auto& Branch = std::get<BranchControlSchema>(Schema);
+                        if (CountOwnerRegions(Graph, Node.Identifier,
+                                ExecutionRegionKind::BranchArm) != 2U ||
+                            CountOwnerRegionsAtPin(Graph, Node.Identifier,
+                                ExecutionRegionKind::BranchArm, Branch.TrueOutput) != 1U ||
+                            CountOwnerRegionsAtPin(Graph, Node.Identifier,
+                                ExecutionRegionKind::BranchArm, Branch.FalseOutput) != 1U)
+                        {
+                            Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
+                                "A Branch-role node must own one region for each declared binary arm output.");
+                        }
+                    }
+                    else if (std::holds_alternative<LoopControlSchema>(Schema))
+                    {
+                        const auto& Loop = std::get<LoopControlSchema>(Schema);
+                        if (CountOwnerRegions(Graph, Node.Identifier,
+                                ExecutionRegionKind::LoopBody) != 1U ||
+                            CountOwnerRegionsAtPin(Graph, Node.Identifier,
+                                ExecutionRegionKind::LoopBody, Loop.BodyOutput) != 1U)
+                        {
+                            Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
+                                "A Loop-role node must own exactly one LoopBody region at its Body output.");
+                        }
+                    }
+                }
+            }
+
+            // Control edges may connect only execution nodes in the same declared entry.
+            for (const ControlEdge& Edge : Graph.GetControlEdges())
+            {
+                const NodeInstance* Source = Graph.FindNode(Edge.SourceNode);
+                const NodeInstance* Destination = Graph.FindNode(Edge.DestinationNode);
+                if (Source == nullptr || Destination == nullptr ||
+                    std::count_if(Graph.GetNodes().begin(), Graph.GetNodes().end(),
+                        [&Edge](const NodeInstance& Node)
+                        {
+                            return Node.Identifier == Edge.SourceNode;
+                        }) != 1 ||
+                    std::count_if(Graph.GetNodes().begin(), Graph.GetNodes().end(),
+                        [&Edge](const NodeInstance& Node)
+                        {
+                            return Node.Identifier == Edge.DestinationNode;
+                        }) != 1 ||
+                    !Source->ExecutionRegion.has_value() ||
+                    !Destination->ExecutionRegion.has_value() ||
+                    CountRegions(Graph, *Source->ExecutionRegion) != 1U ||
+                    CountRegions(Graph, *Destination->ExecutionRegion) != 1U)
+                {
+                    continue;
+                }
+                const ExecutionRegion* SourceRegion =
+                    Graph.FindExecutionRegion(*Source->ExecutionRegion);
+                const ExecutionRegion* DestinationRegion =
+                    Graph.FindExecutionRegion(*Destination->ExecutionRegion);
+                if (SourceRegion != nullptr && DestinationRegion != nullptr &&
+                    SourceRegion->Entry != DestinationRegion->Entry)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
+                        "A structured control edge cannot cross execution-entry ownership.");
+                }
+            }
+        }
+
         static void Add(
             DiagnosticCollection& Diagnostics,
             DiagnosticCode Code,

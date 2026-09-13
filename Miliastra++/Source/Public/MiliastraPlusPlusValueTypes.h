@@ -37,9 +37,13 @@ namespace MiliastraPlusPlus
 
     struct GraphVariableIdTag;
     struct NodeInstanceIdTag;
+    struct ExecutionEntryIdTag;
+    struct ExecutionRegionIdTag;
 
     using GraphVariableId = ValueIdentifier<GraphVariableIdTag>;
     using NodeInstanceId = ValueIdentifier<NodeInstanceIdTag>;
+    using ExecutionEntryId = ValueIdentifier<ExecutionEntryIdTag>;
+    using ExecutionRegionId = ValueIdentifier<ExecutionRegionIdTag>;
 
     class PinIndex
     {

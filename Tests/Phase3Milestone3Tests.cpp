@@ -47,7 +47,7 @@ namespace
     constexpr NodeDescriptorId ConcreteDescriptorId(2001U);
     constexpr NodeDescriptorId GenericDescriptorId(2002U);
     constexpr NodeDescriptorId MultiGenericDescriptorId(2003U);
-    constexpr NodeDescriptorId GenericExecutionDescriptorId(2004U);
+    constexpr NodeDescriptorId GenericDataDescriptorId(2004U);
 
     bool HasCode(const DiagnosticCollection& Diagnostics, DiagnosticCode Code)
     {
@@ -172,18 +172,18 @@ namespace
         );
     }
 
-    NodeDescriptor MakeGenericExecutionDescriptor()
+    NodeDescriptor MakeGenericDataDescriptor()
     {
         const TypeDesc Generic = TypeDesc::Generic(GenericParameterId(1U));
         return NodeDescriptor(
-            GenericExecutionDescriptorId,
-            "GenericExecutionNode",
+            GenericDataDescriptorId,
+            "GenericDataNode",
             {NodeAvailability::Server},
             {
-                PinSchema("ExecutionOutput", Generic, PinDirection::Output,
-                    PinCategory::Execution),
-                PinSchema("ExecutionInput", Generic, PinDirection::Input,
-                    PinCategory::Execution)
+                PinSchema("GenericOutput", Generic, PinDirection::Output,
+                    PinCategory::Data),
+                PinSchema("GenericInput", Generic, PinDirection::Input,
+                    PinCategory::Data)
             }
         );
     }
@@ -194,7 +194,7 @@ namespace
         MPP_CHECK(Registry.Register(MakeConcreteDescriptor()).has_value());
         MPP_CHECK(Registry.Register(MakeGenericDescriptor()).has_value());
         MPP_CHECK(Registry.Register(MakeMultiGenericDescriptor()).has_value());
-        MPP_CHECK(Registry.Register(MakeGenericExecutionDescriptor()).has_value());
+        MPP_CHECK(Registry.Register(MakeGenericDataDescriptor()).has_value());
         return Registry;
     }
 
@@ -733,8 +733,8 @@ int main()
 
     {
         GraphIR Graph;
-        AddNode(Graph, NodeInstanceId(1U), GenericExecutionDescriptorId);
-        AddNode(Graph, NodeInstanceId(2U), GenericExecutionDescriptorId);
+        AddNode(Graph, NodeInstanceId(1U), GenericDataDescriptorId);
+        AddNode(Graph, NodeInstanceId(2U), GenericDataDescriptorId);
         Graph.AddControlEdge(ControlEdge{
             NodeInstanceId(1U), PinIndex(0U),
             NodeInstanceId(2U), PinIndex(1U)

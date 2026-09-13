@@ -104,7 +104,8 @@ int main()
         NodeInstanceId(1U), PinIndex(4U), NodeInstanceId(2U), PinIndex(5U)
     });
     const nlohmann::json Serialized = Serialize(Original);
-    Check(Serialized["irVersion"] == 2);
+    Check(Serialized["irVersion"] == 3);
+    Check(Serialized["executionModel"] == "Unstructured");
     Check(Serialized["inputBindings"][0U]["outputTypeConstraint"].is_null());
     Check(Serialized["inputBindings"][1U]["outputTypeConstraint"]["kind"] == "List");
     Check(Serialized.dump() == Serialize(Original).dump());
@@ -150,9 +151,13 @@ int main()
     Check(std::get<OutputReference>(LegacyGraph->GetInputBindings()[0U].Binding) ==
         OutputReference{NodeInstanceId(2U), PinIndex(3U)});
     const nlohmann::json UpgradedLegacyGraph = Serialize(*LegacyGraph);
-    Check(UpgradedLegacyGraph["irVersion"] == 2);
+    Check(UpgradedLegacyGraph["irVersion"] == 3);
+    Check(UpgradedLegacyGraph["executionModel"] == "Unstructured");
     Check(UpgradedLegacyGraph["inputBindings"][0U]["outputTypeConstraint"].is_null());
-    Check(UpgradedLegacyGraph["nodes"] == VersionOne["nodes"]);
+    Check(UpgradedLegacyGraph["nodes"][0U]["id"] == VersionOne["nodes"][0U]["id"]);
+    Check(UpgradedLegacyGraph["nodes"][0U]["descriptor"] ==
+        VersionOne["nodes"][0U]["descriptor"]);
+    Check(UpgradedLegacyGraph["nodes"][0U]["executionRegion"].is_null());
     Check(UpgradedLegacyGraph["inputBindings"][0U]["binding"] ==
         VersionOne["inputBindings"][0U]["binding"]);
 
@@ -167,7 +172,7 @@ int main()
     for (const nlohmann::json UnsupportedVersion : {
         nlohmann::json(-1),
         nlohmann::json(0U),
-        nlohmann::json(3U),
+        nlohmann::json(4U),
         nlohmann::json(2.0),
         nlohmann::json(std::numeric_limits<std::uint64_t>::max())
     })
@@ -220,7 +225,8 @@ int main()
     UnknownField["extra"] = 4;
     Check(Deserialize(UnknownField).has_value());
     nlohmann::json Unknown = Serialize(Empty);
-    Unknown["nodes"].push_back({{"id", 1U}, {"descriptor", 2U}, {"kind", "unknown"}});
+    Unknown["nodes"].push_back({{"id", 1U}, {"descriptor", 2U},
+        {"executionRegion", nullptr}, {"kind", "unknown"}});
     Check(Deserialize(Unknown).has_value());
 
     nlohmann::json UnknownType = Serialize(Empty);
