@@ -70,6 +70,7 @@ namespace MiliastraPlusPlus
         OpenExecutionScope,
         InvalidExecutionReachability,
         ExecutionDataNotDominated,
+        InvalidLoopTransfer,
         MalformedGraphIRJson,
         MissingAdapterNodeMapping,
         InvalidGraphIRAdapterLink,

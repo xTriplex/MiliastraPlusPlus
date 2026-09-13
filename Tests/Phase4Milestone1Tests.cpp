@@ -210,6 +210,10 @@ namespace
             ExecutionRegionKind::LoopBody, ExecutionRegionId(1U), NodeInstanceId(3U), PinIndex(1U)});
         Graph.AddNode({NodeInstanceId(3U), LoopId, ExecutionRegionId(1U)});
         Graph.AddNode({NodeInstanceId(4U), SequenceId, ExecutionRegionId(2U)});
+        Graph.AddControlEdge({NodeInstanceId(2U), PinIndex(1U), NodeInstanceId(3U), PinIndex(0U)});
+        Graph.AddControlEdge({NodeInstanceId(3U), PinIndex(1U), NodeInstanceId(4U), PinIndex(0U)});
+        Graph.AddControlEdge({NodeInstanceId(4U), PinIndex(1U), NodeInstanceId(3U), PinIndex(3U)});
+        Graph.BindInput(NodeInstanceId(3U), PinIndex(5U), LiteralValue(LiteralValue::Data{true}));
         return Graph;
     }
 }

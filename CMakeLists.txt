@@ -75,6 +75,7 @@ set(TEST_TARGETS
     Phase3Milestone3Tests
     Phase4Milestone1Tests
     Phase4Milestone2Tests
+    Phase4Milestone3Tests
 )
 
 foreach(TEST_NAME ${TEST_TARGETS})
@@ -91,7 +92,11 @@ foreach(TEST_NAME ${TEST_TARGETS})
 endforeach()
 
 target_compile_definitions(Phase4Milestone2Tests PRIVATE
-    MILIASTRA_PHASE4_M2_TEST_ACCESS
+    MILIASTRA_PHASE4_TEST_ACCESS
+)
+
+target_compile_definitions(Phase4Milestone3Tests PRIVATE
+    MILIASTRA_PHASE4_TEST_ACCESS
 )
 
 # --------------------------------------------

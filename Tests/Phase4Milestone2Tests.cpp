@@ -14,7 +14,7 @@
 
 using namespace MiliastraPlusPlus;
 
-#ifdef MILIASTRA_PHASE4_M2_TEST_ACCESS
+#ifdef MILIASTRA_PHASE4_TEST_ACCESS
 namespace MiliastraPlusPlus
 {
     struct GraphBuilderPhase4TestAccess final

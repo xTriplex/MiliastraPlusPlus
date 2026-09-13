@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <expected>
 #include <limits>
@@ -767,6 +768,63 @@ namespace MiliastraPlusPlus
         std::weak_ptr<const NodeHandle::Context> m_Context;
     };
 
+    class LoopScope final
+    {
+    public:
+        LoopScope() = delete;
+        LoopScope(const LoopScope&) = delete;
+        LoopScope& operator=(const LoopScope&) = delete;
+        LoopScope& operator=(LoopScope&&) = delete;
+
+        LoopScope(LoopScope&& Other) noexcept
+            : m_Node(Other.m_Node)
+            , m_Entry(Other.m_Entry)
+            , m_ParentRegion(Other.m_ParentRegion)
+            , m_BodyRegion(Other.m_BodyRegion)
+            , m_ParentSerial(Other.m_ParentSerial)
+            , m_Serial(std::exchange(Other.m_Serial, 0U))
+            , m_Context(std::move(Other.m_Context))
+        {
+            Other.m_Context.reset();
+        }
+
+        [[nodiscard]] bool IsValid() const
+        {
+            return m_Node.IsValid() && m_Entry.IsValid() && m_ParentRegion.IsValid() &&
+                m_BodyRegion.IsValid() && m_Serial != 0U && !m_Context.expired();
+        }
+
+    private:
+        LoopScope(
+            NodeInstanceId Node,
+            ExecutionEntryId Entry,
+            ExecutionRegionId ParentRegion,
+            ExecutionRegionId BodyRegion,
+            std::uint64_t ParentSerial,
+            std::uint64_t Serial,
+            const std::shared_ptr<const NodeHandle::Context>& ContextToken
+        )
+            : m_Node(Node)
+            , m_Entry(Entry)
+            , m_ParentRegion(ParentRegion)
+            , m_BodyRegion(BodyRegion)
+            , m_ParentSerial(ParentSerial)
+            , m_Serial(Serial)
+            , m_Context(ContextToken)
+        {
+        }
+
+        friend class GraphBuilder;
+
+        NodeInstanceId m_Node;
+        ExecutionEntryId m_Entry;
+        ExecutionRegionId m_ParentRegion;
+        ExecutionRegionId m_BodyRegion;
+        std::uint64_t m_ParentSerial = 0U;
+        std::uint64_t m_Serial = 0U;
+        std::weak_ptr<const NodeHandle::Context> m_Context;
+    };
+
     struct EntryStart final
     {
         EntryScope Scope;
@@ -796,6 +854,18 @@ namespace MiliastraPlusPlus
     {
         NodeHandle Node;
         ExecutionHandle Output;
+    };
+
+    struct LoopStart final
+    {
+        LoopScope Scope;
+        NodeHandle Node;
+        ExecutionHandle BodyOutput;
+    };
+
+    struct LoopResult final
+    {
+        std::optional<ExecutionHandle> ExitOutput;
     };
 
     class GraphBuilder
@@ -989,6 +1059,17 @@ namespace MiliastraPlusPlus
                 Scope.m_Context, Predecessor, SequenceDescriptorIdentifier);
         }
 
+        [[nodiscard]] std::expected<ExecutionNodeResult, DiagnosticCollection>
+        AppendExecutionNode(
+            LoopScope& Scope,
+            const ExecutionHandle& Predecessor,
+            NodeDescriptorId SequenceDescriptorIdentifier
+        )
+        {
+            return AppendSequence(Scope.m_Entry, Scope.m_BodyRegion, Scope.m_Serial,
+                Scope.m_Context, Predecessor, SequenceDescriptorIdentifier);
+        }
+
         [[nodiscard]] std::expected<BranchStart, DiagnosticCollection> BeginBranch(
             EntryScope& Parent,
             const ExecutionHandle& Predecessor,
@@ -1008,6 +1089,17 @@ namespace MiliastraPlusPlus
         )
         {
             return BeginBranchInScope(Parent.m_Entry, Parent.m_Region, Parent.m_Serial,
+                Parent.m_Context, Predecessor, BranchDescriptorIdentifier, Condition);
+        }
+
+        [[nodiscard]] std::expected<BranchStart, DiagnosticCollection> BeginBranch(
+            LoopScope& Parent,
+            const ExecutionHandle& Predecessor,
+            NodeDescriptorId BranchDescriptorIdentifier,
+            const ValueOrExpr<bool>& Condition
+        )
+        {
+            return BeginBranchInScope(Parent.m_Entry, Parent.m_BodyRegion, Parent.m_Serial,
                 Parent.m_Context, Predecessor, BranchDescriptorIdentifier, Condition);
         }
 
@@ -1159,6 +1251,189 @@ namespace MiliastraPlusPlus
         {
             return ContinueBranchOutcome(Parent.m_Entry, Parent.m_Region, Parent.m_Serial,
                 Parent.m_Context, std::move(OneLiveArm), SequenceDescriptorIdentifier);
+        }
+
+        [[nodiscard]] std::expected<JoinResult, DiagnosticCollection> Join(
+            LoopScope& Parent,
+            BranchOutcome&& TwoLiveArms,
+            NodeDescriptorId JoinDescriptorIdentifier
+        )
+        {
+            return JoinBranchOutcome(Parent.m_Entry, Parent.m_BodyRegion, Parent.m_Serial,
+                Parent.m_Context, std::move(TwoLiveArms), JoinDescriptorIdentifier);
+        }
+
+        [[nodiscard]] std::expected<ExecutionNodeResult, DiagnosticCollection> ContinueWith(
+            LoopScope& Parent,
+            BranchOutcome&& OneLiveArm,
+            NodeDescriptorId SequenceDescriptorIdentifier
+        )
+        {
+            return ContinueBranchOutcome(Parent.m_Entry, Parent.m_BodyRegion, Parent.m_Serial,
+                Parent.m_Context, std::move(OneLiveArm), SequenceDescriptorIdentifier);
+        }
+
+        [[nodiscard]] std::expected<LoopStart, DiagnosticCollection> BeginLoop(
+            EntryScope& Parent,
+            const ExecutionHandle& Predecessor,
+            NodeDescriptorId LoopDescriptorIdentifier,
+            std::optional<ValueOrExpr<bool>> Condition = std::nullopt
+        )
+        {
+            return BeginLoopInScope(Parent.m_Entry, Parent.m_Region, Parent.m_Serial,
+                Parent.m_Context, Predecessor, LoopDescriptorIdentifier, std::move(Condition));
+        }
+
+        [[nodiscard]] std::expected<LoopStart, DiagnosticCollection> BeginLoop(
+            BranchArmScope& Parent,
+            const ExecutionHandle& Predecessor,
+            NodeDescriptorId LoopDescriptorIdentifier,
+            std::optional<ValueOrExpr<bool>> Condition = std::nullopt
+        )
+        {
+            return BeginLoopInScope(Parent.m_Entry, Parent.m_Region, Parent.m_Serial,
+                Parent.m_Context, Predecessor, LoopDescriptorIdentifier, std::move(Condition));
+        }
+
+        [[nodiscard]] std::expected<LoopStart, DiagnosticCollection> BeginLoop(
+            LoopScope& Parent,
+            const ExecutionHandle& Predecessor,
+            NodeDescriptorId LoopDescriptorIdentifier,
+            std::optional<ValueOrExpr<bool>> Condition = std::nullopt
+        )
+        {
+            return BeginLoopInScope(Parent.m_Entry, Parent.m_BodyRegion, Parent.m_Serial,
+                Parent.m_Context, Predecessor, LoopDescriptorIdentifier, std::move(Condition));
+        }
+
+        [[nodiscard]] std::expected<void, DiagnosticCollection> Break(
+            LoopScope& NearestLoop,
+            const ExecutionHandle& Tail
+        )
+        {
+            return AddLoopTransfer(NearestLoop, Tail, true);
+        }
+
+        [[nodiscard]] std::expected<void, DiagnosticCollection> Continue(
+            LoopScope& NearestLoop,
+            const ExecutionHandle& Tail
+        )
+        {
+            return AddLoopTransfer(NearestLoop, Tail, false);
+        }
+
+        [[nodiscard]] std::expected<LoopResult, DiagnosticCollection> EndLoop(
+            LoopScope&& Scope
+        )
+        {
+            if (!IsBuilderOpen())
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeLifecycleDiagnostic("A closed graph builder cannot end a loop.")
+                });
+            }
+            if (!Scope.IsValid())
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionScopeDiagnostic("The LoopScope is invalid or already closed.")
+                });
+            }
+            if (!HasSameContext(Scope.m_Context))
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeForeignContextDiagnostic("The LoopScope belongs to another builder.")
+                });
+            }
+            if (!IsTopScope(ExecutionScopeKind::Loop, Scope.m_Serial))
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionScopeDiagnostic("The LoopScope is not the active innermost scope.")
+                });
+            }
+            const ExecutionScopeFrame& Frame = m_ExecutionScopes.back();
+            if (Frame.Entry != Scope.m_Entry || Frame.Region != Scope.m_BodyRegion ||
+                Frame.OwnerNode != Scope.m_Node || Frame.ParentSerial != Scope.m_ParentSerial)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionScopeDiagnostic("The LoopScope does not match the active LoopBody frame.")
+                });
+            }
+            if (HasOpenBranchOutcomeInRegion(Scope.m_BodyRegion))
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeBranchOutcomeDiagnostic("Resolve every live branch outcome before EndLoop.")
+                });
+            }
+            const NodeInstance* LoopNode = m_Graph.FindNode(Scope.m_Node);
+            const NodeDescriptor* Descriptor = LoopNode == nullptr
+                ? nullptr : m_Descriptors.Find(LoopNode->Descriptor);
+            const LoopControlSchema* Schema = Descriptor == nullptr
+                ? nullptr : GetControlSchema<LoopControlSchema>(*Descriptor);
+            const ExecutionRegion* BodyRegion = m_Graph.FindExecutionRegion(Scope.m_BodyRegion);
+            if (LoopNode == nullptr || Schema == nullptr || BodyRegion == nullptr ||
+                BodyRegion->Kind != ExecutionRegionKind::LoopBody ||
+                BodyRegion->OwnerNode != Scope.m_Node ||
+                BodyRegion->Parent != Scope.m_ParentRegion ||
+                BodyRegion->Entry != Scope.m_Entry)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionOwnershipDiagnostic("The active LoopBody ownership is invalid.")
+                });
+            }
+            const ControlEdge* BodyAction = nullptr;
+            for (const ControlEdge& Edge : m_Graph.GetControlEdges())
+            {
+                if (Edge.SourceNode == Scope.m_Node && Edge.SourceOutputPin == Schema->BodyOutput)
+                {
+                    if (BodyAction != nullptr)
+                    {
+                        return std::unexpected(DiagnosticCollection{
+                            MakeExecutionReachabilityDiagnostic("A Loop Body output must have exactly one legal first body action.")
+                        });
+                    }
+                    BodyAction = &Edge;
+                }
+            }
+            if (BodyAction == nullptr)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionReachabilityDiagnostic("A Loop Body output must have one legal first body action.")
+                });
+            }
+            const bool IsDirectTransfer = BodyAction->DestinationNode == Scope.m_Node &&
+                (BodyAction->DestinationInputPin == Schema->BreakInput ||
+                    BodyAction->DestinationInputPin == Schema->RepeatInput);
+            if (!IsDirectTransfer)
+            {
+                const NodeInstance* BodyRoot = m_Graph.FindNode(BodyAction->DestinationNode);
+                const NodeDescriptor* BodyRootDescriptor = BodyRoot == nullptr
+                    ? nullptr : m_Descriptors.Find(BodyRoot->Descriptor);
+                if (BodyRoot == nullptr || BodyRoot->ExecutionRegion != Scope.m_BodyRegion ||
+                    BodyRootDescriptor == nullptr ||
+                    !BodyRootDescriptor->GetExecutionControlSchema().has_value())
+                {
+                    return std::unexpected(DiagnosticCollection{
+                        MakeExecutionReachabilityDiagnostic(
+                            "A Loop Body output must enter its owned LoopBody or directly transfer to its own Break or Repeat input.")
+                    });
+                }
+            }
+
+            const bool HasReachableBreak = HasReachableLoopBreak(
+                Scope.m_Node, *Schema, Scope.m_BodyRegion);
+            const bool HasExit = Schema->ExitPolicy == LoopExitPolicy::Conditional || HasReachableBreak;
+            std::optional<ExecutionHandle> ExitOutput;
+            if (HasExit)
+            {
+                ExecutionHandle Handle(Scope.m_Node, Schema->ExitOutput, Scope.m_Entry,
+                    Scope.m_ParentRegion, m_Context);
+                ExitOutput = std::move(Handle);
+            }
+
+            m_ExecutionScopes.pop_back();
+            Scope.m_Serial = 0U;
+            Scope.m_Context.reset();
+            return LoopResult{std::move(ExitOutput)};
         }
 
         [[nodiscard]] std::expected<NodeHandle, DiagnosticCollection> AddNode(
@@ -1504,7 +1779,7 @@ namespace MiliastraPlusPlus
         }
 
     private:
-#ifdef MILIASTRA_PHASE4_M2_TEST_ACCESS
+#ifdef MILIASTRA_PHASE4_TEST_ACCESS
         friend struct GraphBuilderPhase4TestAccess;
 #endif
 
@@ -1512,7 +1787,8 @@ namespace MiliastraPlusPlus
         {
             Entry,
             Branch,
-            BranchArm
+            BranchArm,
+            Loop
         };
 
         struct ExecutionScopeFrame
@@ -1574,6 +1850,15 @@ namespace MiliastraPlusPlus
             return !m_ExecutionScopes.empty() &&
                 m_ExecutionScopes.back().Kind == Kind &&
                 m_ExecutionScopes.back().Serial == Serial;
+        }
+
+        [[nodiscard]] ExecutionScopeKind CurrentParentScopeKind() const
+        {
+            if (m_ExecutionScopes.empty())
+            {
+                return ExecutionScopeKind::Entry;
+            }
+            return m_ExecutionScopes.back().Kind;
         }
 
         [[nodiscard]] bool IsValidActiveScope(
@@ -1718,6 +2003,116 @@ namespace MiliastraPlusPlus
             return Count;
         }
 
+        [[nodiscard]] bool IsRegionWithin(
+            ExecutionRegionId RegionIdentifier,
+            ExecutionRegionId AncestorIdentifier
+        ) const
+        {
+            const ExecutionRegion* Region = m_Graph.FindExecutionRegion(RegionIdentifier);
+            std::vector<ExecutionRegionId> Visited;
+            while (Region != nullptr)
+            {
+                if (Region->Identifier == AncestorIdentifier)
+                {
+                    return true;
+                }
+                if (std::find(Visited.begin(), Visited.end(), Region->Identifier) != Visited.end())
+                {
+                    return false;
+                }
+                Visited.push_back(Region->Identifier);
+                if (!Region->Parent.has_value())
+                {
+                    return false;
+                }
+                Region = m_Graph.FindExecutionRegion(*Region->Parent);
+            }
+            return false;
+        }
+
+        [[nodiscard]] bool HasOpenBranchOutcomeInRegion(
+            ExecutionRegionId RegionIdentifier
+        ) const
+        {
+            for (const OpenBranchOutcome& Outcome : m_OpenBranchOutcomes)
+            {
+                if (Outcome.ParentRegion.IsValid() &&
+                    IsRegionWithin(Outcome.ParentRegion, RegionIdentifier))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        [[nodiscard]] bool HasReachableLoopBreak(
+            NodeInstanceId LoopNodeIdentifier,
+            const LoopControlSchema& LoopSchema,
+            ExecutionRegionId BodyRegionIdentifier
+        ) const
+        {
+            std::vector<NodeInstanceId> Reachable;
+            Reachable.push_back(LoopNodeIdentifier);
+            for (std::size_t Cursor = 0U; Cursor < Reachable.size(); ++Cursor)
+            {
+                const NodeInstanceId Current = Reachable[Cursor];
+                for (const ControlEdge& Edge : m_Graph.GetControlEdges())
+                {
+                    if (Edge.SourceNode != Current)
+                    {
+                        continue;
+                    }
+                    const NodeInstance* Destination = m_Graph.FindNode(Edge.DestinationNode);
+                    const NodeDescriptor* DestinationDescriptor = Destination == nullptr
+                        ? nullptr : m_Descriptors.Find(Destination->Descriptor);
+                    const LoopControlSchema* DestinationLoop = DestinationDescriptor == nullptr
+                        ? nullptr : GetControlSchema<LoopControlSchema>(*DestinationDescriptor);
+                    if (DestinationLoop != nullptr &&
+                        (Edge.DestinationInputPin == DestinationLoop->RepeatInput ||
+                            Edge.DestinationInputPin == DestinationLoop->BreakInput))
+                    {
+                        continue;
+                    }
+                    bool Seen = false;
+                    for (const NodeInstanceId Existing : Reachable)
+                    {
+                        Seen = Seen || Existing == Edge.DestinationNode;
+                    }
+                    if (!Seen && Destination != nullptr)
+                    {
+                        Reachable.push_back(Destination->Identifier);
+                    }
+                }
+            }
+
+            for (const ControlEdge& Edge : m_Graph.GetControlEdges())
+            {
+                if (Edge.DestinationNode != LoopNodeIdentifier ||
+                    Edge.DestinationInputPin != LoopSchema.BreakInput)
+                {
+                    continue;
+                }
+                const NodeInstance* Source = m_Graph.FindNode(Edge.SourceNode);
+                const bool IsBodyOutputTransfer = Edge.SourceNode == LoopNodeIdentifier &&
+                    Edge.SourceOutputPin == LoopSchema.BodyOutput &&
+                    BodyRegionIdentifier.IsValid();
+                if (Source == nullptr || (!IsBodyOutputTransfer &&
+                    (!Source->ExecutionRegion.has_value() ||
+                        !IsRegionWithin(*Source->ExecutionRegion, BodyRegionIdentifier))))
+                {
+                    continue;
+                }
+                for (const NodeInstanceId ReachableNode : Reachable)
+                {
+                    if (ReachableNode == Source->Identifier)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         [[nodiscard]] bool IsBranchArmOutput(
             NodeInstanceId Node,
             PinIndex OutputPin,
@@ -1790,6 +2185,19 @@ namespace MiliastraPlusPlus
                     };
                 }
             }
+            else if (const LoopControlSchema* Loop = GetControlSchema<LoopControlSchema>(*Descriptor);
+                Loop != nullptr && Handle.m_OutputPin == Loop->BodyOutput)
+            {
+                const ExecutionRegion* BodyRegion = m_Graph.FindExecutionRegion(Region);
+                if (BodyRegion == nullptr || BodyRegion->Kind != ExecutionRegionKind::LoopBody ||
+                    BodyRegion->OwnerNode != Handle.m_Node ||
+                    BodyRegion->OwnerOutputPin != Loop->BodyOutput)
+                {
+                    return DiagnosticCollection{
+                        MakeExecutionHandleDiagnostic("A Loop Body output handle must carry its exact owned LoopBody region.")
+                    };
+                }
+            }
             else if (!Node->ExecutionRegion.has_value() || *Node->ExecutionRegion != Region)
             {
                 return DiagnosticCollection{
@@ -1849,6 +2257,100 @@ namespace MiliastraPlusPlus
                     };
                 }
             }
+            return {};
+        }
+
+        [[nodiscard]] DiagnosticCollection ValidateLoopScopeForTransfer(
+            const LoopScope& Scope,
+            const ExecutionHandle& Tail
+        ) const
+        {
+            if (!IsBuilderOpen() || !Scope.IsValid())
+            {
+                return DiagnosticCollection{
+                    MakeExecutionScopeDiagnostic("The target LoopScope is invalid or stale.")
+                };
+            }
+            if (!HasSameContext(Scope.m_Context))
+            {
+                return DiagnosticCollection{
+                    MakeForeignContextDiagnostic("The target LoopScope belongs to another builder.")
+                };
+            }
+            std::optional<std::size_t> TargetIndex;
+            std::optional<std::size_t> NearestLoopIndex;
+            for (std::size_t Index = 0U; Index < m_ExecutionScopes.size(); ++Index)
+            {
+                const ExecutionScopeFrame& Frame = m_ExecutionScopes[Index];
+                if (Frame.Kind == ExecutionScopeKind::Loop)
+                {
+                    NearestLoopIndex = Index;
+                    if (Frame.Serial == Scope.m_Serial && Frame.OwnerNode == Scope.m_Node &&
+                        Frame.Entry == Scope.m_Entry && Frame.Region == Scope.m_BodyRegion &&
+                        Frame.ParentSerial == Scope.m_ParentSerial)
+                    {
+                        TargetIndex = Index;
+                    }
+                }
+            }
+            if (!TargetIndex.has_value() || !NearestLoopIndex.has_value() ||
+                *TargetIndex != *NearestLoopIndex)
+            {
+                return DiagnosticCollection{
+                    MakeLoopTransferDiagnostic("Break and Continue must target the nearest active enclosing LoopScope.")
+                };
+            }
+            if (m_ExecutionScopes.empty())
+            {
+                return DiagnosticCollection{
+                    MakeExecutionScopeDiagnostic("A loop transfer requires an active body or arm scope.")
+                };
+            }
+            const ExecutionScopeFrame& Current = m_ExecutionScopes.back();
+            if ((Current.Kind != ExecutionScopeKind::Loop &&
+                    Current.Kind != ExecutionScopeKind::BranchArm) ||
+                Current.Entry != Scope.m_Entry ||
+                !IsRegionWithin(Current.Region, Scope.m_BodyRegion))
+            {
+                return DiagnosticCollection{
+                    MakeLoopTransferDiagnostic("The active construction path is outside the target LoopBody.")
+                };
+            }
+            if (Tail.m_Entry != Current.Entry || Tail.m_Region != Current.Region)
+            {
+                return DiagnosticCollection{
+                    MakeExecutionHandleDiagnostic("A loop transfer tail must belong to the active execution region.")
+                };
+            }
+            return ValidateExecutionHandle(Tail, Scope.m_Entry, Current.Region);
+        }
+
+        [[nodiscard]] std::expected<void, DiagnosticCollection> AddLoopTransfer(
+            LoopScope& Scope,
+            const ExecutionHandle& Tail,
+            bool IsBreak
+        )
+        {
+            DiagnosticCollection ScopeDiagnostics = ValidateLoopScopeForTransfer(Scope, Tail);
+            if (!ScopeDiagnostics.empty())
+            {
+                return std::unexpected(std::move(ScopeDiagnostics));
+            }
+            const NodeInstance* LoopNode = m_Graph.FindNode(Scope.m_Node);
+            const NodeDescriptor* Descriptor = LoopNode == nullptr
+                ? nullptr : m_Descriptors.Find(LoopNode->Descriptor);
+            const LoopControlSchema* Schema = Descriptor == nullptr
+                ? nullptr : GetControlSchema<LoopControlSchema>(*Descriptor);
+            if (Schema == nullptr)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionRoleDiagnostic("A loop transfer requires the target's trusted Loop control schema.")
+                });
+            }
+            const PinIndex DestinationPin = IsBreak ? Schema->BreakInput : Schema->RepeatInput;
+            m_Graph.AddControlEdge(ControlEdge{
+                Tail.m_Node, Tail.m_OutputPin, Scope.m_Node, DestinationPin
+            });
             return {};
         }
 
@@ -1932,6 +2434,16 @@ namespace MiliastraPlusPlus
             };
         }
 
+        [[nodiscard]] static Diagnostic MakeDataDominanceDiagnostic(const char* Message)
+        {
+            return MakeDiagnostic(DiagnosticCode::ExecutionDataNotDominated, Message);
+        }
+
+        [[nodiscard]] static Diagnostic MakeLoopTransferDiagnostic(const char* Message)
+        {
+            return MakeDiagnostic(DiagnosticCode::InvalidLoopTransfer, Message);
+        }
+
         [[nodiscard]] std::expected<ExecutionNodeResult, DiagnosticCollection> AppendSequence(
             ExecutionEntryId Entry,
             ExecutionRegionId Region,
@@ -1941,9 +2453,7 @@ namespace MiliastraPlusPlus
             NodeDescriptorId SequenceDescriptorIdentifier
         )
         {
-            const ExecutionScopeKind ScopeKind = !m_ExecutionScopes.empty() &&
-                m_ExecutionScopes.back().Kind == ExecutionScopeKind::BranchArm
-                ? ExecutionScopeKind::BranchArm : ExecutionScopeKind::Entry;
+            const ExecutionScopeKind ScopeKind = CurrentParentScopeKind();
             DiagnosticCollection ScopeDiagnostics = ValidateParentScope(ScopeKind,
                 ScopeSerial, std::move(ScopeContext), Entry, Region);
             if (!ScopeDiagnostics.empty())
@@ -2070,6 +2580,378 @@ namespace MiliastraPlusPlus
             };
         }
 
+        [[nodiscard]] bool ExecutionProducerDominates(
+            ExecutionEntryId Entry,
+            NodeInstanceId Producer,
+            NodeInstanceId Consumer
+        ) const
+        {
+            const ExecutionEntry* EntryRecord = m_Graph.FindExecutionEntry(Entry);
+            if (EntryRecord == nullptr)
+            {
+                return false;
+            }
+            std::vector<NodeInstanceId> AllNodes;
+            for (const NodeInstance& Node : m_Graph.GetNodes())
+            {
+                if (!Node.ExecutionRegion.has_value())
+                {
+                    continue;
+                }
+                const ExecutionRegion* Region = m_Graph.FindExecutionRegion(*Node.ExecutionRegion);
+                const NodeDescriptor* Descriptor = m_Descriptors.Find(Node.Descriptor);
+                if (Region != nullptr && Region->Entry == Entry && Descriptor != nullptr &&
+                    Descriptor->GetExecutionControlSchema().has_value())
+                {
+                    AllNodes.push_back(Node.Identifier);
+                }
+            }
+            std::vector<std::pair<std::size_t, std::size_t>> Edges;
+            const auto FindIndex = [&AllNodes](NodeInstanceId Node)
+            {
+                for (std::size_t Index = 0U; Index < AllNodes.size(); ++Index)
+                {
+                    if (AllNodes[Index] == Node)
+                    {
+                        return Index;
+                    }
+                }
+                return AllNodes.size();
+            };
+            for (const ControlEdge& Edge : m_Graph.GetControlEdges())
+            {
+                const std::size_t SourceIndex = FindIndex(Edge.SourceNode);
+                if (SourceIndex == AllNodes.size())
+                {
+                    continue;
+                }
+                const NodeInstance* Destination = m_Graph.FindNode(Edge.DestinationNode);
+                const NodeDescriptor* DestinationDescriptor = Destination == nullptr
+                    ? nullptr : m_Descriptors.Find(Destination->Descriptor);
+                const LoopControlSchema* DestinationLoop = DestinationDescriptor == nullptr
+                    ? nullptr : GetControlSchema<LoopControlSchema>(*DestinationDescriptor);
+                if (DestinationLoop != nullptr && Edge.DestinationInputPin == DestinationLoop->RepeatInput)
+                {
+                    continue;
+                }
+                if (DestinationLoop != nullptr && Edge.DestinationInputPin == DestinationLoop->BreakInput)
+                {
+                    for (const ControlEdge& ExitEdge : m_Graph.GetControlEdges())
+                    {
+                        if (ExitEdge.SourceNode == Destination->Identifier &&
+                            ExitEdge.SourceOutputPin == DestinationLoop->ExitOutput)
+                        {
+                            const std::size_t ExitIndex = FindIndex(ExitEdge.DestinationNode);
+                            if (ExitIndex != AllNodes.size())
+                            {
+                                Edges.emplace_back(SourceIndex, ExitIndex);
+                            }
+                        }
+                    }
+                    continue;
+                }
+                const std::size_t DestinationIndex = FindIndex(Edge.DestinationNode);
+                if (DestinationIndex == AllNodes.size())
+                {
+                    continue;
+                }
+                const LoopControlSchema* SourceLoop = FindLoopSchemaInBuilder(Edge.SourceNode);
+                if (SourceLoop != nullptr && Edge.SourceOutputPin == SourceLoop->ExitOutput &&
+                    SourceLoop->ExitPolicy == LoopExitPolicy::Unconditional &&
+                    !HasAnyLoopBreakEdge(Edge.SourceNode, *SourceLoop))
+                {
+                    continue;
+                }
+                Edges.emplace_back(SourceIndex, DestinationIndex);
+            }
+
+            const std::size_t RootIndex = FindIndex(EntryRecord->RootNode);
+            const std::size_t ProducerIndex = FindIndex(Producer);
+            const std::size_t ConsumerIndex = FindIndex(Consumer);
+            if (RootIndex == AllNodes.size() || ProducerIndex == AllNodes.size() ||
+                ConsumerIndex == AllNodes.size())
+            {
+                return false;
+            }
+            std::vector<std::size_t> Reachable{RootIndex};
+            for (std::size_t Cursor = 0U; Cursor < Reachable.size(); ++Cursor)
+            {
+                for (const auto& [Source, Destination] : Edges)
+                {
+                    if (Source == Reachable[Cursor] &&
+                        std::find(Reachable.begin(), Reachable.end(), Destination) == Reachable.end())
+                    {
+                        Reachable.push_back(Destination);
+                    }
+                }
+            }
+            if (std::find(Reachable.begin(), Reachable.end(), ProducerIndex) == Reachable.end() ||
+                std::find(Reachable.begin(), Reachable.end(), ConsumerIndex) == Reachable.end())
+            {
+                return false;
+            }
+            std::vector<std::vector<bool>> Dominators(
+                AllNodes.size(), std::vector<bool>(AllNodes.size(), true));
+            for (std::size_t Candidate = 0U; Candidate < AllNodes.size(); ++Candidate)
+            {
+                Dominators[RootIndex][Candidate] = Candidate == RootIndex;
+            }
+            bool Changed = true;
+            while (Changed)
+            {
+                Changed = false;
+                for (const std::size_t NodeIndex : Reachable)
+                {
+                    if (NodeIndex == RootIndex)
+                    {
+                        continue;
+                    }
+                    std::vector<std::size_t> Predecessors;
+                    for (const auto& [Source, Destination] : Edges)
+                    {
+                        if (Destination == NodeIndex &&
+                            std::find(Reachable.begin(), Reachable.end(), Source) != Reachable.end())
+                        {
+                            Predecessors.push_back(Source);
+                        }
+                    }
+                    std::vector<bool> Next(AllNodes.size(), false);
+                    Next[NodeIndex] = true;
+                    if (!Predecessors.empty())
+                    {
+                        for (std::size_t Candidate = 0U; Candidate < AllNodes.size(); ++Candidate)
+                        {
+                            bool InAll = true;
+                            for (const std::size_t Predecessor : Predecessors)
+                            {
+                                InAll = InAll && Dominators[Predecessor][Candidate];
+                            }
+                            Next[Candidate] = Next[Candidate] || InAll;
+                        }
+                    }
+                    if (Next != Dominators[NodeIndex])
+                    {
+                        Dominators[NodeIndex] = std::move(Next);
+                        Changed = true;
+                    }
+                }
+            }
+            return Dominators[ConsumerIndex][ProducerIndex];
+        }
+
+        [[nodiscard]] const LoopControlSchema* FindLoopSchemaInBuilder(
+            NodeInstanceId NodeIdentifier
+        ) const
+        {
+            const NodeInstance* Node = m_Graph.FindNode(NodeIdentifier);
+            const NodeDescriptor* Descriptor = Node == nullptr
+                ? nullptr : m_Descriptors.Find(Node->Descriptor);
+            return Descriptor == nullptr
+                ? nullptr : GetControlSchema<LoopControlSchema>(*Descriptor);
+        }
+
+        [[nodiscard]] bool HasAnyLoopBreakEdge(
+            NodeInstanceId LoopNode,
+            const LoopControlSchema& Schema
+        ) const
+        {
+            for (const ControlEdge& Edge : m_Graph.GetControlEdges())
+            {
+                if (Edge.DestinationNode == LoopNode &&
+                    Edge.DestinationInputPin == Schema.BreakInput)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        [[nodiscard]] DiagnosticCollection ValidateLoopConditionProvenance(
+            const ValueOrExpr<bool>& Condition,
+            ExecutionEntryId Entry,
+            NodeInstanceId Predecessor
+        ) const
+        {
+            const Output<bool>* OutputValue = std::get_if<Output<bool>>(&Condition.GetValue());
+            if (OutputValue == nullptr)
+            {
+                return {};
+            }
+            std::vector<NodeInstanceId> Pending{OutputValue->GetIdentifier()};
+            std::vector<NodeInstanceId> Visited;
+            while (!Pending.empty())
+            {
+                const NodeInstanceId Current = Pending.back();
+                Pending.pop_back();
+                if (std::find(Visited.begin(), Visited.end(), Current) != Visited.end())
+                {
+                    continue;
+                }
+                Visited.push_back(Current);
+                const NodeInstance* Node = m_Graph.FindNode(Current);
+                const NodeDescriptor* Descriptor = Node == nullptr
+                    ? nullptr : m_Descriptors.Find(Node->Descriptor);
+                if (Node == nullptr || Descriptor == nullptr || !Descriptor->IsValid())
+                {
+                    return DiagnosticCollection{
+                        MakeExecutionHandleDiagnostic("A Loop condition depends on an unresolved data producer.")
+                    };
+                }
+                if (Descriptor->GetExecutionControlSchema().has_value())
+                {
+                    const ExecutionRegion* ProducerRegion = Node->ExecutionRegion.has_value()
+                        ? m_Graph.FindExecutionRegion(*Node->ExecutionRegion) : nullptr;
+                    if (ProducerRegion == nullptr || ProducerRegion->Entry != Entry ||
+                        !ExecutionProducerDominates(Entry, Current, Predecessor))
+                    {
+                        return DiagnosticCollection{
+                            MakeDataDominanceDiagnostic("A Loop condition producer must belong to the same entry and dominate the pre-test.")
+                        };
+                    }
+                    continue;
+                }
+                for (const InputBindingRecord& Binding : m_Graph.GetInputBindings())
+                {
+                    if (Binding.DestinationNode != Current)
+                    {
+                        continue;
+                    }
+                    if (const OutputReference* Reference =
+                        std::get_if<OutputReference>(&Binding.Binding))
+                    {
+                        Pending.push_back(Reference->SourceNode);
+                    }
+                }
+            }
+            return {};
+        }
+
+        [[nodiscard]] std::expected<LoopStart, DiagnosticCollection> BeginLoopInScope(
+            ExecutionEntryId Entry,
+            ExecutionRegionId ParentRegion,
+            std::uint64_t ParentSerial,
+            std::weak_ptr<const NodeHandle::Context> ParentContext,
+            const ExecutionHandle& Predecessor,
+            NodeDescriptorId LoopDescriptorIdentifier,
+            std::optional<ValueOrExpr<bool>> Condition
+        )
+        {
+            DiagnosticCollection ScopeDiagnostics = ValidateParentScope(
+                CurrentParentScopeKind(), ParentSerial, std::move(ParentContext), Entry,
+                ParentRegion);
+            if (!ScopeDiagnostics.empty())
+            {
+                return std::unexpected(std::move(ScopeDiagnostics));
+            }
+            DiagnosticCollection HandleDiagnostics = ValidateExecutionHandle(
+                Predecessor, Entry, ParentRegion);
+            if (!HandleDiagnostics.empty())
+            {
+                return std::unexpected(std::move(HandleDiagnostics));
+            }
+            const NodeDescriptor* Descriptor = FindValidDescriptor(LoopDescriptorIdentifier);
+            if (Descriptor == nullptr)
+            {
+                return std::unexpected(DescriptorFailure(LoopDescriptorIdentifier,
+                    "The requested Loop descriptor is missing or invalid."));
+            }
+            const LoopControlSchema* Schema = GetControlSchema<LoopControlSchema>(*Descriptor);
+            if (Schema == nullptr)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionRoleDiagnostic("BeginLoop requires a trusted Loop control schema.")
+                });
+            }
+            if (m_NextNodeIdentifier == 0U || m_NextExecutionRegionIdentifier == 0U ||
+                m_NextExecutionScopeSerial == 0U)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeLifecycleDiagnostic("The graph builder exhausted a Loop construction identifier range.")
+                });
+            }
+
+            const NodeInstanceId NodeIdentifier(m_NextNodeIdentifier);
+            const ExecutionRegionId BodyRegionIdentifier(m_NextExecutionRegionIdentifier);
+            const std::uint64_t ScopeSerial = m_NextExecutionScopeSerial;
+            std::optional<InputBindingRecord> PreparedCondition;
+            if (Schema->ExitPolicy == LoopExitPolicy::Conditional)
+            {
+                if (!Schema->ConditionInput.has_value())
+                {
+                    return std::unexpected(DiagnosticCollection{
+                        MakeExecutionRoleDiagnostic("A Conditional Loop schema must declare its Boolean condition input.")
+                    });
+                }
+                const PinSchema& ConditionPin = Descriptor->GetPins()[Schema->ConditionInput->GetValue()];
+                if (Condition.has_value())
+                {
+                    const DiagnosticCollection Provenance = ValidateLoopConditionProvenance(
+                        *Condition, Entry, Predecessor.m_Node);
+                    if (!Provenance.empty())
+                    {
+                        return std::unexpected(Provenance);
+                    }
+                    auto Binding = PrepareInputBindingRecord(NodeIdentifier,
+                        *Schema->ConditionInput, ConditionPin, *Condition);
+                    if (!Binding.has_value())
+                    {
+                        return std::unexpected(std::move(Binding.error()));
+                    }
+                    PreparedCondition = std::move(*Binding);
+                }
+                else if (!ConditionPin.GetDefaultValue().has_value())
+                {
+                    return std::unexpected(DiagnosticCollection{
+                        MakeBindingDiagnostic("A Conditional Loop requires a Boolean condition or compatible descriptor default.")
+                    });
+                }
+            }
+            else if (Condition.has_value())
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeBindingDiagnostic("An Unconditional Loop cannot bind a condition.")
+                });
+            }
+
+            m_Graph.AddNode(NodeInstance{NodeIdentifier, LoopDescriptorIdentifier, ParentRegion});
+            m_Graph.AddControlEdge(ControlEdge{
+                Predecessor.m_Node, Predecessor.m_OutputPin, NodeIdentifier,
+                Schema->ExecutionInput
+            });
+            if (PreparedCondition.has_value())
+            {
+                m_Graph.BindInput(PreparedCondition->DestinationNode,
+                    PreparedCondition->DestinationInputPin, PreparedCondition->Binding,
+                    PreparedCondition->OutputTypeConstraint);
+            }
+            m_Graph.AddExecutionRegion(ExecutionRegion{
+                BodyRegionIdentifier,
+                Entry,
+                ExecutionRegionKind::LoopBody,
+                ParentRegion,
+                NodeIdentifier,
+                Schema->BodyOutput
+            });
+            m_ExecutionScopes.push_back(ExecutionScopeFrame{
+                ExecutionScopeKind::Loop,
+                ScopeSerial,
+                ParentSerial,
+                Entry,
+                BodyRegionIdentifier,
+                NodeIdentifier
+            });
+            AdvanceIdentifier(m_NextNodeIdentifier);
+            AdvanceIdentifier(m_NextExecutionRegionIdentifier);
+            AdvanceIdentifier(m_NextExecutionScopeSerial);
+
+            LoopScope Scope(NodeIdentifier, Entry, ParentRegion, BodyRegionIdentifier,
+                ParentSerial, ScopeSerial, m_Context);
+            NodeHandle Node(NodeIdentifier, LoopDescriptorIdentifier, m_Context);
+            ExecutionHandle BodyOutput(NodeIdentifier, Schema->BodyOutput, Entry,
+                BodyRegionIdentifier, m_Context);
+            return LoopStart{std::move(Scope), std::move(Node), std::move(BodyOutput)};
+        }
+
         [[nodiscard]] std::expected<BranchStart, DiagnosticCollection> BeginBranchInScope(
             ExecutionEntryId Entry,
             ExecutionRegionId ParentRegion,
@@ -2080,9 +2962,7 @@ namespace MiliastraPlusPlus
             const ValueOrExpr<bool>& Condition
         )
         {
-            const ExecutionScopeKind ParentKind = !m_ExecutionScopes.empty() &&
-                m_ExecutionScopes.back().Kind == ExecutionScopeKind::BranchArm
-                ? ExecutionScopeKind::BranchArm : ExecutionScopeKind::Entry;
+            const ExecutionScopeKind ParentKind = CurrentParentScopeKind();
             DiagnosticCollection ScopeDiagnostics = ValidateParentScope(ParentKind,
                 ParentSerial, std::move(ParentContext), Entry, ParentRegion);
             if (!ScopeDiagnostics.empty())
@@ -2377,8 +3257,7 @@ namespace MiliastraPlusPlus
                 });
             }
             DiagnosticCollection ScopeDiagnostics = ValidateParentScope(
-                !m_ExecutionScopes.empty() && m_ExecutionScopes.back().Kind == ExecutionScopeKind::BranchArm
-                    ? ExecutionScopeKind::BranchArm : ExecutionScopeKind::Entry,
+                CurrentParentScopeKind(),
                 ParentSerial, std::move(ParentContext), Entry, ParentRegion, Outcome.m_Serial);
             if (!ScopeDiagnostics.empty())
             {
@@ -2474,8 +3353,7 @@ namespace MiliastraPlusPlus
                 });
             }
             DiagnosticCollection ScopeDiagnostics = ValidateParentScope(
-                !m_ExecutionScopes.empty() && m_ExecutionScopes.back().Kind == ExecutionScopeKind::BranchArm
-                    ? ExecutionScopeKind::BranchArm : ExecutionScopeKind::Entry,
+                CurrentParentScopeKind(),
                 ParentSerial, std::move(ParentContext), Entry, ParentRegion, Outcome.m_Serial);
             if (!ScopeDiagnostics.empty())
             {
