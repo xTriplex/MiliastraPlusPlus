@@ -105,64 +105,74 @@ namespace
     }
 }
 
+namespace
+{
+    void TestGraphIRValidation()
+    {
+        NodeDescriptorRegistry Descriptors = MakeDescriptors();
+        Check(Descriptors.Size() == 2U);
+        Check(Descriptors.Find(SourceDescriptorId) != nullptr);
+        Check(Descriptors.Find(DestinationDescriptorId) != nullptr);
+
+        const GraphIR RepresentativeGraph = MakeRepresentativeGraph();
+        Check(RepresentativeGraph.GetNodeCount() == 2U);
+        Check(RepresentativeGraph.GetInputBindingCount() == 1U);
+        Check(RepresentativeGraph.GetControlEdgeCount() == 1U);
+        Check(std::get<OutputReference>(
+            RepresentativeGraph.GetInputBindings()[0].Binding).SourceNode == SourceNodeId);
+        Check(std::get<OutputReference>(
+            RepresentativeGraph.GetInputBindings()[0].Binding).SourceOutputPin == SourceDataOutput);
+        Check(RepresentativeGraph.GetControlEdges()[0].SourceOutputPin == SourceFlowOutput);
+        Check(RepresentativeGraph.GetControlEdges()[0].DestinationInputPin == DestinationFlowInput);
+        Check(GraphIRValidator::Validate(RepresentativeGraph, Descriptors).empty());
+
+        GraphIR InvalidDescriptorGraph = RepresentativeGraph;
+        InvalidDescriptorGraph.AddNode(NodeInstance{
+            NodeInstanceId(1003U), NodeDescriptorId(999U)
+        });
+        const DiagnosticCollection InvalidDescriptorDiagnostics =
+            GraphIRValidator::Validate(InvalidDescriptorGraph, Descriptors);
+        Check(HasCode(InvalidDescriptorDiagnostics, DiagnosticCode::MissingDescriptor));
+
+        GraphIR IncompatibleBindingGraph = RepresentativeGraph;
+        IncompatibleBindingGraph.BindInput(
+            DestinationNodeId,
+            DestinationDataInput,
+            OutputReference{SourceNodeId, SourceFlowOutput}
+        );
+        const DiagnosticCollection IncompatibleBindingDiagnostics =
+            GraphIRValidator::Validate(IncompatibleBindingGraph, Descriptors);
+        Check(HasCode(IncompatibleBindingDiagnostics, DiagnosticCode::DuplicateInputBinding));
+        Check(HasCode(IncompatibleBindingDiagnostics, DiagnosticCode::IncompatibleGraphIRTypes));
+
+        GraphIR InvalidPinGraph = RepresentativeGraph;
+        InvalidPinGraph.BindInput(
+            DestinationNodeId,
+            DestinationDataInput,
+            OutputReference{SourceNodeId, PinIndex(99U)}
+        );
+        const DiagnosticCollection InvalidPinDiagnostics =
+            GraphIRValidator::Validate(InvalidPinGraph, Descriptors);
+        Check(HasCode(InvalidPinDiagnostics, DiagnosticCode::InvalidGraphIRPinReference));
+
+        GraphIR InvalidControlEdgeGraph = RepresentativeGraph;
+        InvalidControlEdgeGraph.AddControlEdge(ControlEdge{
+            SourceNodeId,
+            SourceDataOutput,
+            DestinationNodeId,
+            DestinationFlowInput
+        });
+        const DiagnosticCollection InvalidControlEdgeDiagnostics =
+            GraphIRValidator::Validate(InvalidControlEdgeGraph, Descriptors);
+        Check(HasCode(InvalidControlEdgeDiagnostics, DiagnosticCode::InvalidControlEdge));
+
+    }
+
+}
+
 int main()
 {
-    NodeDescriptorRegistry Descriptors = MakeDescriptors();
-    Check(Descriptors.Size() == 2U);
-    Check(Descriptors.Find(SourceDescriptorId) != nullptr);
-    Check(Descriptors.Find(DestinationDescriptorId) != nullptr);
-
-    const GraphIR RepresentativeGraph = MakeRepresentativeGraph();
-    Check(RepresentativeGraph.GetNodeCount() == 2U);
-    Check(RepresentativeGraph.GetInputBindingCount() == 1U);
-    Check(RepresentativeGraph.GetControlEdgeCount() == 1U);
-    Check(std::get<OutputReference>(
-        RepresentativeGraph.GetInputBindings()[0].Binding).SourceNode == SourceNodeId);
-    Check(std::get<OutputReference>(
-        RepresentativeGraph.GetInputBindings()[0].Binding).SourceOutputPin == SourceDataOutput);
-    Check(RepresentativeGraph.GetControlEdges()[0].SourceOutputPin == SourceFlowOutput);
-    Check(RepresentativeGraph.GetControlEdges()[0].DestinationInputPin == DestinationFlowInput);
-    Check(GraphIRValidator::Validate(RepresentativeGraph, Descriptors).empty());
-
-    GraphIR InvalidDescriptorGraph = RepresentativeGraph;
-    InvalidDescriptorGraph.AddNode(NodeInstance{
-        NodeInstanceId(1003U), NodeDescriptorId(999U)
-    });
-    const DiagnosticCollection InvalidDescriptorDiagnostics =
-        GraphIRValidator::Validate(InvalidDescriptorGraph, Descriptors);
-    Check(HasCode(InvalidDescriptorDiagnostics, DiagnosticCode::MissingDescriptor));
-
-    GraphIR IncompatibleBindingGraph = RepresentativeGraph;
-    IncompatibleBindingGraph.BindInput(
-        DestinationNodeId,
-        DestinationDataInput,
-        OutputReference{SourceNodeId, SourceFlowOutput}
-    );
-    const DiagnosticCollection IncompatibleBindingDiagnostics =
-        GraphIRValidator::Validate(IncompatibleBindingGraph, Descriptors);
-    Check(HasCode(IncompatibleBindingDiagnostics, DiagnosticCode::DuplicateInputBinding));
-    Check(HasCode(IncompatibleBindingDiagnostics, DiagnosticCode::IncompatibleGraphIRTypes));
-
-    GraphIR InvalidPinGraph = RepresentativeGraph;
-    InvalidPinGraph.BindInput(
-        DestinationNodeId,
-        DestinationDataInput,
-        OutputReference{SourceNodeId, PinIndex(99U)}
-    );
-    const DiagnosticCollection InvalidPinDiagnostics =
-        GraphIRValidator::Validate(InvalidPinGraph, Descriptors);
-    Check(HasCode(InvalidPinDiagnostics, DiagnosticCode::InvalidGraphIRPinReference));
-
-    GraphIR InvalidControlEdgeGraph = RepresentativeGraph;
-    InvalidControlEdgeGraph.AddControlEdge(ControlEdge{
-        SourceNodeId,
-        SourceDataOutput,
-        DestinationNodeId,
-        DestinationFlowInput
-    });
-    const DiagnosticCollection InvalidControlEdgeDiagnostics =
-        GraphIRValidator::Validate(InvalidControlEdgeGraph, Descriptors);
-    Check(HasCode(InvalidControlEdgeDiagnostics, DiagnosticCode::InvalidControlEdge));
+    TestGraphIRValidation();
 
     return 0;
 }
