@@ -477,6 +477,15 @@ namespace MiliastraPlusPlus
                     }
                     return !Control.ConditionInput.has_value();
                 }
+                else if constexpr (std::is_same_v<Schema, ReturnControlSchema>)
+                {
+                    return AddFlowRole(Control.ExecutionInput, PinDirection::Input) &&
+                        std::none_of(m_Pins.begin(), m_Pins.end(),
+                            [](const PinSchema& Pin)
+                            {
+                                return Pin.GetCategory() == PinCategory::Data;
+                            });
+                }
                 else
                 {
                     return AddFlowRole(Control.ExecutionInput, PinDirection::Input);

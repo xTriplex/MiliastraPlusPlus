@@ -117,6 +117,7 @@ namespace MiliastraPlusPlus
                         Diagnostics,
                         DiagnosticCode::InvalidInputBinding,
                         "An input binding destination must be a data input pin.");
+                    continue;
                 }
                 if (DestinationPin->GetCardinality() != PinCardinality::Multiple &&
                     CountBindings(Graph, Record.DestinationNode, Record.DestinationInputPin) > 1U)
@@ -843,6 +844,56 @@ namespace MiliastraPlusPlus
             return GetControlSchema<LoopControlSchema>(Descriptor) != nullptr;
         }
 
+        static bool IsReturnNode(
+            const NodeInstance& Node,
+            const NodeDescriptorRegistry& Descriptors
+        )
+        {
+            const NodeDescriptor* Descriptor = Node.Descriptor.IsValid()
+                ? Descriptors.Find(Node.Descriptor) : nullptr;
+            return GetControlSchema<ReturnControlSchema>(Descriptor) != nullptr;
+        }
+
+        static void ValidateReturnTerminalTopology(
+            const GraphIR& Graph,
+            const NodeDescriptorRegistry& Descriptors,
+            DiagnosticCollection& Diagnostics
+        )
+        {
+            if (Graph.GetExecutionModel() != ExecutionModel::Structured)
+            {
+                return;
+            }
+            for (const NodeInstance& Node : Graph.GetNodes())
+            {
+                const NodeDescriptor* Descriptor = Node.Descriptor.IsValid()
+                    ? Descriptors.Find(Node.Descriptor) : nullptr;
+                const ReturnControlSchema* Return =
+                    GetControlSchema<ReturnControlSchema>(Descriptor);
+                if (Return == nullptr)
+                {
+                    continue;
+                }
+
+                if (CountIncomingEndpoint(Graph, Node.Identifier, Return->ExecutionInput) != 1U)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability,
+                        "A structured Return must have exactly one explicit execution predecessor.");
+                }
+                const bool HasSuccessor = std::any_of(
+                    Graph.GetControlEdges().begin(), Graph.GetControlEdges().end(),
+                    [&Node](const ControlEdge& Edge)
+                    {
+                        return Edge.SourceNode == Node.Identifier;
+                    });
+                if (HasSuccessor)
+                {
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability,
+                        "A Return path is terminal and cannot have an execution successor.");
+                }
+            }
+        }
+
         static bool IsLoopTransferEdge(
             const GraphIR& Graph,
             const NodeDescriptorRegistry& Descriptors,
@@ -925,6 +976,10 @@ namespace MiliastraPlusPlus
                 {
                     continue;
                 }
+                if (IsReturnNode(*Source, Descriptors))
+                {
+                    continue;
+                }
                 if (CountOutgoingEndpoint(Graph, Edge.SourceNode, Edge.SourceOutputPin) > 1U)
                 {
                     Add(Diagnostics, DiagnosticCode::ExecutionEndpointAlreadyConsumed,
@@ -946,6 +1001,7 @@ namespace MiliastraPlusPlus
                 if (Source == nullptr || Destination == nullptr ||
                     !Source->ExecutionRegion.has_value() ||
                     !Destination->ExecutionRegion.has_value() ||
+                    IsReturnNode(*Source, Descriptors) ||
                     IsLoopTransferEdge(Graph, Descriptors, Edge))
                 {
                     continue;
@@ -1025,6 +1081,11 @@ namespace MiliastraPlusPlus
                 for (std::size_t Cursor = 0U; Cursor < Reachable.size(); ++Cursor)
                 {
                     const NodeInstanceId Current = Reachable[Cursor];
+                    const NodeInstance* CurrentNode = Graph.FindNode(Current);
+                    if (CurrentNode == nullptr || IsReturnNode(*CurrentNode, Descriptors))
+                    {
+                        continue;
+                    }
                     for (const ControlEdge& Edge : Graph.GetControlEdges())
                     {
                         if (Edge.SourceNode != Current ||
@@ -1032,11 +1093,22 @@ namespace MiliastraPlusPlus
                         {
                             continue;
                         }
+                        const PinSchema* SourcePin = FindPin(
+                            CurrentNode, Edge.SourceOutputPin, Descriptors);
                         const NodeInstance* Destination = Graph.FindNode(Edge.DestinationNode);
+                        const PinSchema* DestinationPin = FindPin(
+                            Destination, Edge.DestinationInputPin, Descriptors);
                         const ExecutionRegion* Region = Destination != nullptr &&
                             Destination->ExecutionRegion.has_value()
                             ? Graph.FindExecutionRegion(*Destination->ExecutionRegion) : nullptr;
-                        if (Destination == nullptr || Region == nullptr || Region->Entry != Entry.Identifier ||
+                        if (SourcePin == nullptr || SourcePin->GetDirection() != PinDirection::Output ||
+                            SourcePin->GetCategory() != PinCategory::Execution ||
+                            SourcePin->GetType() != TypeDesc::Flow() ||
+                            DestinationPin == nullptr ||
+                            DestinationPin->GetDirection() != PinDirection::Input ||
+                            DestinationPin->GetCategory() != PinCategory::Execution ||
+                            DestinationPin->GetType() != TypeDesc::Flow() ||
+                            Destination == nullptr || Region == nullptr || Region->Entry != Entry.Identifier ||
                             IsInsideLoopBody(Graph, *Destination))
                         {
                             continue;
@@ -1085,6 +1157,7 @@ namespace MiliastraPlusPlus
                 ValidateStructuredCycles(Graph, Descriptors, Entry.Identifier, Reachable, Diagnostics);
             }
 
+            ValidateReturnTerminalTopology(Graph, Descriptors, Diagnostics);
             if (Diagnostics.size() == InitialDiagnosticCount && !ContainsError(Diagnostics))
             {
                 ValidateExecutionDataDominance(Graph, Descriptors, Diagnostics);
@@ -1124,6 +1197,11 @@ namespace MiliastraPlusPlus
                 for (const ControlEdge& Edge : Graph.GetControlEdges())
                 {
                     if (IsLoopTransferEdge(Graph, Descriptors, Edge))
+                    {
+                        continue;
+                    }
+                    const NodeInstance* EdgeSource = Graph.FindNode(Edge.SourceNode);
+                    if (EdgeSource == nullptr || IsReturnNode(*EdgeSource, Descriptors))
                     {
                         continue;
                     }
@@ -1282,11 +1360,24 @@ namespace MiliastraPlusPlus
                         {
                             continue;
                         }
+                        const NodeInstance* Source = Graph.FindNode(Edge.SourceNode);
+                        const PinSchema* SourcePin = FindPin(
+                            Source, Edge.SourceOutputPin, Descriptors);
                         const NodeInstance* Destination = Graph.FindNode(Edge.DestinationNode);
+                        const PinSchema* DestinationPin = FindPin(
+                            Destination, Edge.DestinationInputPin, Descriptors);
                         const ExecutionRegion* Region = Destination != nullptr &&
                             Destination->ExecutionRegion.has_value()
                             ? Graph.FindExecutionRegion(*Destination->ExecutionRegion) : nullptr;
-                        if (Destination != nullptr && Region != nullptr && Region->Entry == Entry &&
+                        if (SourcePin != nullptr &&
+                            SourcePin->GetDirection() == PinDirection::Output &&
+                            SourcePin->GetCategory() == PinCategory::Execution &&
+                            SourcePin->GetType() == TypeDesc::Flow() &&
+                            DestinationPin != nullptr &&
+                            DestinationPin->GetDirection() == PinDirection::Input &&
+                            DestinationPin->GetCategory() == PinCategory::Execution &&
+                            DestinationPin->GetType() == TypeDesc::Flow() &&
+                            Destination != nullptr && Region != nullptr && Region->Entry == Entry &&
                             !IsInsideLoopBody(Graph, *Destination))
                         {
                             bool DestinationRemoved = false;
@@ -1404,6 +1495,15 @@ namespace MiliastraPlusPlus
             {
                 return false;
             }
+            const NodeDescriptor* SourceDescriptor = Descriptors.Find(Source->Descriptor);
+            const PinSchema* SourcePin = FindPin(Source, Edge.SourceOutputPin, Descriptors);
+            if (GetControlSchema<ReturnControlSchema>(SourceDescriptor) != nullptr ||
+                SourcePin == nullptr || SourcePin->GetDirection() != PinDirection::Output ||
+                SourcePin->GetCategory() != PinCategory::Execution ||
+                SourcePin->GetType() != TypeDesc::Flow())
+            {
+                return false;
+            }
             const LoopControlSchema* TargetSchema = FindLoopSchema(
                 Graph, Descriptors, Target->Identifier);
             if (TargetSchema == nullptr ||
@@ -1462,6 +1562,11 @@ namespace MiliastraPlusPlus
             for (std::size_t Cursor = 0U; Cursor < Reachable.size(); ++Cursor)
             {
                 const NodeInstanceId Current = Reachable[Cursor];
+                const NodeInstance* CurrentNode = Graph.FindNode(Current);
+                if (CurrentNode == nullptr || IsReturnNode(*CurrentNode, Descriptors))
+                {
+                    continue;
+                }
                 const LoopControlSchema* CurrentLoop = FindLoopSchema(
                     Graph, Descriptors, Current);
                 for (const ControlEdge& Edge : Graph.GetControlEdges())
@@ -1470,7 +1575,21 @@ namespace MiliastraPlusPlus
                     {
                         continue;
                     }
+                    const PinSchema* SourcePin = FindPin(
+                        CurrentNode, Edge.SourceOutputPin, Descriptors);
                     const NodeInstance* Destination = Graph.FindNode(Edge.DestinationNode);
+                    const PinSchema* DestinationPin = FindPin(
+                        Destination, Edge.DestinationInputPin, Descriptors);
+                    if (SourcePin == nullptr || SourcePin->GetDirection() != PinDirection::Output ||
+                        SourcePin->GetCategory() != PinCategory::Execution ||
+                        SourcePin->GetType() != TypeDesc::Flow() ||
+                        DestinationPin == nullptr ||
+                        DestinationPin->GetDirection() != PinDirection::Input ||
+                        DestinationPin->GetCategory() != PinCategory::Execution ||
+                        DestinationPin->GetType() != TypeDesc::Flow())
+                    {
+                        continue;
+                    }
                     const LoopControlSchema* DestinationLoop = Destination == nullptr
                         ? nullptr : FindLoopSchema(Graph, Descriptors, Destination->Identifier);
                     if (DestinationLoop != nullptr &&
@@ -2292,6 +2411,11 @@ namespace MiliastraPlusPlus
                 for (std::size_t Cursor = 0U; Cursor < Nodes.size(); ++Cursor)
                 {
                     const NodeInstanceId Current = Nodes[Cursor];
+                    const NodeInstance* CurrentNode = Graph.FindNode(Current);
+                    if (CurrentNode == nullptr || IsReturnNode(*CurrentNode, Descriptors))
+                    {
+                        continue;
+                    }
                     for (const ControlEdge& Edge : Graph.GetControlEdges())
                     {
                         if (Edge.SourceNode != Current ||

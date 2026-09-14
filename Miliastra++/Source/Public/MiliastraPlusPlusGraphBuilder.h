@@ -1070,6 +1070,36 @@ namespace MiliastraPlusPlus
                 Scope.m_Context, Predecessor, SequenceDescriptorIdentifier);
         }
 
+        [[nodiscard]] std::expected<void, DiagnosticCollection> Return(
+            EntryScope& Scope,
+            const ExecutionHandle& Tail,
+            NodeDescriptorId ReturnDescriptorIdentifier
+        )
+        {
+            return ReturnInScope(ExecutionScopeKind::Entry, Scope.m_Entry, Scope.m_Region,
+                Scope.m_Serial, Scope.m_Context, Tail, ReturnDescriptorIdentifier);
+        }
+
+        [[nodiscard]] std::expected<void, DiagnosticCollection> Return(
+            BranchArmScope& Scope,
+            const ExecutionHandle& Tail,
+            NodeDescriptorId ReturnDescriptorIdentifier
+        )
+        {
+            return ReturnInScope(ExecutionScopeKind::BranchArm, Scope.m_Entry, Scope.m_Region,
+                Scope.m_Serial, Scope.m_Context, Tail, ReturnDescriptorIdentifier);
+        }
+
+        [[nodiscard]] std::expected<void, DiagnosticCollection> Return(
+            LoopScope& Scope,
+            const ExecutionHandle& Tail,
+            NodeDescriptorId ReturnDescriptorIdentifier
+        )
+        {
+            return ReturnInScope(ExecutionScopeKind::Loop, Scope.m_Entry, Scope.m_BodyRegion,
+                Scope.m_Serial, Scope.m_Context, Tail, ReturnDescriptorIdentifier);
+        }
+
         [[nodiscard]] std::expected<BranchStart, DiagnosticCollection> BeginBranch(
             EntryScope& Parent,
             const ExecutionHandle& Predecessor,
@@ -2500,6 +2530,67 @@ namespace MiliastraPlusPlus
             ExecutionHandle Output(NodeIdentifier, Schema->ExecutionOutput, Entry,
                 Region, m_Context);
             return ExecutionNodeResult{std::move(Node), std::move(Output)};
+        }
+
+        [[nodiscard]] std::expected<void, DiagnosticCollection> ReturnInScope(
+            ExecutionScopeKind ScopeKind,
+            ExecutionEntryId Entry,
+            ExecutionRegionId Region,
+            std::uint64_t ScopeSerial,
+            std::weak_ptr<const NodeHandle::Context> ScopeContext,
+            const ExecutionHandle& Tail,
+            NodeDescriptorId ReturnDescriptorIdentifier
+        )
+        {
+            DiagnosticCollection ScopeDiagnostics = ValidateParentScope(
+                ScopeKind, ScopeSerial, std::move(ScopeContext), Entry, Region);
+            if (!ScopeDiagnostics.empty())
+            {
+                return std::unexpected(std::move(ScopeDiagnostics));
+            }
+
+            DiagnosticCollection HandleDiagnostics = ValidateExecutionHandle(Tail, Entry, Region);
+            if (!HandleDiagnostics.empty())
+            {
+                return std::unexpected(std::move(HandleDiagnostics));
+            }
+
+            const NodeDescriptor* Descriptor = FindValidDescriptor(ReturnDescriptorIdentifier);
+            if (Descriptor == nullptr)
+            {
+                return std::unexpected(DescriptorFailure(ReturnDescriptorIdentifier,
+                    "The requested Return descriptor is missing or invalid."));
+            }
+            const ReturnControlSchema* Schema =
+                GetControlSchema<ReturnControlSchema>(*Descriptor);
+            if (Schema == nullptr)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeExecutionRoleDiagnostic(
+                        "Return requires a trusted Return control schema.")
+                });
+            }
+            if (m_NextNodeIdentifier == 0U)
+            {
+                return std::unexpected(DiagnosticCollection{
+                    MakeLifecycleDiagnostic("The graph builder exhausted its node identifier range.")
+                });
+            }
+
+            const NodeInstanceId NodeIdentifier(m_NextNodeIdentifier);
+            m_Graph.AddNode(NodeInstance{
+                NodeIdentifier,
+                ReturnDescriptorIdentifier,
+                Region
+            });
+            m_Graph.AddControlEdge(ControlEdge{
+                Tail.m_Node,
+                Tail.m_OutputPin,
+                NodeIdentifier,
+                Schema->ExecutionInput
+            });
+            AdvanceIdentifier(m_NextNodeIdentifier);
+            return {};
         }
 
         template<typename T>
