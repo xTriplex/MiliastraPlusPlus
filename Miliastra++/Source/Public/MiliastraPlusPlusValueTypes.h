@@ -8,6 +8,7 @@
 
 namespace MiliastraPlusPlus
 {
+    /// Strong graph-local identity domain; zero is reserved for an invalid/default identifier.
     template<typename Tag>
     class ValueIdentifier
     {
@@ -45,6 +46,7 @@ namespace MiliastraPlusPlus
     using ExecutionEntryId = ValueIdentifier<ExecutionEntryIdTag>;
     using ExecutionRegionId = ValueIdentifier<ExecutionRegionIdTag>;
 
+    /// Descriptor pin ordinal. The default sentinel is invalid.
     class PinIndex
     {
     public:
@@ -161,6 +163,7 @@ namespace MiliastraPlusPlus
         Data m_Data;
     };
 
+    /// Identifies a producer endpoint; per-binding type intent is stored by GraphIR separately.
     struct OutputReference
     {
         NodeInstanceId SourceNode;

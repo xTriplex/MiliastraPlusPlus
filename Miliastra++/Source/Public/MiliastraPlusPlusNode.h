@@ -13,6 +13,7 @@
 
 namespace MiliastraPlusPlus
 {
+    /// Phase 1 node that owns its pins; copying it clones those pins as well.
     class Node
     {
     public:

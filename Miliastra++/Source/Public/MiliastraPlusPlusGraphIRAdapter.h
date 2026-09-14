@@ -28,6 +28,7 @@ namespace MiliastraPlusPlus
         std::vector<GraphIRNodeMapping> Nodes;
     };
 
+    /// Converts the legacy graph only through caller-supplied node and pin mappings.
     class GraphIRAdapter
     {
     public:

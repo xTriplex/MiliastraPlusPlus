@@ -345,6 +345,7 @@ namespace
                 : Builder.BeginLoop(Entry->Scope, Entry->RootOutput, LoopDescriptor);
             MPP_CHECK(Loop.has_value());
 
+            // The transfer itself is the first body action; this graph needs no filler Sequence.
             const auto Transfer = IsBreak
                 ? Builder.Break(Loop->Scope, Loop->BodyOutput)
                 : Builder.Continue(Loop->Scope, Loop->BodyOutput);

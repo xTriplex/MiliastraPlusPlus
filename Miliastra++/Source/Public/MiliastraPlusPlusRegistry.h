@@ -9,6 +9,7 @@
 
 namespace MiliastraPlusPlus
 {
+    /// Phase 1 singleton factory registry, keyed by the caller-provided type name.
     class Registry
     {
     public:
@@ -22,6 +23,7 @@ namespace MiliastraPlusPlus
 
         void RegisterNodeType(const std::string& TypeName, NodeFactory Factory)
         {
+            // Registering the same name replaces its current factory.
             m_Factories[TypeName] = Factory;
         }
 

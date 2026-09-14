@@ -258,6 +258,7 @@ namespace
 
     void TestReturnReturnBranchHasZeroLiveArms(const NodeDescriptorRegistry& Registry)
     {
+        // Each arm has its own Return because a Return input is single-cardinality.
         GraphBuilder Builder(Registry);
         auto Entry = Builder.BeginEntry(EntryId);
         MPP_CHECK(Entry.has_value());
@@ -374,6 +375,7 @@ namespace
 
     void TestConditionalAndUnconditionalReturnLoops(const NodeDescriptorRegistry& Registry)
     {
+        // A conditional loop can still exit when its condition is false; Return is not a Break.
         {
             GraphBuilder Builder(Registry);
             auto Entry = Builder.BeginEntry(EntryId);
@@ -519,6 +521,8 @@ namespace
 
     void TestEntryCompletionAndMultipleEntries(const NodeDescriptorRegistry& Registry)
     {
+        // Root-only is invalid, while Return or an ordinary first action may close
+        // an entry.
         {
             GraphBuilder Builder(Registry);
             auto Empty = Builder.BeginEntry(EntryId);

@@ -17,6 +17,8 @@
 
 namespace MiliastraPlusPlus
 {
+    /// Registry identity for a reusable node schema, separate from graph-local
+    /// node identity.
     class NodeDescriptorId
     {
     public:
@@ -112,9 +114,12 @@ namespace MiliastraPlusPlus
 
     struct ReturnControlSchema
     {
+        // Return is execution-only and has no continuation pin.
         PinIndex ExecutionInput;
     };
 
+    /// Trusted control roles refer to pin indices; pin labels do not define
+    /// execution semantics.
     using ExecutionControlSchema = std::variant<
         EntryControlSchema,
         SequenceControlSchema,
@@ -123,6 +128,8 @@ namespace MiliastraPlusPlus
         LoopControlSchema,
         ReturnControlSchema>;
 
+    /// Pin type, direction, cardinality, and literal policy used to validate
+    /// node instances.
     class PinSchema
     {
     public:
@@ -190,6 +197,7 @@ namespace MiliastraPlusPlus
         std::optional<LiteralValue> m_DefaultValue;
     };
 
+    /// A trusted node schema. Structured control meaning comes from its control schema.
     class NodeDescriptor
     {
     public:
@@ -547,6 +555,7 @@ namespace MiliastraPlusPlus
         std::optional<ExecutionControlSchema> m_ControlSchema;
     };
 
+    /// Owns validated descriptors and resolves them by registry-local identifier.
     class NodeDescriptorRegistry
     {
     public:

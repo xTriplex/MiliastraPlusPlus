@@ -8,6 +8,7 @@
 
 namespace MiliastraPlusPlus
 {
+    /// Phase 1 edge between node-local pin addresses.
     class Link
     {
     public:

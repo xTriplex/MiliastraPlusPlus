@@ -62,6 +62,8 @@ namespace MiliastraPlusPlus
         std::uint32_t m_Value = 0U;
     };
 
+    /// Recursive backend-neutral type description; StructObject carries identity,
+    /// not reflected fields.
     class TypeDesc
     {
     public:
@@ -257,6 +259,7 @@ namespace MiliastraPlusPlus
             return true;
         }
 
+        // Different generic parameters need an owner binding context, which this local operation lacks.
         [[nodiscard]] std::expected<TypeDesc, Diagnostic> Unify(const TypeDesc& OtherType) const
         {
             if (!IsValid() || !OtherType.IsValid())

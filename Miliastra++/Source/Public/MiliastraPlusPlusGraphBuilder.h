@@ -21,6 +21,7 @@ namespace MiliastraPlusPlus
 {
     class GraphBuilder;
 
+    /// Builder-context-bound identity for a graph node; it expires when that context closes.
     class NodeHandle
     {
     public:
@@ -267,6 +268,7 @@ namespace MiliastraPlusPlus
         }
     }
 
+    /// Data-output identity. Any explicit type intent is stored on the input binding.
     template<typename T>
     class Output
     {
@@ -310,6 +312,7 @@ namespace MiliastraPlusPlus
     template<typename T>
     class ValueOrExpr;
 
+    /// Typed graph-variable reference; this API exposes no variable assignment operation.
     template<typename T>
     class Variable
     {
@@ -344,6 +347,7 @@ namespace MiliastraPlusPlus
         std::weak_ptr<const NodeHandle::Context> m_Context;
     };
 
+    /// A data input source: literal, output reference, or graph-variable reference.
     template<typename T>
     class ValueOrExpr
     {
@@ -380,6 +384,7 @@ namespace MiliastraPlusPlus
         return ValueOrExpr<T>(*this);
     }
 
+    /// Explicit live Flow predecessor tied to one builder, entry, and execution region.
     class ExecutionHandle final
     {
     public:
@@ -436,6 +441,7 @@ namespace MiliastraPlusPlus
         std::weak_ptr<const NodeHandle::Context> m_Context;
     };
 
+    /// Capability for constructing and closing one structured execution entry.
     class EntryScope final
     {
     public:
@@ -489,6 +495,7 @@ namespace MiliastraPlusPlus
         std::weak_ptr<const NodeHandle::Context> m_Context;
     };
 
+    /// Capability for opening each semantic arm of a branch exactly once.
     class BranchScope final
     {
     public:
@@ -557,10 +564,12 @@ namespace MiliastraPlusPlus
         False
     };
 
+    /// Marks a closed arm as having no live tail, for example after Return or a loop transfer.
     struct NoContinuation final
     {
     };
 
+    /// Capability for building one branch arm in its own execution region.
     class BranchArmScope final
     {
     public:
@@ -627,6 +636,7 @@ namespace MiliastraPlusPlus
         std::weak_ptr<const NodeHandle::Context> m_Context;
     };
 
+    /// Closed arm result, carrying a tail only when that arm still has a continuation.
     class BranchArmOutcome final
     {
     public:
@@ -692,6 +702,7 @@ namespace MiliastraPlusPlus
         std::weak_ptr<const NodeHandle::Context> m_Context;
     };
 
+    /// Branch result with zero, one, or two live tails; merges remain explicit.
     class BranchOutcome final
     {
     public:
@@ -768,6 +779,7 @@ namespace MiliastraPlusPlus
         std::weak_ptr<const NodeHandle::Context> m_Context;
     };
 
+    /// Capability for building one LoopBody and targeting that nearest active loop.
     class LoopScope final
     {
     public:
@@ -865,9 +877,12 @@ namespace MiliastraPlusPlus
 
     struct LoopResult final
     {
+        // Conditional loops retain their condition-false exit. Unconditional loops
+        // expose an exit only after a reachable Break.
         std::optional<ExecutionHandle> ExitOutput;
     };
 
+    /// Builds canonical GraphIR using explicit predecessors and context-bound scope capabilities.
     class GraphBuilder
     {
     public:
@@ -880,6 +895,7 @@ namespace MiliastraPlusPlus
         GraphBuilder(const GraphBuilder&) = delete;
         GraphBuilder& operator=(const GraphBuilder&) = delete;
 
+        // The context token moves with the graph so active handles and scopes remain usable.
         GraphBuilder(GraphBuilder&& Other) noexcept
             : m_Descriptors(Other.m_Descriptors)
             , m_Graph(std::move(Other.m_Graph))
@@ -901,6 +917,7 @@ namespace MiliastraPlusPlus
 
         GraphBuilder& operator=(GraphBuilder&&) = delete;
 
+        /// Starts a structured entry with a real Entry root and its root Flow output.
         [[nodiscard]] std::expected<EntryStart, DiagnosticCollection> BeginEntry(
             NodeDescriptorId EntryDescriptorIdentifier
         )
@@ -988,6 +1005,8 @@ namespace MiliastraPlusPlus
             return EntryStart{std::move(Scope), std::move(Root), std::move(RootOutput)};
         }
 
+        /// Closes a resolved entry; the root needs an outgoing action, but paths
+        /// need not Return.
         [[nodiscard]] std::expected<void, DiagnosticCollection> EndEntry(EntryScope&& Scope)
         {
             if (!IsBuilderOpen())
@@ -1037,6 +1056,7 @@ namespace MiliastraPlusPlus
             return {};
         }
 
+        /// Appends a Sequence in the active region and returns its explicit live output.
         [[nodiscard]] std::expected<ExecutionNodeResult, DiagnosticCollection>
         AppendExecutionNode(
             EntryScope& Scope,
@@ -1070,6 +1090,7 @@ namespace MiliastraPlusPlus
                 Scope.m_Context, Predecessor, SequenceDescriptorIdentifier);
         }
 
+        /// Appends a valueless Return and consumes Tail. Success produces no continuation handle.
         [[nodiscard]] std::expected<void, DiagnosticCollection> Return(
             EntryScope& Scope,
             const ExecutionHandle& Tail,
@@ -1133,6 +1154,7 @@ namespace MiliastraPlusPlus
                 Parent.m_Context, Predecessor, BranchDescriptorIdentifier, Condition);
         }
 
+        /// Opens one arm; true and false arms may be built in either order.
         [[nodiscard]] std::expected<BranchArmStart, DiagnosticCollection> BeginArm(
             BranchScope& Branch,
             BranchArm Arm
@@ -1218,6 +1240,7 @@ namespace MiliastraPlusPlus
             return BranchArmStart{std::move(Scope), std::move(ArmOutput)};
         }
 
+        /// Closes an arm with its live tail. Use NoContinuation when the path has already terminated.
         [[nodiscard]] std::expected<BranchArmOutcome, DiagnosticCollection> EndArm(
             BranchArmScope&& Arm,
             const ExecutionHandle& LiveTail
@@ -1234,6 +1257,7 @@ namespace MiliastraPlusPlus
             return EndBranchArm(std::move(Arm), nullptr);
         }
 
+        /// Combines the two closed arms without implicitly joining their live tails.
         [[nodiscard]] std::expected<BranchOutcome, DiagnosticCollection> EndBranch(
             BranchScope&& Branch,
             BranchArmOutcome&& TrueArm,
@@ -1243,6 +1267,7 @@ namespace MiliastraPlusPlus
             return EndBranchConstruction(std::move(Branch), std::move(TrueArm), std::move(FalseArm));
         }
 
+        /// Materializes the required merge for a branch with two live arms.
         [[nodiscard]] std::expected<JoinResult, DiagnosticCollection> Join(
             EntryScope& Parent,
             BranchOutcome&& TwoLiveArms,
@@ -1263,6 +1288,7 @@ namespace MiliastraPlusPlus
                 Parent.m_Context, std::move(TwoLiveArms), JoinDescriptorIdentifier);
         }
 
+        /// Adds a parent-region Sequence for the sole live arm of a branch.
         [[nodiscard]] std::expected<ExecutionNodeResult, DiagnosticCollection> ContinueWith(
             EntryScope& Parent,
             BranchOutcome&& OneLiveArm,
@@ -1303,6 +1329,7 @@ namespace MiliastraPlusPlus
                 Parent.m_Context, std::move(OneLiveArm), SequenceDescriptorIdentifier);
         }
 
+        /// Starts a loop whose body is built in a child LoopBody region.
         [[nodiscard]] std::expected<LoopStart, DiagnosticCollection> BeginLoop(
             EntryScope& Parent,
             const ExecutionHandle& Predecessor,
@@ -1336,6 +1363,7 @@ namespace MiliastraPlusPlus
                 Parent.m_Context, Predecessor, LoopDescriptorIdentifier, std::move(Condition));
         }
 
+        /// Consumes Tail into the nearest active loop's BreakInput.
         [[nodiscard]] std::expected<void, DiagnosticCollection> Break(
             LoopScope& NearestLoop,
             const ExecutionHandle& Tail
@@ -1344,6 +1372,7 @@ namespace MiliastraPlusPlus
             return AddLoopTransfer(NearestLoop, Tail, true);
         }
 
+        /// Consumes Tail into the nearest active loop's RepeatInput.
         [[nodiscard]] std::expected<void, DiagnosticCollection> Continue(
             LoopScope& NearestLoop,
             const ExecutionHandle& Tail
@@ -1352,6 +1381,7 @@ namespace MiliastraPlusPlus
             return AddLoopTransfer(NearestLoop, Tail, false);
         }
 
+        /// Closes a resolved body without adding an implicit Repeat edge.
         [[nodiscard]] std::expected<LoopResult, DiagnosticCollection> EndLoop(
             LoopScope&& Scope
         )
@@ -1766,6 +1796,7 @@ namespace MiliastraPlusPlus
             return Node != nullptr && Node->Descriptor == Handle.GetDescriptor();
         }
 
+        /// Checks open builder scopes, then delegates graph semantics to GraphIRValidator.
         [[nodiscard]] DiagnosticCollection Validate() const
         {
             if (m_IsClosed)
@@ -1783,6 +1814,8 @@ namespace MiliastraPlusPlus
             return Diagnostics;
         }
 
+        /// Consumes the builder and invalidates its context before returning or
+        /// reporting validation errors.
         [[nodiscard]] std::expected<GraphIR, DiagnosticCollection> Finalize() &&
         {
             if (m_IsClosed)
@@ -2532,6 +2565,7 @@ namespace MiliastraPlusPlus
             return ExecutionNodeResult{std::move(Node), std::move(Output)};
         }
 
+        // Keep every check above the first graph mutation so a failed Return leaves Tail reusable.
         [[nodiscard]] std::expected<void, DiagnosticCollection> ReturnInScope(
             ExecutionScopeKind ScopeKind,
             ExecutionEntryId Entry,

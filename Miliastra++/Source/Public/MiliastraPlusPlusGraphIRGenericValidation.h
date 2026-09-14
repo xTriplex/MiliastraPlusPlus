@@ -14,6 +14,7 @@
 
 namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
 {
+    // Generic bindings are solved independently for each node or graph-variable owner.
     enum class GenericOwnerKind : std::uint8_t
     {
         NodeInstance,
@@ -973,6 +974,8 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
         std::vector<std::pair<std::size_t, std::size_t>> m_ActiveBindingPairs;
     };
 
+    /// Derives generic constraints without changing GraphIR or treating execution
+    /// regions as owners.
     [[nodiscard]] inline DiagnosticCollection ValidateGenericTypes(
         const GraphIR& Graph,
         const NodeDescriptorRegistry& Descriptors

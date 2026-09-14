@@ -10,6 +10,8 @@
 
 namespace MiliastraPlusPlus
 {
+    /// One graph-local node instance; optional region membership is persisted for
+    /// structured execution.
     struct NodeInstance
     {
         NodeInstanceId Identifier;
@@ -42,9 +44,11 @@ namespace MiliastraPlusPlus
         NodeInstanceId DestinationNode;
         PinIndex DestinationInputPin;
         InputBinding Binding;
+        // Output intent belongs to this binding, not to the OutputReference itself.
         std::optional<TypeDesc> OutputTypeConstraint;
     };
 
+    /// The sole persisted node-to-node execution topology.
     struct ControlEdge
     {
         NodeInstanceId SourceNode;
@@ -53,6 +57,7 @@ namespace MiliastraPlusPlus
         PinIndex DestinationInputPin;
     };
 
+    /// Unstructured graphs carry no inferred Entry or region ownership.
     enum class ExecutionModel
     {
         Unstructured,
@@ -79,6 +84,8 @@ namespace MiliastraPlusPlus
         ExecutionRegionId Identifier;
         ExecutionEntryId Entry;
         ExecutionRegionKind Kind;
+        // Parent records lexical containment; owner fields identify the construct
+        // output that creates the region.
         std::optional<ExecutionRegionId> Parent;
         std::optional<NodeInstanceId> OwnerNode;
         std::optional<PinIndex> OwnerOutputPin;
@@ -86,6 +93,7 @@ namespace MiliastraPlusPlus
         auto operator<=>(const ExecutionRegion&) const = default;
     };
 
+    /// Canonical persisted graph representation used by validation and serialization.
     class GraphIR
     {
     public:

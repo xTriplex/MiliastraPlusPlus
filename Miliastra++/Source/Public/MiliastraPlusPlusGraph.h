@@ -16,6 +16,7 @@
 
 namespace MiliastraPlusPlus
 {
+    /// Mutable Phase 1 graph. Conversion to canonical GraphIR is an explicit adapter step.
     class Graph
     {
     public:
@@ -151,6 +152,8 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] DiagnosticCollection PropagateTypes()
         {
+            // Resolved generic pin types are cached on pins, so discard old results
+            // before solving again.
             ClearResolvedGenericTypes();
 
             DiagnosticCollection Diagnostics;

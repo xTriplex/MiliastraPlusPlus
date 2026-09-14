@@ -82,6 +82,7 @@ namespace MiliastraPlusPlus
         std::uint32_t m_Value;
     };
 
+    /// A Phase 1 pin address is local to its owning node.
     struct PinReference
     {
         NodeIdentifier OwningNodeIdentifier;

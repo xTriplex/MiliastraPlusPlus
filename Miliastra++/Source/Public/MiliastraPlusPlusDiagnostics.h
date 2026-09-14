@@ -77,6 +77,7 @@ namespace MiliastraPlusPlus
         InvalidGraphIRAdapterMapping
     };
 
+    /// Callers can branch on Code; Message carries human-readable context.
     struct Diagnostic
     {
         DiagnosticSeverity Severity;

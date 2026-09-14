@@ -567,6 +567,8 @@ namespace MiliastraPlusPlus::GraphIRJson
         }
     }
 
+    /// Writes the current v3 schema, including the explicit execution model and
+    /// ownership.
     [[nodiscard]] inline Json Serialize(const GraphIR& Graph)
     {
         Json Result{
@@ -686,6 +688,8 @@ namespace MiliastraPlusPlus::GraphIRJson
         return Result;
     }
 
+    /// Reads v1-v3; legacy v1/v2 stay Unstructured and never gain inferred
+    /// execution ownership.
     [[nodiscard]] inline ParseResult Deserialize(const Json& Root)
     {
         try

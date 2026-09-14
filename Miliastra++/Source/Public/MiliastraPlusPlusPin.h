@@ -11,6 +11,7 @@
 
 namespace MiliastraPlusPlus
 {
+    // Legacy mutable pin types are separate from the recursive TypeDesc model used by GraphIR.
     enum class EPinCategory
     {
         Execution,

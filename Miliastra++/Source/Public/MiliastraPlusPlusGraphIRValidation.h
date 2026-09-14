@@ -15,6 +15,8 @@
 
 namespace MiliastraPlusPlus
 {
+    /// Canonical whole-graph validator for builder output and raw or deserialized
+    /// GraphIR.
     class GraphIRValidator
     {
     public:

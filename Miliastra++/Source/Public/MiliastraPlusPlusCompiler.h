@@ -10,9 +10,11 @@
 
 namespace MiliastraPlusPlus
 {
+    /// Phase 1 compiler facade for the mutable Graph model.
     class Compiler
     {
     public:
+        /// Resolves legacy generic pins on the graph copy before serializing it.
         static std::string CompileToJSON(
             Graph TargetGraph,
             DiagnosticCollection* Diagnostics = nullptr

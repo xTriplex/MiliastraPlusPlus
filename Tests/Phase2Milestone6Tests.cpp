@@ -125,6 +125,7 @@ namespace
             TypeDesc::List(TypeDesc::Integer()));
         Check(RoundTrip->GetInputBindings()[2U].OutputTypeConstraint == std::nullopt);
 
+        // This legacy document has control edges but no structured ownership to infer.
         nlohmann::json VersionOne = {
             {"irVersion", 1},
             {"nodes", nlohmann::json::array({
