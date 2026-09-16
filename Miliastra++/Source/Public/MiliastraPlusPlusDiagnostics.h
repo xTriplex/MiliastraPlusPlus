@@ -120,7 +120,9 @@ namespace MiliastraPlusPlus
         InvalidSourceProvenance,
         DuplicateExternalNodeIdentity,
         DescriptorIdentifierExhausted,
-        DescriptorCatalogueMismatch
+        DescriptorCatalogueMismatch,
+        InvalidNormalizedDescriptorRecord,
+        UnsupportedDescriptorCatalogueSemanticSchemaVersion
     };
 
     /// Callers can branch on Code; Message carries human-readable context.
