@@ -122,7 +122,10 @@ namespace MiliastraPlusPlus
         DescriptorIdentifierExhausted,
         DescriptorCatalogueMismatch,
         InvalidNormalizedDescriptorRecord,
-        UnsupportedDescriptorCatalogueSemanticSchemaVersion
+        UnsupportedDescriptorCatalogueSemanticSchemaVersion,
+        MalformedGenshinClientBooleanFilterDescriptorSource,
+        MissingGenshinClientBooleanFilterDescriptorSourceField,
+        UnsupportedGenshinClientBooleanFilterDescriptorSourceForm
     };
 
     /// Callers can branch on Code; Message carries human-readable context.

@@ -1,0 +1,33 @@
+Source reference for P5.3 vendor-derived metadata
+
+The large JSON fixture embedded in Tests/Phase5Milestone3Tests.cpp under
+AuthenticNodeMetadataJson and AuthenticNodeModesJson is derived from metadata
+published by the genshin-ts project.
+
+Upstream project: genshin-ts
+Repository: https://github.com/josStorer/genshin-ts
+
+Pinned revision:
+26bdf2a9a3fadba934423940489236f0b53eb3ea
+
+Source resource:
+resources/client_node_metadata.json
+Pinned Git blob: 93237c724f6453650ae9394077620c6e0fddb3d3
+
+Mode resource:
+resources/client_node_modes.json
+Pinned Git blob: b7e14a0dd7102ccd682235cf958a2d3d36378033
+
+Miliastra++ consumer:
+Tests/Phase5Milestone3Tests.cpp
+
+Miliastra++ uses a bounded P5.3 test fixture selected from these resources.
+The embedded node metadata contains the selected client boolean-filter records
+required by the P5.3 contract, not the complete upstream metadata dataset. The
+node metadata subset was mechanically selected from the pinned source resource,
+and the mode document is based on the pinned mode resource.
+
+Miliastra++ does not claim authorship of the upstream-derived metadata. This
+directory is reserved for attribution and licensing information associated with
+that material. A copy of the upstream project's license should be kept beside
+this file.
