@@ -1,13 +1,53 @@
 #pragma once
 
+#include <compare>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "MiliastraPlusPlusIdentifiers.h"
 
 namespace MiliastraPlusPlus
 {
+    /// Identifies a logical source record; parser-specific coordinates are added later if needed.
+    class SourceProvenance final
+    {
+    public:
+        SourceProvenance() = default;
+
+        SourceProvenance(
+            std::string SourceDocumentIdentifier,
+            std::string SourceRecordIdentifier
+        )
+            : m_SourceDocumentIdentifier(std::move(SourceDocumentIdentifier))
+            , m_SourceRecordIdentifier(std::move(SourceRecordIdentifier))
+        {
+        }
+
+        [[nodiscard]] bool IsValid() const
+        {
+            return !m_SourceDocumentIdentifier.empty() &&
+                !m_SourceRecordIdentifier.empty();
+        }
+
+        [[nodiscard]] const std::string& GetSourceDocumentIdentifier() const
+        {
+            return m_SourceDocumentIdentifier;
+        }
+
+        [[nodiscard]] const std::string& GetSourceRecordIdentifier() const
+        {
+            return m_SourceRecordIdentifier;
+        }
+
+        auto operator<=>(const SourceProvenance&) const = default;
+
+    private:
+        std::string m_SourceDocumentIdentifier;
+        std::string m_SourceRecordIdentifier;
+    };
+
     enum class DiagnosticSeverity
     {
         Warning,
@@ -74,7 +114,13 @@ namespace MiliastraPlusPlus
         MalformedGraphIRJson,
         MissingAdapterNodeMapping,
         InvalidGraphIRAdapterLink,
-        InvalidGraphIRAdapterMapping
+        InvalidGraphIRAdapterMapping,
+        InvalidDescriptorCatalogueIdentity,
+        InvalidExternalNodeIdentity,
+        InvalidSourceProvenance,
+        DuplicateExternalNodeIdentity,
+        DescriptorIdentifierExhausted,
+        DescriptorCatalogueMismatch
     };
 
     /// Callers can branch on Code; Message carries human-readable context.
@@ -87,6 +133,8 @@ namespace MiliastraPlusPlus
         std::optional<NodeIdentifier> DestinationNodeIdentifier;
         std::optional<PinReference> SourcePinReference;
         std::optional<PinReference> DestinationPinReference;
+        std::optional<SourceProvenance> PrimarySourceProvenance;
+        std::optional<SourceProvenance> RelatedSourceProvenance;
     };
 
     using DiagnosticCollection = std::vector<Diagnostic>;
