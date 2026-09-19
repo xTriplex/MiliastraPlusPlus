@@ -131,7 +131,12 @@ namespace MiliastraPlusPlus
         UnsupportedGenshinClientBooleanFilterReflectedDescriptorFamilySourceForm,
         InvalidDescriptorSpecializationFamily,
         InvalidDescriptorSpecializationVariantBinding,
-        DuplicateDescriptorSpecializationVariant
+        DuplicateDescriptorSpecializationVariant,
+        MalformedDescriptorCatalogueSnapshot,
+        UnsupportedDescriptorCatalogueSnapshotVersion,
+        DescriptorCatalogueSnapshotContentMismatch,
+        DescriptorCatalogueSnapshotIdentifierMismatch,
+        DescriptorCatalogueSnapshotSpecializationMismatch
     };
 
     /// Callers can branch on Code; Message carries human-readable context.

@@ -81,6 +81,7 @@ set(TEST_TARGETS
     Phase5Milestone2Tests
     Phase5Milestone3Tests
     Phase5Milestone4Tests
+    Phase5Milestone5Tests
 )
 
 foreach(TEST_NAME ${TEST_TARGETS})
