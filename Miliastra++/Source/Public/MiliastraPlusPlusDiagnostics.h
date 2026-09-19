@@ -125,7 +125,13 @@ namespace MiliastraPlusPlus
         UnsupportedDescriptorCatalogueSemanticSchemaVersion,
         MalformedGenshinClientBooleanFilterDescriptorSource,
         MissingGenshinClientBooleanFilterDescriptorSourceField,
-        UnsupportedGenshinClientBooleanFilterDescriptorSourceForm
+        UnsupportedGenshinClientBooleanFilterDescriptorSourceForm,
+        MalformedGenshinClientBooleanFilterReflectedDescriptorFamilySource,
+        MissingGenshinClientBooleanFilterReflectedDescriptorFamilySourceField,
+        UnsupportedGenshinClientBooleanFilterReflectedDescriptorFamilySourceForm,
+        InvalidDescriptorSpecializationFamily,
+        InvalidDescriptorSpecializationVariantBinding,
+        DuplicateDescriptorSpecializationVariant
     };
 
     /// Callers can branch on Code; Message carries human-readable context.

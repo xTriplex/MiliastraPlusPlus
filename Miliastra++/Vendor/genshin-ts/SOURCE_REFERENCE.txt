@@ -1,8 +1,4 @@
-Source reference for P5.3 vendor-derived metadata
-
-The large JSON fixture embedded in Tests/Phase5Milestone3Tests.cpp under
-AuthenticNodeMetadataJson and AuthenticNodeModesJson is derived from metadata
-published by the genshin-ts project.
+Source reference for genshin-ts-derived Miliastra++ material
 
 Upstream project: genshin-ts
 Repository: https://github.com/josStorer/genshin-ts
@@ -10,7 +6,17 @@ Repository: https://github.com/josStorer/genshin-ts
 Pinned revision:
 26bdf2a9a3fadba934423940489236f0b53eb3ea
 
-Source resource:
+P5.3 bounded metadata fixture
+--------------------------------
+
+Miliastra++ consumer:
+Tests/Phase5Milestone3Tests.cpp
+
+Embedded fixture symbols:
+AuthenticNodeMetadataJson
+AuthenticNodeModesJson
+
+Node metadata resource:
 resources/client_node_metadata.json
 Pinned Git blob: 93237c724f6453650ae9394077620c6e0fddb3d3
 
@@ -18,16 +24,75 @@ Mode resource:
 resources/client_node_modes.json
 Pinned Git blob: b7e14a0dd7102ccd682235cf958a2d3d36378033
 
+P5.3 uses a bounded selected client boolean-filter subset from the pinned
+node metadata resource rather than the complete upstream node metadata dataset.
+The mode document is based on the pinned mode resource.
+
+P5.4 bounded reflected-family specialization fixture
+-------------------------------------------------------
+
 Miliastra++ consumer:
-Tests/Phase5Milestone3Tests.cpp
+Tests/Phase5Milestone4Tests.cpp
 
-Miliastra++ uses a bounded P5.3 test fixture selected from these resources.
-The embedded node metadata contains the selected client boolean-filter records
-required by the P5.3 contract, not the complete upstream metadata dataset. The
-node metadata subset was mechanically selected from the pinned source resource,
-and the mode document is based on the pinned mode resource.
+Embedded fixture symbols:
+AuthenticNodeMetadataJson
+AuthenticNodeModesJson
 
-Miliastra++ does not claim authorship of the upstream-derived metadata. This
-directory is reserved for attribution and licensing information associated with
-that material. A copy of the upstream project's license should be kept beside
-this file.
+The exact bounded reflected-family fixture covers:
+
+subType: bool_filter
+graphType: 20001
+nodeType: get_random_number
+genericId: 200032
+concrete variants:
+1011 / variantKey 3,3
+1012 / variantKey 7,7
+
+Runtime fixture resources:
+resources/client_node_metadata.json
+Pinned Git blob: 93237c724f6453650ae9394077620c6e0fddb3d3
+
+resources/client_node_modes.json
+Pinned Git blob: b7e14a0dd7102ccd682235cf958a2d3d36378033
+
+The runtime P5.4 fixture uses the selected record material and complete mode
+document from those two pinned resources. P5.4 architecture and source-evidence
+validation also materially relies on these pinned resources:
+
+resources/client_node_static_metadata.json
+Pinned Git blob: 17d0290993c1fef2d84d5105b2f23b7429a77ba3
+
+resources/client_node_concrete_variants.json
+Pinned Git blob: 7c1c52cf938458c88ee28d064515e1dc97525b65
+
+resources/node_generics.json
+Pinned Git blob: fb6d3c16203030eacab505fb0726b7424a92218e
+
+resources/node_generics_summary.json
+Pinned Git blob: 72d4e8ce38839e3e67a681ba0fd038c23629b222
+
+resources/client_variable_specialization_seed.json
+Pinned Git blob: 5750bb796f28adb29b238bb8ec889a5409078f29
+
+client_node_metadata.json and client_node_modes.json supply the runtime test
+fixture material. The remaining P5.4 resources are evidence used to verify
+reflected-family and specialization semantics; they are not runtime adapter
+inputs and complete copies are not vendored into Miliastra++.
+
+Attribution and licensing
+-------------------------
+
+Miliastra++ does not claim authorship of the upstream-derived metadata. The
+adjacent LICENSE file contains the upstream project's license. This directory
+is reserved for attribution and licensing information associated with the
+upstream-derived material.
+
+Maintenance
+-----------
+
+This file is cumulative. When Miliastra++ adds a new implementation, test
+fixture, generated or selected data set, or other material derived from or
+materially based on genshin-ts, this source-reference file should be updated
+in the same change with the Miliastra++ consumer path, pinned upstream
+revision, relevant upstream resource paths and blobs, and the bounded purpose
+for which they are used.
