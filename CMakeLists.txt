@@ -6,8 +6,6 @@ set(CMAKE_CONFIGURATION_TYPES "Debug;Release;Dist" CACHE STRING
     "Supported build configurations" FORCE
 )
 
-set(CMAKE_VS_STARTUP_PROJECT "${PROJECT_NAME}")
-
 enable_testing()
 set(CMAKE_SUPPRESS_REGENERATION ON)
 
@@ -49,10 +47,10 @@ set(MILIASTRA_PROJECT_FILES
 )
 
 # --------------------------------------------
-# Main Executable
+# Core Static Library
 # --------------------------------------------
 
-add_executable(${PROJECT_NAME}
+add_library(${PROJECT_NAME} STATIC
     ${MILIASTRA_PROJECT_FILES}
 )
 
@@ -89,9 +87,8 @@ foreach(TEST_NAME ${TEST_TARGETS})
         ${CMAKE_CURRENT_SOURCE_DIR}/Tests/${TEST_NAME}.cpp
     )
 
-    target_include_directories(${TEST_NAME} PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/Public
-        ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Vendor
+    target_link_libraries(${TEST_NAME} PRIVATE
+        ${PROJECT_NAME}
     )
 
     add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
@@ -113,11 +110,13 @@ target_compile_definitions(Phase4Milestone4Tests PRIVATE
 # Include Directories
 # --------------------------------------------
 
-target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source
-    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/Public
-    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/Private
-    ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Vendor
+target_include_directories(${PROJECT_NAME}
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/Public
+        ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Vendor
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source
+        ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/Private
 )
 
 # --------------------------------------------
@@ -157,25 +156,4 @@ endif()
 
 target_precompile_headers(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/mpppch.h
-)
-
-# --------------------------------------------
-# Link Libraries
-# --------------------------------------------
-
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    $<$<PLATFORM_ID:Windows>:opengl32.lib>
-)
-
-# --------------------------------------------
-# Visual Studio Linker Settings
-# --------------------------------------------
-
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    LINK_FLAGS "/ENTRY:mainCRTStartup"
-)
-
-set_property(
-    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    PROPERTY VS_STARTUP_PROJECT "${PROJECT_NAME}"
 )
