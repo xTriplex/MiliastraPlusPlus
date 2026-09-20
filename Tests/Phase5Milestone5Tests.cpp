@@ -835,7 +835,7 @@ namespace
                 {"catalogue", "entries", "snapshotFormatVersion", "specialization"}
             )
         );
-        MPP_CHECK(Document["snapshotFormatVersion"] == 1U);
+        MPP_CHECK(Document["snapshotFormatVersion"] == 2U);
         MPP_CHECK(Document["catalogue"].is_object());
         MPP_CHECK(
             HasExactMembers(
@@ -1166,7 +1166,7 @@ namespace
         );
 
         Json = JsonValue::parse(Fixture.Json);
-        Json["snapshotFormatVersion"] = 2U;
+        Json["snapshotFormatVersion"] = 3U;
         RequireReadCode(
             Json.dump(),
             DiagnosticCode::UnsupportedDescriptorCatalogueSnapshotVersion
@@ -2275,7 +2275,7 @@ namespace
 
         MPP_CHECK(
             DescriptorCatalogueSnapshotPersistence::CurrentSnapshotFormatVersion ==
-            1U
+            2U
         );
     }
 }

@@ -158,13 +158,19 @@ namespace MiliastraPlusPlus::GraphIRJson
                 Result["kind"] = "StructObject";
                 Result["structType"] = Type.GetStructType().GetValue();
                 break;
+
+            case Kind::Enum:
+                Result["kind"] = "Enum";
+                Result["identity"] = Type.GetEnumTypeIdentity().GetValue();
+                break;
             }
 
             return Result;
         }
 
         inline std::expected<TypeDesc, DiagnosticCollection> TypeFromJson(
-            const Json& Value)
+            const Json& Value,
+            bool AllowEnum)
         {
             if (!Value.is_object()
                 || !Value.contains("kind")
@@ -259,6 +265,21 @@ namespace MiliastraPlusPlus::GraphIRJson
                 return TypeDesc::StructObject(StructTypeId(*StructType));
             }
 
+            if (Kind == "Enum")
+            {
+                if (!AllowEnum || Value.size() != 2 ||
+                    !Value.contains("identity") ||
+                    !Value["identity"].is_string() ||
+                    Value["identity"].get<std::string>().empty())
+                {
+                    return Fail<TypeDesc>(
+                        "Enum TypeDesc is not valid for this GraphIR JSON version.");
+                }
+
+                return TypeDesc::Enum(
+                    EnumTypeIdentity(Value["identity"].get<std::string>()));
+            }
+
             if (Kind == "List")
             {
                 if (!Value.contains("element"))
@@ -266,7 +287,7 @@ namespace MiliastraPlusPlus::GraphIRJson
                     return Fail<TypeDesc>("Malformed List TypeDesc.");
                 }
 
-                const auto Element = TypeFromJson(Value["element"]);
+                const auto Element = TypeFromJson(Value["element"], AllowEnum);
 
                 if (!Element)
                 {
@@ -283,8 +304,8 @@ namespace MiliastraPlusPlus::GraphIRJson
                     return Fail<TypeDesc>("Malformed Dictionary TypeDesc.");
                 }
 
-                const auto Key = TypeFromJson(Value["key"]);
-                const auto Element = TypeFromJson(Value["value"]);
+                const auto Key = TypeFromJson(Value["key"], AllowEnum);
+                const auto Element = TypeFromJson(Value["value"], AllowEnum);
 
                 if (!Key)
                 {
@@ -369,6 +390,13 @@ namespace MiliastraPlusPlus::GraphIRJson
                         Result["y"] = Value.Y;
                         Result["z"] = Value.Z;
                     }
+                    else if constexpr (std::is_same_v<Type, EnumLiteralValue>)
+                    {
+                        Result["kind"] = "Enum";
+                        Result["enumIdentity"] =
+                            Value.GetEnumTypeIdentity().GetValue();
+                        Result["value"] = Value.GetValue();
+                    }
                 },
                 Literal.GetData());
 
@@ -376,7 +404,8 @@ namespace MiliastraPlusPlus::GraphIRJson
         }
 
         inline std::expected<LiteralValue, DiagnosticCollection> LiteralFromJson(
-            const Json& Value)
+            const Json& Value,
+            bool AllowEnum)
         {
             if (!Value.is_object()
                 || !Value.contains("kind")
@@ -390,6 +419,47 @@ namespace MiliastraPlusPlus::GraphIRJson
             if (Kind == "Invalid")
             {
                 return LiteralValue{};
+            }
+
+            if (Kind == "Enum")
+            {
+                if (!AllowEnum || Value.size() != 3 ||
+                    !Value.contains("enumIdentity") ||
+                    !Value["enumIdentity"].is_string() ||
+                    Value["enumIdentity"].get<std::string>().empty() ||
+                    !Value.contains("value") ||
+                    (!Value["value"].is_number_integer() &&
+                        !Value["value"].is_number_unsigned()))
+                {
+                    return Fail<LiteralValue>(
+                        "Enum LiteralValue is not valid for this GraphIR JSON version.");
+                }
+
+                std::int64_t EnumValue = 0;
+                if (Value["value"].is_number_unsigned())
+                {
+                    const std::uint64_t UnsignedValue =
+                        Value["value"].get<std::uint64_t>();
+                    if (UnsignedValue > static_cast<std::uint64_t>(
+                        std::numeric_limits<std::int64_t>::max()))
+                    {
+                        return Fail<LiteralValue>(
+                            "Enum literal value is outside the signed 64-bit graph range.");
+                    }
+                    EnumValue = static_cast<std::int64_t>(UnsignedValue);
+                }
+                else
+                {
+                    EnumValue = Value["value"].get<std::int64_t>();
+                }
+
+                return LiteralValue(
+                    LiteralValue::Data{
+                        EnumLiteralValue(
+                            EnumTypeIdentity(
+                                Value["enumIdentity"].get<std::string>()),
+                            EnumValue)
+                    });
             }
 
             if (!Value.contains("value") && Kind != "Vector3")
@@ -752,6 +822,8 @@ namespace MiliastraPlusPlus::GraphIRJson
                     "GraphIR JSON version 3 requires executionModel, executionEntries, and executionRegions.");
             }
 
+            const bool AllowEnum = Version == 3U;
+
             GraphIR Graph;
             if (Version == 3U)
             {
@@ -836,7 +908,8 @@ namespace MiliastraPlusPlus::GraphIRJson
                 }
 
                 const auto Type = Detail::TypeFromJson(
-                    Value["type"]);
+                    Value["type"],
+                    AllowEnum);
 
                 if (!Type)
                 {
@@ -854,7 +927,8 @@ namespace MiliastraPlusPlus::GraphIRJson
                 if (Value.contains("default"))
                 {
                     const auto Parsed = Detail::LiteralFromJson(
-                        Value["default"]);
+                        Value["default"],
+                        AllowEnum);
 
                     if (!Parsed)
                     {
@@ -907,7 +981,8 @@ namespace MiliastraPlusPlus::GraphIRJson
                 if (Version >= 2U && !Value["outputTypeConstraint"].is_null())
                 {
                     const auto ParsedConstraint = Detail::TypeFromJson(
-                        Value["outputTypeConstraint"]);
+                        Value["outputTypeConstraint"],
+                        AllowEnum);
                     if (!ParsedConstraint)
                     {
                         return std::unexpected(ParsedConstraint.error());
@@ -933,7 +1008,8 @@ namespace MiliastraPlusPlus::GraphIRJson
                     && Binding.contains("value"))
                 {
                     const auto Literal = Detail::LiteralFromJson(
-                        Binding["value"]);
+                        Binding["value"],
+                        AllowEnum);
 
                     if (!Literal)
                     {

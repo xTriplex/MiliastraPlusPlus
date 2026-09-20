@@ -6,6 +6,8 @@
 #include <utility>
 #include <variant>
 
+#include "MiliastraPlusPlusEnumTypes.h"
+
 namespace MiliastraPlusPlus
 {
     /// Strong graph-local identity domain; zero is reserved for an invalid/default identifier.
@@ -125,7 +127,8 @@ namespace MiliastraPlusPlus
             Vector3Value,
             PrefabIdValue,
             ConfigIdValue,
-            FactionValue
+            FactionValue,
+            EnumLiteralValue
         >;
 
         LiteralValue() = default;

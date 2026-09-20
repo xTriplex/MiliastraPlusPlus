@@ -1296,7 +1296,7 @@ namespace
     void TestUnsupportedDescriptorCatalogueSemanticSchemaVersion()
     {
         const auto Unsupported = DescriptorCatalogueBuilder::Build(
-            "source", "revision", DescriptorCatalogueSemanticSchemaVersion(2U), {}
+            "source", "revision", DescriptorCatalogueSemanticSchemaVersion(3U), {}
         );
         MPP_CHECK(!Unsupported.has_value());
         MPP_CHECK(Unsupported.error().size() == 1U);

@@ -198,10 +198,10 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] inline OrderedJson EncodeType(const TypeDesc& Type);
         [[nodiscard]] inline std::expected<TypeDesc, DiagnosticCollection>
-            DecodeType(const Json& Value);
+            DecodeType(const Json& Value, bool AllowEnum);
         [[nodiscard]] inline OrderedJson EncodeLiteral(const LiteralValue& Value);
         [[nodiscard]] inline std::expected<LiteralValue, DiagnosticCollection>
-            DecodeLiteral(const Json& Value);
+            DecodeLiteral(const Json& Value, bool AllowEnum);
         [[nodiscard]] inline OrderedJson EncodeControl(
             const std::optional<ExecutionControlSchema>& Control
         );
@@ -314,12 +314,18 @@ namespace MiliastraPlusPlus
                     Result["kind"] = "Faction";
                     Result["value"] = Item.Value;
                 }
+                else if constexpr (std::is_same_v<ItemType, EnumLiteralValue>)
+                {
+                    Result["kind"] = "Enum";
+                    Result["enumIdentity"] = Item.GetEnumTypeIdentity().GetValue();
+                    Result["value"] = Item.GetValue();
+                }
             }, Value.GetData());
             return Result;
         }
 
         [[nodiscard]] inline std::expected<LiteralValue, DiagnosticCollection>
-            DecodeLiteral(const Json& Value)
+            DecodeLiteral(const Json& Value, bool AllowEnum)
         {
             if (!Value.is_object() || !Value.contains("kind") || !Value["kind"].is_string())
             {
@@ -365,6 +371,29 @@ namespace MiliastraPlusPlus
                     return FailureExpected<LiteralValue>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "String literal shape is invalid.");
                 }
                 return LiteralValue(LiteralValue::Data{Value["value"].get<std::string>()});
+            }
+            if (Kind == "Enum")
+            {
+                if (!AllowEnum ||
+                    !HasExactMembers(Value, {"kind", "enumIdentity", "value"}) ||
+                    !Value["enumIdentity"].is_string() ||
+                    Value["enumIdentity"].get<std::string>().empty())
+                {
+                    return FailureExpected<LiteralValue>(
+                        DiagnosticCode::MalformedDescriptorCatalogueSnapshot,
+                        "Enum literal shape is invalid for this snapshot version or schema."
+                    );
+                }
+                const auto Parsed = ParseInt64(Value["value"]);
+                if (!Parsed.has_value())
+                {
+                    return std::unexpected(Parsed.error());
+                }
+                return LiteralValue(LiteralValue::Data{
+                    EnumLiteralValue(
+                        EnumTypeIdentity(Value["enumIdentity"].get<std::string>()),
+                        *Parsed)
+                });
             }
 
             const auto DecodeUnsignedLiteral = [&Value](
@@ -444,6 +473,10 @@ namespace MiliastraPlusPlus
                 AddKind("StructObject");
                 Result["structType"] = Type.GetStructType().GetValue();
                 break;
+            case TypeDesc::Kind::Enum:
+                AddKind("Enum");
+                Result["identity"] = Type.GetEnumTypeIdentity().GetValue();
+                break;
             case TypeDesc::Kind::Invalid:
                 break;
             }
@@ -451,7 +484,7 @@ namespace MiliastraPlusPlus
         }
 
         [[nodiscard]] inline std::expected<TypeDesc, DiagnosticCollection>
-            DecodeType(const Json& Value)
+            DecodeType(const Json& Value, bool AllowEnum)
         {
             if (!Value.is_object() || !Value.contains("kind") || !Value["kind"].is_string())
             {
@@ -494,13 +527,28 @@ namespace MiliastraPlusPlus
                 }
                 return TypeDesc::StructObject(StructTypeId(Value["structType"].get<std::uint32_t>()));
             }
+            if (Kind == "Enum")
+            {
+                if (!AllowEnum ||
+                    !HasExactMembers(Value, {"kind", "identity"}) ||
+                    !Value["identity"].is_string() ||
+                    Value["identity"].get<std::string>().empty())
+                {
+                    return FailureExpected<TypeDesc>(
+                        DiagnosticCode::MalformedDescriptorCatalogueSnapshot,
+                        "Enum type shape is invalid for this snapshot version or schema."
+                    );
+                }
+                return TypeDesc::Enum(
+                    EnumTypeIdentity(Value["identity"].get<std::string>()));
+            }
             if (Kind == "List")
             {
                 if (!HasExactMembers(Value, {"kind", "element"}))
                 {
                     return FailureExpected<TypeDesc>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "List type shape is invalid.");
                 }
-                const auto Element = DecodeType(Value["element"]);
+                const auto Element = DecodeType(Value["element"], AllowEnum);
                 if (!Element.has_value()) return std::unexpected(Element.error());
                 return TypeDesc::List(*Element);
             }
@@ -510,8 +558,8 @@ namespace MiliastraPlusPlus
                 {
                     return FailureExpected<TypeDesc>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Dictionary type shape is invalid.");
                 }
-                const auto Key = DecodeType(Value["key"]);
-                const auto Item = DecodeType(Value["value"]);
+                const auto Key = DecodeType(Value["key"], AllowEnum);
+                const auto Item = DecodeType(Value["value"], AllowEnum);
                 if (!Key.has_value()) return std::unexpected(Key.error());
                 if (!Item.has_value()) return std::unexpected(Item.error());
                 return TypeDesc::Dictionary(*Key, *Item);
@@ -764,14 +812,14 @@ namespace MiliastraPlusPlus
         }
 
         [[nodiscard]] inline std::expected<NormalizedPinRecord, DiagnosticCollection>
-            DecodeNormalizedPin(const Json& Value)
+            DecodeNormalizedPin(const Json& Value, bool AllowEnum)
         {
             if (!HasExactMembers(Value, {"name", "type", "direction", "category", "cardinality", "allowsLiteral", "default"})) return FailureExpected<NormalizedPinRecord>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Normalized pin shape is invalid.");
-            const auto Name = ParseString(Value["name"]); const auto Type = DecodeType(Value["type"]); const auto Direction = DecodeDirection(Value["direction"]); const auto Category = DecodeCategory(Value["category"]); const auto Cardinality = DecodeCardinality(Value["cardinality"]);
+            const auto Name = ParseString(Value["name"]); const auto Type = DecodeType(Value["type"], AllowEnum); const auto Direction = DecodeDirection(Value["direction"]); const auto Category = DecodeCategory(Value["category"]); const auto Cardinality = DecodeCardinality(Value["cardinality"]);
             if (!Name.has_value()) return std::unexpected(Name.error()); if (!Type.has_value()) return std::unexpected(Type.error()); if (!Direction.has_value()) return std::unexpected(Direction.error()); if (!Category.has_value()) return std::unexpected(Category.error()); if (!Cardinality.has_value()) return std::unexpected(Cardinality.error());
             if (!Value["allowsLiteral"].is_boolean()) return FailureExpected<NormalizedPinRecord>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Normalized pin literal policy is invalid.");
             std::optional<LiteralValue> Default;
-            if (!Value["default"].is_null()) { const auto Parsed = DecodeLiteral(Value["default"]); if (!Parsed.has_value()) return std::unexpected(Parsed.error()); Default = *Parsed; }
+            if (!Value["default"].is_null()) { const auto Parsed = DecodeLiteral(Value["default"], AllowEnum); if (!Parsed.has_value()) return std::unexpected(Parsed.error()); Default = *Parsed; }
             NormalizedPinRecord Result(*Name, *Type, *Direction, *Category, *Cardinality, Value["allowsLiteral"].get<bool>(), std::move(Default));
             if (!Result.IsValid()) return FailureExpected<NormalizedPinRecord>(DiagnosticCode::InvalidNormalizedDescriptorRecord, "Normalized pin is semantically invalid.");
             return Result;
@@ -791,13 +839,13 @@ namespace MiliastraPlusPlus
         }
 
         [[nodiscard]] inline std::expected<NormalizedNodeDescriptorRecord, DiagnosticCollection>
-            DecodeRecord(const Json& Value)
+            DecodeRecord(const Json& Value, bool AllowEnum)
         {
             if (!HasExactMembers(Value, {"availability", "displayName", "executionControl", "externalIdentity", "pins", "provenance"})) return FailureExpected<NormalizedNodeDescriptorRecord>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Normalized record shape is invalid.");
             const auto Availability = DecodeAvailability(Value["availability"]); const auto DisplayName = ParseString(Value["displayName"]); const auto Identity = ParseString(Value["externalIdentity"]); const auto Control = DecodeControl(Value["executionControl"]); const auto Provenance = DecodeProvenance(Value["provenance"]);
             if (!Availability.has_value()) return std::unexpected(Availability.error()); if (!DisplayName.has_value()) return std::unexpected(DisplayName.error()); if (!Identity.has_value()) return std::unexpected(Identity.error()); if (!Control.has_value()) return std::unexpected(Control.error()); if (!Provenance.has_value()) return std::unexpected(Provenance.error());
             if (!Value["pins"].is_array()) return FailureExpected<NormalizedNodeDescriptorRecord>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Normalized record pins are not an array.");
-            std::vector<NormalizedPinRecord> Pins; for (const Json& Pin : Value["pins"]) { const auto Parsed = DecodeNormalizedPin(Pin); if (!Parsed.has_value()) return std::unexpected(Parsed.error()); Pins.push_back(*Parsed); }
+            std::vector<NormalizedPinRecord> Pins; for (const Json& Pin : Value["pins"]) { const auto Parsed = DecodeNormalizedPin(Pin, AllowEnum); if (!Parsed.has_value()) return std::unexpected(Parsed.error()); Pins.push_back(*Parsed); }
             NormalizedNodeDescriptorRecord Result(ExternalNodeIdentity(*Identity), *DisplayName, *Availability, std::move(Pins), *Control, *Provenance);
             const auto Validation = ValidateNormalizedDescriptorRecord(Result); if (!Validation.has_value()) return std::unexpected(Validation.error());
             return Result;
@@ -818,21 +866,21 @@ namespace MiliastraPlusPlus
         }
 
         [[nodiscard]] inline std::expected<DescriptorSpecializationPin, DiagnosticCollection>
-            DecodeFamilyPin(const Json& Value)
+            DecodeFamilyPin(const Json& Value, bool AllowEnum)
         {
             if (!HasExactMembers(Value, {"name", "fixedType", "reflected", "direction", "category", "cardinality", "allowsLiteral", "default"})) return FailureExpected<DescriptorSpecializationPin>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Specialization family pin shape is invalid.");
             const auto Name = ParseString(Value["name"]); const auto Direction = DecodeDirection(Value["direction"]); const auto Category = DecodeCategory(Value["category"]); const auto Cardinality = DecodeCardinality(Value["cardinality"]);
             if (!Name.has_value()) return std::unexpected(Name.error()); if (!Direction.has_value()) return std::unexpected(Direction.error()); if (!Category.has_value()) return std::unexpected(Category.error()); if (!Cardinality.has_value()) return std::unexpected(Cardinality.error());
             if (!Value["reflected"].is_boolean() || !Value["allowsLiteral"].is_boolean()) return FailureExpected<DescriptorSpecializationPin>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Specialization family pin boolean field is invalid.");
-            std::optional<TypeDesc> FixedType; if (!Value["fixedType"].is_null()) { const auto Parsed = DecodeType(Value["fixedType"]); if (!Parsed.has_value()) return std::unexpected(Parsed.error()); FixedType = *Parsed; }
-            std::optional<LiteralValue> Default; if (!Value["default"].is_null()) { const auto Parsed = DecodeLiteral(Value["default"]); if (!Parsed.has_value()) return std::unexpected(Parsed.error()); Default = *Parsed; }
+            std::optional<TypeDesc> FixedType; if (!Value["fixedType"].is_null()) { const auto Parsed = DecodeType(Value["fixedType"], AllowEnum); if (!Parsed.has_value()) return std::unexpected(Parsed.error()); FixedType = *Parsed; }
+            std::optional<LiteralValue> Default; if (!Value["default"].is_null()) { const auto Parsed = DecodeLiteral(Value["default"], AllowEnum); if (!Parsed.has_value()) return std::unexpected(Parsed.error()); Default = *Parsed; }
             DescriptorSpecializationPin Result(*Name, std::move(FixedType), Value["reflected"].get<bool>(), *Direction, *Category, *Cardinality, Value["allowsLiteral"].get<bool>(), std::move(Default));
             if (!Result.IsValid()) return FailureExpected<DescriptorSpecializationPin>(DiagnosticCode::DescriptorCatalogueSnapshotSpecializationMismatch, "Specialization family pin is invalid.");
             return Result;
         }
 
         [[nodiscard]] inline OrderedJson EncodeFamily(const DescriptorSpecializationFamily& Family);
-        [[nodiscard]] inline std::expected<DescriptorSpecializationFamily, DiagnosticCollection> DecodeFamily(const Json& Value);
+        [[nodiscard]] inline std::expected<DescriptorSpecializationFamily, DiagnosticCollection> DecodeFamily(const Json& Value, bool AllowEnum);
 
         [[nodiscard]] inline OrderedJson EncodeFamily(const DescriptorSpecializationFamily& Family)
         {
@@ -862,13 +910,13 @@ namespace MiliastraPlusPlus
             return Result;
         }
 
-        [[nodiscard]] inline std::expected<DescriptorSpecializationFamily, DiagnosticCollection> DecodeFamily(const Json& Value)
+        [[nodiscard]] inline std::expected<DescriptorSpecializationFamily, DiagnosticCollection> DecodeFamily(const Json& Value, bool AllowEnum)
         {
             if (!HasExactMembers(Value, {"familyExternalIdentity", "displayName", "availability", "pins", "executionControl", "provenance", "variants"})) return FailureExpected<DescriptorSpecializationFamily>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Specialization family shape is invalid.");
             const auto Identity = ParseString(Value["familyExternalIdentity"]); const auto DisplayName = ParseString(Value["displayName"]); const auto Availability = DecodeAvailability(Value["availability"]); const auto Control = DecodeControl(Value["executionControl"]); const auto Provenance = DecodeProvenance(Value["provenance"]);
             if (!Identity.has_value()) return std::unexpected(Identity.error()); if (!DisplayName.has_value()) return std::unexpected(DisplayName.error()); if (!Availability.has_value()) return std::unexpected(Availability.error()); if (!Control.has_value()) return std::unexpected(Control.error()); if (!Provenance.has_value()) return std::unexpected(Provenance.error());
             if (!Value["pins"].is_array() || !Value["variants"].is_array()) return FailureExpected<DescriptorSpecializationFamily>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Specialization family arrays are invalid.");
-            std::vector<DescriptorSpecializationPin> Pins; for (const Json& Pin : Value["pins"]) { const auto Parsed = DecodeFamilyPin(Pin); if (!Parsed.has_value()) return std::unexpected(Parsed.error()); Pins.push_back(*Parsed); }
+            std::vector<DescriptorSpecializationPin> Pins; for (const Json& Pin : Value["pins"]) { const auto Parsed = DecodeFamilyPin(Pin, AllowEnum); if (!Parsed.has_value()) return std::unexpected(Parsed.error()); Pins.push_back(*Parsed); }
             std::vector<DescriptorSpecializationVariant> Variants;
             std::string PreviousIdentity;
             for (const Json& VariantValue : Value["variants"])
@@ -883,7 +931,7 @@ namespace MiliastraPlusPlus
                 {
                     if (!HasExactMembers(BindingValue, {"familyPinIndex", "concreteType"}) || !IsUint32(BindingValue["familyPinIndex"])) return FailureExpected<DescriptorSpecializationFamily>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Specialization binding shape is invalid.");
                     const std::uint32_t Index = BindingValue["familyPinIndex"].get<std::uint32_t>(); if (Index == std::numeric_limits<std::uint32_t>::max() || (HasPrevious && Index <= PreviousIndex)) return FailureExpected<DescriptorSpecializationFamily>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Specialization bindings are not canonical."); HasPrevious = true; PreviousIndex = Index;
-                    const auto Type = DecodeType(BindingValue["concreteType"]); if (!Type.has_value()) return std::unexpected(Type.error()); Bindings.emplace_back(PinIndex(Index), *Type);
+                    const auto Type = DecodeType(BindingValue["concreteType"], AllowEnum); if (!Type.has_value()) return std::unexpected(Type.error()); Bindings.emplace_back(PinIndex(Index), *Type);
                 }
                 Variants.emplace_back(ExternalNodeIdentity(*ConcreteIdentity), *Key, std::move(Bindings));
             }
@@ -973,7 +1021,7 @@ namespace MiliastraPlusPlus
     {
     public:
         DescriptorCatalogueSnapshotPersistence() = delete;
-        inline static constexpr std::uint32_t CurrentSnapshotFormatVersion = 1U;
+        inline static constexpr std::uint32_t CurrentSnapshotFormatVersion = 2U;
         [[nodiscard]] static std::expected<std::string, DiagnosticCollection> Write(const DescriptorCatalogueSnapshot& Snapshot);
         [[nodiscard]] static std::expected<DescriptorCatalogueSnapshot, DiagnosticCollection> Read(std::string SnapshotJson);
     };
@@ -1075,18 +1123,20 @@ namespace MiliastraPlusPlus
         const auto Parsed = ParseStrictJson(SnapshotJson); if (!Parsed.has_value()) return std::unexpected(Parsed.error()); const Json& Root = *Parsed;
         if (!HasExactMembers(Root, {"catalogue", "entries", "snapshotFormatVersion", "specialization"})) return FailureExpected<DescriptorCatalogueSnapshot>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Snapshot root shape is invalid.");
         if (!IsUint32(Root["snapshotFormatVersion"])) return FailureExpected<DescriptorCatalogueSnapshot>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Snapshot format version is invalid.");
-        const std::uint32_t Version = Root["snapshotFormatVersion"].get<std::uint32_t>(); if (Version != CurrentSnapshotFormatVersion) return FailureExpected<DescriptorCatalogueSnapshot>(DiagnosticCode::UnsupportedDescriptorCatalogueSnapshotVersion, "Snapshot format version is unsupported.");
+        const std::uint32_t Version = Root["snapshotFormatVersion"].get<std::uint32_t>(); if (Version != 1U && Version != 2U) return FailureExpected<DescriptorCatalogueSnapshot>(DiagnosticCode::UnsupportedDescriptorCatalogueSnapshotVersion, "Snapshot format version is unsupported.");
         const Json& CatalogueJson = Root["catalogue"];
         if (!HasExactMembers(CatalogueJson, {"contentIdentifier", "semanticSchemaVersion", "sourceNamespace", "sourceRevision"})) return FailureExpected<DescriptorCatalogueSnapshot>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Catalogue identity shape is invalid.");
         const auto Content = ParseString(CatalogueJson["contentIdentifier"]); const auto Namespace = ParseString(CatalogueJson["sourceNamespace"]); const auto Revision = ParseString(CatalogueJson["sourceRevision"]); const auto Schema = ParseUint32(CatalogueJson["semanticSchemaVersion"]);
         if (!Content.has_value()) return std::unexpected(Content.error()); if (!Namespace.has_value()) return std::unexpected(Namespace.error()); if (!Revision.has_value()) return std::unexpected(Revision.error()); if (!Schema.has_value()) return std::unexpected(Schema.error());
+        if (*Schema == 2U && Version == 1U) return FailureExpected<DescriptorCatalogueSnapshot>(DiagnosticCode::UnsupportedDescriptorCatalogueSemanticSchemaVersion, "Snapshot format version 1 cannot carry catalogue semantic schema version 2.");
+        const bool AllowEnum = Version == 2U && *Schema == 2U;
         const DescriptorCatalogueContentIdentifier PersistedContentIdentifier(*Content); if (!PersistedContentIdentifier.IsValid()) return FailureExpected<DescriptorCatalogueSnapshot>(DiagnosticCode::InvalidDescriptorCatalogueIdentity, "Persisted catalogue content identifier is invalid.");
         if (!Root["entries"].is_array()) return FailureExpected<DescriptorCatalogueSnapshot>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Snapshot entries are not an array.");
         std::vector<NormalizedNodeDescriptorRecord> Records; std::vector<std::uint32_t> PersistedIds; std::string PreviousIdentity;
         for (const Json& EntryJson : Root["entries"])
         {
             if (!HasExactMembers(EntryJson, {"nodeDescriptorId", "record"}) || !IsUint32(EntryJson["nodeDescriptorId"]) || EntryJson["nodeDescriptorId"] == 0U) return FailureExpected<DescriptorCatalogueSnapshot>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Snapshot entry shape or ID is invalid.");
-            const auto Record = DecodeRecord(EntryJson["record"]); if (!Record.has_value()) return std::unexpected(Record.error());
+            const auto Record = DecodeRecord(EntryJson["record"], AllowEnum); if (!Record.has_value()) return std::unexpected(Record.error());
             if (!PreviousIdentity.empty() && Record->GetExternalIdentity().GetKey() <= PreviousIdentity) return FailureExpected<DescriptorCatalogueSnapshot>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Snapshot entries are not canonical."); PreviousIdentity = Record->GetExternalIdentity().GetKey();
             Records.push_back(*Record); PersistedIds.push_back(EntryJson["nodeDescriptorId"].get<std::uint32_t>());
         }
@@ -1102,7 +1152,7 @@ namespace MiliastraPlusPlus
             std::vector<DescriptorSpecializationFamily> Families; std::string PreviousFamily;
             for (const Json& FamilyJson : Wrapper["families"])
             {
-                const auto Family = DecodeFamily(FamilyJson); if (!Family.has_value()) return std::unexpected(Family.error()); if (!PreviousFamily.empty() && Family->GetFamilyExternalIdentity().GetKey() <= PreviousFamily) return FailureExpected<DescriptorCatalogueSnapshot>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Specialization families are not canonical."); PreviousFamily = Family->GetFamilyExternalIdentity().GetKey(); Families.push_back(*Family);
+                const auto Family = DecodeFamily(FamilyJson, AllowEnum); if (!Family.has_value()) return std::unexpected(Family.error()); if (!PreviousFamily.empty() && Family->GetFamilyExternalIdentity().GetKey() <= PreviousFamily) return FailureExpected<DescriptorCatalogueSnapshot>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Specialization families are not canonical."); PreviousFamily = Family->GetFamilyExternalIdentity().GetKey(); Families.push_back(*Family);
             }
             const auto Specialized = DescriptorFamilySpecializer::Specialize(std::move(Families)); if (!Specialized.has_value()) return FailureExpected<DescriptorCatalogueSnapshot>(DiagnosticCode::DescriptorCatalogueSnapshotSpecializationMismatch, "Specialization sidecar could not be reconstructed."); Sidecar = *Specialized;
         }

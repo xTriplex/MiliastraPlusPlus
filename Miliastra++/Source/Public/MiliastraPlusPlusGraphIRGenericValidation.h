@@ -374,6 +374,8 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
         case TypeDesc::Kind::PrefabId: return "PrefabId";
         case TypeDesc::Kind::ConfigId: return "ConfigId";
         case TypeDesc::Kind::Faction: return "Faction";
+        case TypeDesc::Kind::Enum:
+            return "Enum<" + Type.GetEnumTypeIdentity().GetValue() + ">";
         case TypeDesc::Kind::Generic:
             return "Generic<" + std::to_string(Type.GetGenericParameter().GetValue()) + ">";
         case TypeDesc::Kind::List:

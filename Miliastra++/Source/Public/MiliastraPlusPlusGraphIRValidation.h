@@ -2795,6 +2795,10 @@ namespace MiliastraPlusPlus
             case TypeDesc::Kind::PrefabId: return Literal.Is<PrefabIdValue>();
             case TypeDesc::Kind::ConfigId: return Literal.Is<ConfigIdValue>();
             case TypeDesc::Kind::Faction: return Literal.Is<FactionValue>();
+            case TypeDesc::Kind::Enum:
+                return Literal.Is<EnumLiteralValue>() &&
+                    Literal.TryGet<EnumLiteralValue>()->GetEnumTypeIdentity() ==
+                    Type.GetEnumTypeIdentity();
             default: return false;
             }
         }

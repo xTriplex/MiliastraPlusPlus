@@ -691,7 +691,7 @@ namespace MiliastraPlusPlus
     };
 
     inline constexpr DescriptorCatalogueSemanticSchemaVersion
-        CurrentDescriptorCatalogueSemanticSchemaVersion{1U};
+        CurrentDescriptorCatalogueSemanticSchemaVersion{2U};
 
     namespace DescriptorCatalogueDetail
     {
@@ -785,6 +785,11 @@ namespace MiliastraPlusPlus
             if (Left.Is<FactionValue>())
             {
                 return *Left.TryGet<FactionValue>() == *Right.TryGet<FactionValue>();
+            }
+            if (Left.Is<EnumLiteralValue>())
+            {
+                return *Left.TryGet<EnumLiteralValue>() ==
+                    *Right.TryGet<EnumLiteralValue>();
             }
 
             return false;
@@ -899,6 +904,42 @@ namespace MiliastraPlusPlus
                 Record.GetExecutionControlSchema()
             );
             return Descriptor.IsValid();
+        }
+
+        [[nodiscard]] inline bool ContainsEnumType(const TypeDesc& Type)
+        {
+            switch (Type.GetKind())
+            {
+            case TypeDesc::Kind::Enum:
+                return true;
+            case TypeDesc::Kind::List:
+                return Type.GetElementType() != nullptr &&
+                    ContainsEnumType(*Type.GetElementType());
+            case TypeDesc::Kind::Dictionary:
+                return Type.GetKeyType() != nullptr &&
+                    ContainsEnumType(*Type.GetKeyType()) ||
+                    Type.GetValueType() != nullptr &&
+                    ContainsEnumType(*Type.GetValueType());
+            default:
+                return false;
+            }
+        }
+
+        [[nodiscard]] inline bool RecordContainsEnum(
+            const NormalizedNodeDescriptorRecord& Record
+        )
+        {
+            for (const NormalizedPinRecord& Pin : Record.GetPins())
+            {
+                if (ContainsEnumType(Pin.GetType()) ||
+                    (Pin.GetDefaultValue().has_value() &&
+                        Pin.GetDefaultValue()->Is<EnumLiteralValue>()))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         [[nodiscard]] inline std::optional<SourceProvenance>
@@ -1134,6 +1175,10 @@ namespace MiliastraPlusPlus
                     AppendByte(0x0FU);
                     AppendUnsigned32(Type.GetStructType().GetValue());
                     break;
+                case TypeDesc::Kind::Enum:
+                    AppendByte(0x10U);
+                    AppendString(Type.GetEnumTypeIdentity().GetValue());
+                    break;
                 case TypeDesc::Kind::Invalid:
                     AppendByte(0x00U);
                     break;
@@ -1206,6 +1251,26 @@ namespace MiliastraPlusPlus
                 {
                     AppendByte(0x09U);
                     AppendUnsigned64(Literal.TryGet<FactionValue>()->Value);
+                }
+                else if (Literal.Is<EnumLiteralValue>())
+                {
+                    AppendByte(0x0AU);
+                    const EnumLiteralValue& Value =
+                        *Literal.TryGet<EnumLiteralValue>();
+                    AppendString(Value.GetEnumTypeIdentity().GetValue());
+                    const std::int64_t Number = Value.GetValue();
+                    if (Number < 0)
+                    {
+                        AppendByte(0x01U);
+                        const std::uint64_t Magnitude =
+                            static_cast<std::uint64_t>(-(Number + 1)) + 1U;
+                        AppendUnsigned64(Magnitude);
+                    }
+                    else
+                    {
+                        AppendByte(0x00U);
+                        AppendUnsigned64(static_cast<std::uint64_t>(Number));
+                    }
                 }
             }
 
@@ -1940,7 +2005,8 @@ namespace MiliastraPlusPlus
                 .Message = "Descriptor catalogue semantic schema version must not be zero."
             });
         }
-        else if (SemanticSchemaVersion != CurrentDescriptorCatalogueSemanticSchemaVersion)
+        else if (SemanticSchemaVersion.GetValue() != 1U &&
+            SemanticSchemaVersion.GetValue() != 2U)
         {
             PendingDiagnostics.push_back({
                 .ExternalKey = std::string(),
@@ -1949,6 +2015,25 @@ namespace MiliastraPlusPlus
                 .Code = DiagnosticCode::UnsupportedDescriptorCatalogueSemanticSchemaVersion,
                 .Message = "Descriptor catalogue semantic schema version is unsupported."
             });
+        }
+
+        if (SemanticSchemaVersion.GetValue() == 1U)
+        {
+            for (const NormalizedNodeDescriptorRecord& Record : Records)
+            {
+                if (DescriptorCatalogueDetail::RecordContainsEnum(Record))
+                {
+                    PendingDiagnostics.push_back({
+                        .ExternalKey = Record.GetExternalIdentity().GetKey(),
+                        .PrimarySourceProvenance =
+                            DescriptorCatalogueDetail::GetValidSourceProvenance(Record),
+                        .RelatedSourceProvenance = std::nullopt,
+                        .Code = DiagnosticCode::InvalidNormalizedDescriptorRecord,
+                        .Message =
+                            "Enum semantic values require descriptor catalogue schema version 2."
+                    });
+                }
+            }
         }
 
         if (!PendingDiagnostics.empty())

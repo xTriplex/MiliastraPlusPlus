@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "MiliastraPlusPlusDiagnostics.h"
+#include "MiliastraPlusPlusEnumTypes.h"
 
 namespace MiliastraPlusPlus
 {
@@ -84,7 +85,8 @@ namespace MiliastraPlusPlus
             Generic,
             List,
             Dictionary,
-            StructObject
+            StructObject,
+            Enum
         };
 
         TypeDesc() = default;
@@ -173,6 +175,13 @@ namespace MiliastraPlusPlus
             return Result;
         }
 
+        [[nodiscard]] static TypeDesc Enum(EnumTypeIdentity Identity)
+        {
+            TypeDesc Result(Kind::Enum);
+            Result.m_EnumTypeIdentity = std::move(Identity);
+            return Result;
+        }
+
         [[nodiscard]] bool IsValid() const
         {
             switch (m_Kind)
@@ -188,6 +197,8 @@ namespace MiliastraPlusPlus
                     m_ValueType != nullptr && m_ValueType->IsValid();
             case Kind::StructObject:
                 return m_StructType.IsValid();
+            case Kind::Enum:
+                return m_EnumTypeIdentity.IsValid();
             default:
                 return true;
             }
@@ -223,6 +234,11 @@ namespace MiliastraPlusPlus
             return m_StructType;
         }
 
+        [[nodiscard]] const EnumTypeIdentity& GetEnumTypeIdentity() const
+        {
+            return m_EnumTypeIdentity;
+        }
+
         [[nodiscard]] bool IsCompatibleWith(const TypeDesc& OtherType) const
         {
             if (!IsValid() || !OtherType.IsValid())
@@ -254,6 +270,11 @@ namespace MiliastraPlusPlus
             if (m_Kind == Kind::StructObject)
             {
                 return m_StructType == OtherType.m_StructType;
+            }
+
+            if (m_Kind == Kind::Enum)
+            {
+                return m_EnumTypeIdentity == OtherType.m_EnumTypeIdentity;
             }
 
             return true;
@@ -320,6 +341,12 @@ namespace MiliastraPlusPlus
                 return Dictionary(*KeyResult, *ValueResult);
             }
 
+            if (m_Kind == Kind::Enum &&
+                m_EnumTypeIdentity == OtherType.m_EnumTypeIdentity)
+            {
+                return *this;
+            }
+
             return std::unexpected(MakeTypeDiagnostic(
                 "Types are incompatible and cannot be unified."
             ));
@@ -352,6 +379,10 @@ namespace MiliastraPlusPlus
                 }
                 return *m_ValueType <=> *OtherType.m_ValueType;
             }
+            if (m_Kind == Kind::Enum)
+            {
+                return m_EnumTypeIdentity <=> OtherType.m_EnumTypeIdentity;
+            }
             return std::strong_ordering::equal;
         }
 
@@ -378,6 +409,7 @@ namespace MiliastraPlusPlus
         Kind m_Kind = Kind::Invalid;
         GenericParameterId m_GenericParameter;
         StructTypeId m_StructType;
+        EnumTypeIdentity m_EnumTypeIdentity;
         std::shared_ptr<const TypeDesc> m_ElementType;
         std::shared_ptr<const TypeDesc> m_KeyType;
         std::shared_ptr<const TypeDesc> m_ValueType;

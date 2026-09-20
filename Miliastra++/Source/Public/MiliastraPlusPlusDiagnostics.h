@@ -145,7 +145,10 @@ namespace MiliastraPlusPlus
         InvalidGiaBackendNodeMapping,
         InvalidGiaBackendPinMapping,
         DuplicateGiaBackendPinMapping,
-        InvalidGiaExportContext
+        InvalidGiaExportContext,
+        MalformedGenshinClientBooleanFilterResultNodeSource,
+        MissingGenshinClientBooleanFilterResultNodeSourceField,
+        UnsupportedGenshinClientBooleanFilterResultNodeSourceForm
     };
 
     /// Callers can branch on Code; Message carries human-readable context.

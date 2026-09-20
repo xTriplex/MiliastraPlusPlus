@@ -96,3 +96,62 @@ materially based on genshin-ts, this source-reference file should be updated
 in the same change with the Miliastra++ consumer path, pinned upstream
 revision, relevant upstream resource paths and blobs, and the bounded purpose
 for which they are used.
+
+First Fixture Coverage Prerequisite: Add bounded bool_filter result-node and enum semantic coverage
+----------------------------------------------------------------------------------------------------
+
+Direct source-evidence consumers:
+Miliastra++/Source/Public/MiliastraPlusPlusGenshinClientBooleanFilterResultNodeSourceAdapter.h
+Tests/Phase6FirstFixtureCoverageTests.cpp
+
+Transitive backend-neutral semantic support:
+Miliastra++/Source/Public/MiliastraPlusPlusEnumTypes.h
+Miliastra++/Source/Public/MiliastraPlusPlusTypeDesc.h
+Miliastra++/Source/Public/MiliastraPlusPlusValueTypes.h
+Miliastra++/Source/Public/MiliastraPlusPlusDescriptorCatalogue.h
+Miliastra++/Source/Public/MiliastraPlusPlusDescriptorCatalogueSnapshot.h
+Miliastra++/Source/Public/MiliastraPlusPlusGraphIRJson.h
+
+The transitive support files implement generic enum, catalogue, snapshot, and
+GraphIR semantic/persistence behavior. They do not embed or interpret the
+pinned upstream node or enum evidence; the direct source-evidence consumers
+perform that bounded interpretation.
+
+Pinned revision:
+26bdf2a9a3fadba934423940489236f0b53eb3ea
+
+Node metadata resource:
+resources/client_node_metadata.json
+Pinned Git blob: 93237c724f6453650ae9394077620c6e0fddb3d3
+
+Mode resource:
+resources/client_node_modes.json
+Pinned Git blob: b7e14a0dd7102ccd682235cf958a2d3d36378033
+
+Enum value evidence resource:
+src/thirdparty/Genshin-Impact-Miliastra-Wonderland-Code-Node-Editor-Pack/node_data/client_enum_values.ts
+Pinned Git blob: 17b7d80dcd414739bd42093c6142f93b2af2cf6c
+
+Enum definition evidence resource:
+src/definitions/client_enums.ts
+Pinned Git blob: b23535b9054b60d2069e88c13316958124aaa8a8
+
+Derived evidence fixture:
+Tests/Phase6FirstFixtureCoverageTests.cpp embeds a minimized JSON evidence object
+derived from the pinned enum-value and enum-definition resources. It is not a
+native source resource. The bounded adapter uses it only to verify the
+filter_return_type family, IOC 38, and the two required members before retaining
+the semantic family identity and selected numeric value 1000010.
+
+Bounded purpose:
+The prerequisite admits exactly the client bool_filter result node
+node_graph_end_boolean (generic source ID 200000, concrete source value 0),
+its two data inputs, Beyond availability, and the backend-neutral enum default
+filter_return_type / 1000010. Client variable type 13, connection type 210040,
+IOC 38, graph type 20001, graph which 10, and the concrete value 0 remain
+source/backend evidence rather than semantic enum identity or GraphIR fields.
+
+The source adapter produces one normalized descriptor record. The historical
+bounded Phase 5 adapter remains a separate 25-record contract; the prerequisite
+composes its one result record with that historical slice to form a 26-record
+schema-2 catalogue. No binary graph fixture is introduced.
