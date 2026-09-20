@@ -7,9 +7,6 @@ echo ============================================
 
 cd /d "%~dp0"
 
-rem PowerShell can pass PATH and Path as distinct environment keys. MSBuild's
-rem process launcher treats those keys as duplicates, so normalize the key
-rem before CMake performs compiler detection or starts a build.
 set "NormalizedMiliastraPath=%PATH%"
 set "Path="
 set "PATH=%NormalizedMiliastraPath%"
@@ -18,9 +15,6 @@ set "NormalizedMiliastraPath="
 echo.
 echo Cleaning previous generated project files...
 
-rem The solution is regenerated in the build tree and then moved to the
-rem repository root. Remove Visual Studio's cached per-solution launch state
-rem so a previous ALL_BUILD selection cannot survive regeneration.
 if exist ".vs\Miliastra++\v17\.suo" (
 del /q ".vs\Miliastra++\v17\.suo"
 )
@@ -37,8 +31,6 @@ if exist "Miliastra++\CMakeFiles" (
 rmdir /s /q "Miliastra++\CMakeFiles"
 )
 
-rem Remove CMake's generated build metadata and target intermediates only.
-rem Source, Vendor, and Tests are intentionally outside this cleanup scope.
 if exist "Miliastra++\Miliastra++.dir" (
 rmdir /s /q "Miliastra++\Miliastra++.dir"
 )
@@ -108,9 +100,7 @@ if exist "Int\ProjectFiles" (
 rmdir /s /q "Int\ProjectFiles"
 )
 
-rem A project-file regeneration is a full generated-state reset. Remove all
-rem configuration outputs and intermediates so Bin and Int are recreated only
-rem by a subsequent build.
+
 if exist "Bin" (
 rmdir /s /q "Bin"
 )
@@ -146,9 +136,6 @@ pause
 exit /b 1
 )
 
-echo.
-echo Moving solution to solution root...
-
 move /Y "%ProjectFilesDirectory%\Miliastra++.sln" "Miliastra++.sln" >nul
 
 if %ERRORLEVEL% neq 0 (
@@ -158,8 +145,6 @@ pause
 exit /b 1
 )
 
-echo.
-echo Fixing project paths inside solution...
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$path = 'Miliastra++.sln'; $s = Get-Content -LiteralPath $path -Raw; $q = [char]34; Get-ChildItem -LiteralPath 'Miliastra++' -Filter '*.vcxproj' | ForEach-Object { $file = $_.Name; $s = $s.Replace(', ' + $q + $file + $q, ', ' + $q + 'Miliastra++\' + $file + $q) }; [System.IO.File]::WriteAllText($path, $s, [System.Text.UTF8Encoding]::new($false))"
 
@@ -186,14 +171,6 @@ echo %CD%\Bin
 echo.
 echo Build intermediates:
 echo %CD%\Int
-echo.
-
-if exist "x64" (
-echo WARNING: Root-level x64 directory still exists!
-) else (
-echo Root-level x64 directory: NOT PRESENT
-)
-
 echo.
 
 pause

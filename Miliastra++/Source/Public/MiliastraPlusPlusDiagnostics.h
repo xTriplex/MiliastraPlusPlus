@@ -136,7 +136,16 @@ namespace MiliastraPlusPlus
         UnsupportedDescriptorCatalogueSnapshotVersion,
         DescriptorCatalogueSnapshotContentMismatch,
         DescriptorCatalogueSnapshotIdentifierMismatch,
-        DescriptorCatalogueSnapshotSpecializationMismatch
+        DescriptorCatalogueSnapshotSpecializationMismatch,
+        InvalidGiaExportConfiguration,
+        UnsupportedGiaExportTarget,
+        InvalidGiaBackendMappingPackage,
+        UnsupportedGiaBackendMappingSchemaVersion,
+        IncompatibleGiaBackendMappingPackage,
+        InvalidGiaBackendNodeMapping,
+        InvalidGiaBackendPinMapping,
+        DuplicateGiaBackendPinMapping,
+        InvalidGiaExportContext
     };
 
     /// Callers can branch on Code; Message carries human-readable context.
@@ -151,6 +160,7 @@ namespace MiliastraPlusPlus
         std::optional<PinReference> DestinationPinReference;
         std::optional<SourceProvenance> PrimarySourceProvenance;
         std::optional<SourceProvenance> RelatedSourceProvenance;
+        std::optional<std::string> ExternalIdentityKey;
     };
 
     using DiagnosticCollection = std::vector<Diagnostic>;
