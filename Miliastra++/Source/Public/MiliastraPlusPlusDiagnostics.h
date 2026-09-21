@@ -148,7 +148,18 @@ namespace MiliastraPlusPlus
         InvalidGiaExportContext,
         MalformedGenshinClientBooleanFilterResultNodeSource,
         MissingGenshinClientBooleanFilterResultNodeSourceField,
-        UnsupportedGenshinClientBooleanFilterResultNodeSourceForm
+        UnsupportedGenshinClientBooleanFilterResultNodeSourceForm,
+        InvalidGiaLoweringInput,
+        InvalidGiaDescriptorCatalogueAssociation,
+        MissingGiaBackendNodeMapping,
+        MissingGiaBackendPinMapping,
+        UnresolvedGiaBackendConcreteIdentity,
+        UnsupportedGiaTargetGraphFeature,
+        UnsupportedGiaBackendType,
+        UnsupportedGiaBackendValue,
+        InvalidGiaBackendInputResolution,
+        InvalidGiaBackendConnection,
+        InvalidGiaBackendModel
     };
 
     /// Callers can branch on Code; Message carries human-readable context.

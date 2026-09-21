@@ -155,3 +155,67 @@ The source adapter produces one normalized descriptor record. The historical
 bounded Phase 5 adapter remains a separate 25-record contract; the prerequisite
 composes its one result record with that historical slice to form a 26-record
 schema-2 catalogue. No binary graph fixture is introduced.
+
+Phase 6 Milestone 2: Lower Validated GraphIR into a Deterministic GIA Backend Model
+------------------------------------------------------------------------------------
+
+Direct source-evidence consumer:
+Tests/Phase6Milestone2Tests.cpp
+
+The test directly constructs the derived in-memory authentic first-node backend
+mapping fixture used with the prerequisite's 26-record catalogue. It does not
+parse upstream resources at runtime and does not introduce a native binary
+fixture.
+
+Transitive backend-neutral semantic support:
+Miliastra++/Source/Public/MiliastraPlusPlusGiaBackendGraph.h
+Miliastra++/Source/Public/MiliastraPlusPlusGiaGraphLowerer.h
+Miliastra++/Source/Public/MiliastraPlusPlusDiagnostics.h
+
+These production files provide generic backend-model ownership, lowering,
+mapping validation, and diagnostics. They do not embed or interpret the pinned
+source records; they consume the semantic results of the bounded prerequisite
+and caller-supplied mapping package.
+
+Pinned revision:
+26bdf2a9a3fadba934423940489236f0b53eb3ea
+
+Node metadata resource:
+resources/client_node_metadata.json
+Pinned Git blob: 93237c724f6453650ae9394077620c6e0fddb3d3
+
+Mode resource:
+resources/client_node_modes.json
+Pinned Git blob: b7e14a0dd7102ccd682235cf958a2d3d36378033
+
+Enum value evidence resource:
+src/thirdparty/Genshin-Impact-Miliastra-Wonderland-Code-Node-Editor-Pack/node_data/client_enum_values.ts
+Pinned Git blob: 17b7d80dcd414739bd42093c6142f93b2af2cf6c
+
+Enum definition evidence resource:
+src/definitions/client_enums.ts
+Pinned Git blob: b23535b9054b60d2069e88c13316958124aaa8a8
+
+Client graph encoding evidence resource:
+src/thirdparty/Genshin-Impact-Miliastra-Wonderland-Code-Node-Editor-Pack/node_data/client_graph_encoding.ts
+Pinned Git blob: 7c9f66706d89cd1c50a59bdca9346f9dc5611429
+
+Minimal client graph smoke evidence resource:
+scripts/client-nodegraph/smoke-minimal-client-gia.ts
+Pinned Git blob: 07e62f88cd7dca60995e29588c20df912e6cc65f
+
+Derived mapping fixture:
+The bounded test mapping records derive the selected first-node facts for
+ClientBooleanFilter/Beyond: graph type 20001, graph which 10, opaque external
+identity 200000, generic ID 200000, present concrete ID 0, semantic input pin 0
+with backend type code 5 and Boolean literal encoding, and semantic input pin 1
+with backend type code 13 and Enum literal encoding. The semantic enum evidence
+remains filter_return_type / 1000010; IOC 38, client variable type 13, and
+source connection type 210040 remain evidence/backend facts rather than semantic
+enum identity. No raw .gia or protobuf resource is used by P6.2.
+
+Bounded purpose:
+P6.2 lowers the validated one-node first fixture, plus synthetic semantic
+connection cases, into an owned protobuf-independent backend model. Final GIA
+pin coordinates, target remaps, layout, protobuf, and encoded bytes remain
+later milestone responsibilities.
