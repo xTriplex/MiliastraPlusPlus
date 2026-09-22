@@ -17,10 +17,7 @@ namespace
         }
     }
 
-    NodeDescriptor MakeDescriptor(
-        NodeDescriptorId Id,
-        bool Execution = false,
-        TypeDesc ExecutionType = TypeDesc::Flow())
+    NodeDescriptor MakeDescriptor(NodeDescriptorId Id, bool Execution = false, TypeDesc ExecutionType = TypeDesc::Flow())
     {
         const TypeDesc PinType = Execution ? std::move(ExecutionType) : TypeDesc::Integer();
         const bool HasFlowPins = Execution && PinType == TypeDesc::Flow();

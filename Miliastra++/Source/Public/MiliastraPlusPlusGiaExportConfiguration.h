@@ -24,8 +24,7 @@ namespace MiliastraPlusPlus
 
     namespace GiaExportConfigurationDetail
     {
-        [[nodiscard]] inline Diagnostic MakeDiagnostic(DiagnosticCode Code,
-            std::string Message)
+        [[nodiscard]] inline Diagnostic MakeDiagnostic(DiagnosticCode Code, std::string Message)
         {
             return Diagnostic{
                 .Severity = DiagnosticSeverity::Error,
@@ -230,12 +229,14 @@ namespace MiliastraPlusPlus
         bool operator==(const GiaExportConfiguration&) const = default;
 
     private:
-        GiaExportConfiguration(GiaExportTargetProfile TargetProfile,
+        GiaExportConfiguration(
+            GiaExportTargetProfile TargetProfile,
             GiaExportMode Mode,
             GiaGraphIdentifier GraphIdentifier,
             std::string GraphName,
             GiaUniqueIdentifier UniqueIdentifier,
-            double EvaluationInterval)
+            double EvaluationInterval
+        )
             : m_TargetProfile(TargetProfile)
             , m_Mode(Mode)
             , m_GraphIdentifier(GraphIdentifier)

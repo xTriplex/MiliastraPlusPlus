@@ -112,14 +112,12 @@ namespace MiliastraPlusPlus
             return m_SourceRevision;
         }
 
-        [[nodiscard]] const DescriptorCatalogueSemanticSchemaVersion&
-            GetSemanticSchemaVersion() const
+        [[nodiscard]] const DescriptorCatalogueSemanticSchemaVersion& GetSemanticSchemaVersion() const
         {
             return m_SemanticSchemaVersion;
         }
 
-        [[nodiscard]] const DescriptorCatalogueContentIdentifier&
-            GetCatalogueContentIdentifier() const
+        [[nodiscard]] const DescriptorCatalogueContentIdentifier& GetCatalogueContentIdentifier() const
         {
             return m_CatalogueContentIdentifier;
         }
@@ -195,10 +193,7 @@ namespace MiliastraPlusPlus
     public:
         DescriptorIdentifierAllocationCandidate() = default;
 
-        explicit DescriptorIdentifierAllocationCandidate(
-            ExternalNodeIdentity ExternalIdentity,
-            std::optional<SourceProvenance> Provenance = std::nullopt
-        )
+        explicit DescriptorIdentifierAllocationCandidate(ExternalNodeIdentity ExternalIdentity, std::optional<SourceProvenance> Provenance = std::nullopt)
             : m_ExternalIdentity(std::move(ExternalIdentity))
             , m_SourceProvenance(std::move(Provenance))
         {
@@ -232,10 +227,7 @@ namespace MiliastraPlusPlus
     public:
         DescriptorIdentifierAssignment() = default;
 
-        DescriptorIdentifierAssignment(
-            ExternalNodeIdentity ExternalIdentity,
-            NodeDescriptorId DescriptorIdentifier
-        )
+        DescriptorIdentifierAssignment(ExternalNodeIdentity ExternalIdentity, NodeDescriptorId DescriptorIdentifier)
             : m_ExternalIdentity(std::move(ExternalIdentity))
             , m_DescriptorIdentifier(DescriptorIdentifier)
         {
@@ -274,10 +266,7 @@ namespace MiliastraPlusPlus
             std::string Message;
         };
 
-        [[nodiscard]] inline bool IsSourceProvenanceLess(
-            const std::optional<SourceProvenance>& Left,
-            const std::optional<SourceProvenance>& Right
-        )
+        [[nodiscard]] inline bool IsSourceProvenanceLess(const std::optional<SourceProvenance>& Left, const std::optional<SourceProvenance>& Right)
         {
             if (!Left.has_value() || !Right.has_value())
             {
@@ -287,10 +276,7 @@ namespace MiliastraPlusPlus
             return *Left < *Right;
         }
 
-        [[nodiscard]] inline bool IsPendingDiagnosticLess(
-            const PendingDiagnostic& Left,
-            const PendingDiagnostic& Right
-        )
+        [[nodiscard]] inline bool IsPendingDiagnosticLess(const PendingDiagnostic& Left, const PendingDiagnostic& Right)
         {
             if (Left.ExternalKey != Right.ExternalKey)
             {
@@ -321,8 +307,7 @@ namespace MiliastraPlusPlus
             return Left.Message < Right.Message;
         }
 
-        [[nodiscard]] inline std::optional<SourceProvenance>
-            GetValidSourceProvenance(const DescriptorIdentifierAllocationCandidate& Candidate)
+        [[nodiscard]] inline std::optional<SourceProvenance> GetValidSourceProvenance(const DescriptorIdentifierAllocationCandidate& Candidate)
         {
             if (Candidate.GetSourceProvenance().has_value() &&
                 Candidate.GetSourceProvenance()->IsValid())
@@ -353,9 +338,7 @@ namespace MiliastraPlusPlus
             };
         }
 
-        [[nodiscard]] inline DiagnosticCollection MaterializePendingDiagnostics(
-            std::vector<PendingDiagnostic> PendingDiagnostics
-        )
+        [[nodiscard]] inline DiagnosticCollection MaterializePendingDiagnostics(std::vector<PendingDiagnostic> PendingDiagnostics)
         {
             std::sort(
                 PendingDiagnostics.begin(),
@@ -378,9 +361,7 @@ namespace MiliastraPlusPlus
             return Diagnostics;
         }
 
-        [[nodiscard]] constexpr bool IsDescriptorIdentifierCountWithinDomain(
-            std::size_t CandidateCount
-        ) noexcept
+        [[nodiscard]] constexpr bool IsDescriptorIdentifierCountWithinDomain(std::size_t CandidateCount) noexcept
         {
             return CandidateCount <= static_cast<std::size_t>(
                 std::numeric_limits<std::uint32_t>::max());
@@ -409,10 +390,7 @@ namespace MiliastraPlusPlus
             std::sort(
                 SortedCandidates.begin(),
                 SortedCandidates.end(),
-                [](
-                    const DescriptorIdentifierAllocationCandidate& Left,
-                    const DescriptorIdentifierAllocationCandidate& Right
-                )
+                [](const DescriptorIdentifierAllocationCandidate& Left, const DescriptorIdentifierAllocationCandidate& Right)
                 {
                     if (Left.GetExternalIdentity() != Right.GetExternalIdentity())
                     {
@@ -593,14 +571,10 @@ namespace MiliastraPlusPlus
         [[nodiscard]] const std::string& GetDisplayName() const;
         [[nodiscard]] const std::vector<NodeAvailability>& GetAvailability() const;
         [[nodiscard]] const std::vector<NormalizedPinRecord>& GetPins() const;
-        [[nodiscard]] const std::optional<ExecutionControlSchema>&
-            GetExecutionControlSchema() const;
-        [[nodiscard]] const std::optional<SourceProvenance>&
-            GetSourceProvenance() const;
+        [[nodiscard]] const std::optional<ExecutionControlSchema>& GetExecutionControlSchema() const;
+        [[nodiscard]] const std::optional<SourceProvenance>& GetSourceProvenance() const;
 
-        [[nodiscard]] bool operator==(
-            const NormalizedNodeDescriptorRecord& Other
-        ) const;
+        [[nodiscard]] bool operator==(const NormalizedNodeDescriptorRecord& Other) const;
 
     private:
         ExternalNodeIdentity m_ExternalIdentity;
@@ -617,22 +591,16 @@ namespace MiliastraPlusPlus
     public:
         DescriptorCatalogueEntry();
 
-        DescriptorCatalogueEntry(
-            NormalizedNodeDescriptorRecord Record,
-            NodeDescriptorId DescriptorIdentifier
-        );
+        DescriptorCatalogueEntry(NormalizedNodeDescriptorRecord Record, NodeDescriptorId DescriptorIdentifier);
 
         [[nodiscard]] bool IsValid() const;
 
         [[nodiscard]] const NormalizedNodeDescriptorRecord& GetRecord() const;
         [[nodiscard]] const ExternalNodeIdentity& GetExternalIdentity() const;
-        [[nodiscard]] const std::optional<SourceProvenance>&
-            GetSourceProvenance() const;
+        [[nodiscard]] const std::optional<SourceProvenance>& GetSourceProvenance() const;
         [[nodiscard]] NodeDescriptorId GetDescriptorIdentifier() const;
 
-        [[nodiscard]] bool operator==(
-            const DescriptorCatalogueEntry& Other
-        ) const;
+        [[nodiscard]] bool operator==(const DescriptorCatalogueEntry& Other) const;
 
     private:
         NormalizedNodeDescriptorRecord m_Record;
@@ -651,21 +619,14 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] const DescriptorCatalogueIdentity& GetIdentity() const;
         [[nodiscard]] const std::vector<DescriptorCatalogueEntry>& GetEntries() const;
-        [[nodiscard]] const DescriptorCatalogueEntry* FindByExternalIdentity(
-            const ExternalNodeIdentity& ExternalIdentity
-        ) const;
-        [[nodiscard]] const DescriptorCatalogueEntry* FindByDescriptorIdentifier(
-            NodeDescriptorId DescriptorIdentifier
-        ) const;
+        [[nodiscard]] const DescriptorCatalogueEntry* FindByExternalIdentity(const ExternalNodeIdentity& ExternalIdentity) const;
+        [[nodiscard]] const DescriptorCatalogueEntry* FindByDescriptorIdentifier(NodeDescriptorId DescriptorIdentifier) const;
         [[nodiscard]] std::size_t GetEntryCount() const;
 
         [[nodiscard]] bool operator==(const DescriptorCatalogue& Other) const;
 
     private:
-        DescriptorCatalogue(
-            DescriptorCatalogueIdentity Identity,
-            std::vector<DescriptorCatalogueEntry> Entries
-        );
+        DescriptorCatalogue(DescriptorCatalogueIdentity Identity, std::vector<DescriptorCatalogueEntry> Entries);
 
         friend class DescriptorCatalogueBuilder;
 
@@ -695,9 +656,7 @@ namespace MiliastraPlusPlus
 
     namespace DescriptorCatalogueDetail
     {
-        [[nodiscard]] inline std::vector<NodeAvailability> CanonicalizeAvailability(
-            const std::vector<NodeAvailability>& Availability
-        )
+        [[nodiscard]] inline std::vector<NodeAvailability> CanonicalizeAvailability(const std::vector<NodeAvailability>& Availability)
         {
             std::vector<NodeAvailability> CanonicalAvailability;
             CanonicalAvailability.reserve(Availability.size());
@@ -728,10 +687,7 @@ namespace MiliastraPlusPlus
             return CanonicalAvailability;
         }
 
-        [[nodiscard]] inline bool AreNormalizedLiteralValuesEqual(
-            const LiteralValue& Left,
-            const LiteralValue& Right
-        )
+        [[nodiscard]] inline bool AreNormalizedLiteralValuesEqual(const LiteralValue& Left, const LiteralValue& Right)
         {
             if (Left.GetData().index() != Right.GetData().index())
             {
@@ -795,16 +751,10 @@ namespace MiliastraPlusPlus
             return false;
         }
 
-        [[nodiscard]] inline bool AreExecutionControlSchemasEqual(
-            const ExecutionControlSchema& Left,
-            const ExecutionControlSchema& Right
-        )
+        [[nodiscard]] inline bool AreExecutionControlSchemasEqual(const ExecutionControlSchema& Left, const ExecutionControlSchema& Right)
         {
             return std::visit(
-                [](
-                    const auto& LeftControl,
-                    const auto& RightControl
-                ) -> bool
+                [](const auto& LeftControl, const auto& RightControl) -> bool
                 {
                     using LeftType = std::decay_t<decltype(LeftControl)>;
                     using RightType = std::decay_t<decltype(RightControl)>;
@@ -853,9 +803,7 @@ namespace MiliastraPlusPlus
             );
         }
 
-        [[nodiscard]] inline bool IsNormalizedPinSemanticallyValid(
-            const NormalizedPinRecord& Pin
-        )
+        [[nodiscard]] inline bool IsNormalizedPinSemanticallyValid(const NormalizedPinRecord& Pin)
         {
             std::vector<PinSchema> Pins;
             Pins.emplace_back(
@@ -877,9 +825,7 @@ namespace MiliastraPlusPlus
             return Descriptor.IsValid();
         }
 
-        [[nodiscard]] inline bool IsNormalizedRecordSemanticPayloadValid(
-            const NormalizedNodeDescriptorRecord& Record
-        )
+        [[nodiscard]] inline bool IsNormalizedRecordSemanticPayloadValid(const NormalizedNodeDescriptorRecord& Record)
         {
             std::vector<PinSchema> Pins;
             Pins.reserve(Record.GetPins().size());
@@ -925,9 +871,7 @@ namespace MiliastraPlusPlus
             }
         }
 
-        [[nodiscard]] inline bool RecordContainsEnum(
-            const NormalizedNodeDescriptorRecord& Record
-        )
+        [[nodiscard]] inline bool RecordContainsEnum(const NormalizedNodeDescriptorRecord& Record)
         {
             for (const NormalizedPinRecord& Pin : Record.GetPins())
             {
@@ -942,8 +886,7 @@ namespace MiliastraPlusPlus
             return false;
         }
 
-        [[nodiscard]] inline std::optional<SourceProvenance>
-            GetValidSourceProvenance(const NormalizedNodeDescriptorRecord& Record)
+        [[nodiscard]] inline std::optional<SourceProvenance> GetValidSourceProvenance(const NormalizedNodeDescriptorRecord& Record)
         {
             if (Record.GetSourceProvenance().has_value() &&
                 Record.GetSourceProvenance()->IsValid())
@@ -954,10 +897,7 @@ namespace MiliastraPlusPlus
             return std::nullopt;
         }
 
-        [[nodiscard]] inline std::vector<PendingDiagnostic>
-            CollectNormalizedRecordDiagnostics(
-                const std::vector<NormalizedNodeDescriptorRecord>& Records
-            )
+        [[nodiscard]] inline std::vector<PendingDiagnostic> CollectNormalizedRecordDiagnostics(const std::vector<NormalizedNodeDescriptorRecord>& Records)
         {
             std::vector<PendingDiagnostic> PendingDiagnostics;
 
@@ -1062,10 +1002,7 @@ namespace MiliastraPlusPlus
             return PendingDiagnostics;
         }
 
-        [[nodiscard]] inline std::vector<NormalizedNodeDescriptorRecord>
-            GetCanonicalRecords(
-                const std::vector<NormalizedNodeDescriptorRecord>& Records
-            )
+        [[nodiscard]] inline std::vector<NormalizedNodeDescriptorRecord> GetCanonicalRecords(const std::vector<NormalizedNodeDescriptorRecord>& Records)
         {
             std::vector<NormalizedNodeDescriptorRecord> CanonicalRecords(
                 Records.begin(),
@@ -1074,8 +1011,7 @@ namespace MiliastraPlusPlus
             std::sort(
                 CanonicalRecords.begin(),
                 CanonicalRecords.end(),
-                [](const NormalizedNodeDescriptorRecord& Left,
-                    const NormalizedNodeDescriptorRecord& Right)
+                [](const NormalizedNodeDescriptorRecord& Left, const NormalizedNodeDescriptorRecord& Right)
                 {
                     return Left.GetExternalIdentity() < Right.GetExternalIdentity();
                 }
@@ -1274,9 +1210,7 @@ namespace MiliastraPlusPlus
                 }
             }
 
-            void AppendControlSchema(
-                const std::optional<ExecutionControlSchema>& ControlSchema
-            )
+            void AppendControlSchema(const std::optional<ExecutionControlSchema>& ControlSchema)
             {
                 if (!ControlSchema.has_value())
                 {
@@ -1359,9 +1293,7 @@ namespace MiliastraPlusPlus
             std::vector<std::uint8_t> m_Bytes;
         };
 
-        [[nodiscard]] inline std::vector<std::uint8_t> EncodeCanonicalContent(
-            const std::vector<NormalizedNodeDescriptorRecord>& Records
-        )
+        [[nodiscard]] inline std::vector<std::uint8_t> EncodeCanonicalContent(const std::vector<NormalizedNodeDescriptorRecord>& Records)
         {
             const std::string Domain = "MiliastraPlusPlus.DescriptorCatalogue.Content.v1";
             CanonicalContentEncoder Encoder;
@@ -1424,17 +1356,12 @@ namespace MiliastraPlusPlus
             return std::move(Encoder).TakeBytes();
         }
 
-        [[nodiscard]] inline constexpr std::uint32_t RotateRight(
-            std::uint32_t Value,
-            std::uint32_t Shift
-        ) noexcept
+        [[nodiscard]] inline constexpr std::uint32_t RotateRight(std::uint32_t Value, std::uint32_t Shift) noexcept
         {
             return (Value >> Shift) | (Value << (32U - Shift));
         }
 
-        [[nodiscard]] inline std::array<std::uint8_t, 32U> ComputeSha256(
-            const std::vector<std::uint8_t>& Bytes
-        )
+        [[nodiscard]] inline std::array<std::uint8_t, 32U> ComputeSha256(const std::vector<std::uint8_t>& Bytes)
         {
             static constexpr std::array<std::uint32_t, 64U> RoundConstants = {
                 0x428A2F98U, 0x71374491U, 0xB5C0FBCFU, 0xE9B5DBA5U,
@@ -1558,8 +1485,7 @@ namespace MiliastraPlusPlus
             return Digest;
         }
 
-        [[nodiscard]] inline DescriptorCatalogueContentIdentifier
-            MakeContentIdentifier(const std::vector<std::uint8_t>& CanonicalBytes)
+        [[nodiscard]] inline DescriptorCatalogueContentIdentifier MakeContentIdentifier(const std::vector<std::uint8_t>& CanonicalBytes)
         {
             const std::array<std::uint8_t, 32U> Digest = ComputeSha256(CanonicalBytes);
             constexpr char HexDigits[] = "0123456789abcdef";
@@ -1573,10 +1499,7 @@ namespace MiliastraPlusPlus
             return DescriptorCatalogueContentIdentifier(std::move(HexValue));
         }
 
-        [[nodiscard]] inline DescriptorCatalogueContentIdentifier
-            DeriveValidatedContentIdentifier(
-                const std::vector<NormalizedNodeDescriptorRecord>& Records
-            )
+        [[nodiscard]] inline DescriptorCatalogueContentIdentifier DeriveValidatedContentIdentifier(const std::vector<NormalizedNodeDescriptorRecord>& Records)
         {
             return MakeContentIdentifier(EncodeCanonicalContent(Records));
         }
@@ -1663,9 +1586,7 @@ namespace MiliastraPlusPlus
         return m_DefaultValue;
     }
 
-    inline bool NormalizedPinRecord::operator==(
-        const NormalizedPinRecord& Other
-    ) const
+    inline bool NormalizedPinRecord::operator==(const NormalizedPinRecord& Other) const
     {
         if (m_Name != Other.m_Name || m_Type != Other.m_Type ||
             m_Direction != Other.m_Direction || m_Category != Other.m_Category ||
@@ -1710,8 +1631,7 @@ namespace MiliastraPlusPlus
             DescriptorCatalogueDetail::IsNormalizedRecordSemanticPayloadValid(*this);
     }
 
-    inline const ExternalNodeIdentity&
-        NormalizedNodeDescriptorRecord::GetExternalIdentity() const
+    inline const ExternalNodeIdentity& NormalizedNodeDescriptorRecord::GetExternalIdentity() const
     {
         return m_ExternalIdentity;
     }
@@ -1721,33 +1641,27 @@ namespace MiliastraPlusPlus
         return m_DisplayName;
     }
 
-    inline const std::vector<NodeAvailability>&
-        NormalizedNodeDescriptorRecord::GetAvailability() const
+    inline const std::vector<NodeAvailability>& NormalizedNodeDescriptorRecord::GetAvailability() const
     {
         return m_Availability;
     }
 
-    inline const std::vector<NormalizedPinRecord>&
-        NormalizedNodeDescriptorRecord::GetPins() const
+    inline const std::vector<NormalizedPinRecord>& NormalizedNodeDescriptorRecord::GetPins() const
     {
         return m_Pins;
     }
 
-    inline const std::optional<ExecutionControlSchema>&
-        NormalizedNodeDescriptorRecord::GetExecutionControlSchema() const
+    inline const std::optional<ExecutionControlSchema>& NormalizedNodeDescriptorRecord::GetExecutionControlSchema() const
     {
         return m_ControlSchema;
     }
 
-    inline const std::optional<SourceProvenance>&
-        NormalizedNodeDescriptorRecord::GetSourceProvenance() const
+    inline const std::optional<SourceProvenance>& NormalizedNodeDescriptorRecord::GetSourceProvenance() const
     {
         return m_SourceProvenance;
     }
 
-    inline bool NormalizedNodeDescriptorRecord::operator==(
-        const NormalizedNodeDescriptorRecord& Other
-    ) const
+    inline bool NormalizedNodeDescriptorRecord::operator==(const NormalizedNodeDescriptorRecord& Other) const
     {
         if (m_ExternalIdentity != Other.m_ExternalIdentity ||
             m_DisplayName != Other.m_DisplayName ||
@@ -1776,10 +1690,7 @@ namespace MiliastraPlusPlus
 
     inline DescriptorCatalogueEntry::DescriptorCatalogueEntry() = default;
 
-    inline DescriptorCatalogueEntry::DescriptorCatalogueEntry(
-        NormalizedNodeDescriptorRecord Record,
-        NodeDescriptorId DescriptorIdentifier
-    )
+    inline DescriptorCatalogueEntry::DescriptorCatalogueEntry(NormalizedNodeDescriptorRecord Record, NodeDescriptorId DescriptorIdentifier)
         : m_Record(std::move(Record))
         , m_DescriptorIdentifier(DescriptorIdentifier)
     {
@@ -1790,20 +1701,17 @@ namespace MiliastraPlusPlus
         return m_Record.IsValid() && m_DescriptorIdentifier.IsValid();
     }
 
-    inline const NormalizedNodeDescriptorRecord&
-        DescriptorCatalogueEntry::GetRecord() const
+    inline const NormalizedNodeDescriptorRecord& DescriptorCatalogueEntry::GetRecord() const
     {
         return m_Record;
     }
 
-    inline const ExternalNodeIdentity&
-        DescriptorCatalogueEntry::GetExternalIdentity() const
+    inline const ExternalNodeIdentity& DescriptorCatalogueEntry::GetExternalIdentity() const
     {
         return m_Record.GetExternalIdentity();
     }
 
-    inline const std::optional<SourceProvenance>&
-        DescriptorCatalogueEntry::GetSourceProvenance() const
+    inline const std::optional<SourceProvenance>& DescriptorCatalogueEntry::GetSourceProvenance() const
     {
         return m_Record.GetSourceProvenance();
     }
@@ -1813,9 +1721,7 @@ namespace MiliastraPlusPlus
         return m_DescriptorIdentifier;
     }
 
-    inline bool DescriptorCatalogueEntry::operator==(
-        const DescriptorCatalogueEntry& Other
-    ) const
+    inline bool DescriptorCatalogueEntry::operator==(const DescriptorCatalogueEntry& Other) const
     {
         return m_Record == Other.m_Record &&
             m_DescriptorIdentifier == Other.m_DescriptorIdentifier;
@@ -1823,10 +1729,7 @@ namespace MiliastraPlusPlus
 
     inline DescriptorCatalogue::DescriptorCatalogue() = default;
 
-    inline DescriptorCatalogue::DescriptorCatalogue(
-        DescriptorCatalogueIdentity Identity,
-        std::vector<DescriptorCatalogueEntry> Entries
-    )
+    inline DescriptorCatalogue::DescriptorCatalogue(DescriptorCatalogueIdentity Identity, std::vector<DescriptorCatalogueEntry> Entries)
         : m_Identity(std::move(Identity))
         , m_Entries(std::move(Entries))
     {
@@ -1875,15 +1778,12 @@ namespace MiliastraPlusPlus
         return m_Identity;
     }
 
-    inline const std::vector<DescriptorCatalogueEntry>&
-        DescriptorCatalogue::GetEntries() const
+    inline const std::vector<DescriptorCatalogueEntry>& DescriptorCatalogue::GetEntries() const
     {
         return m_Entries;
     }
 
-    inline const DescriptorCatalogueEntry* DescriptorCatalogue::FindByExternalIdentity(
-        const ExternalNodeIdentity& ExternalIdentity
-    ) const
+    inline const DescriptorCatalogueEntry* DescriptorCatalogue::FindByExternalIdentity(const ExternalNodeIdentity& ExternalIdentity) const
     {
         for (const DescriptorCatalogueEntry& Entry : m_Entries)
         {
@@ -1896,9 +1796,7 @@ namespace MiliastraPlusPlus
         return nullptr;
     }
 
-    inline const DescriptorCatalogueEntry* DescriptorCatalogue::FindByDescriptorIdentifier(
-        NodeDescriptorId DescriptorIdentifier
-    ) const
+    inline const DescriptorCatalogueEntry* DescriptorCatalogue::FindByDescriptorIdentifier(NodeDescriptorId DescriptorIdentifier) const
     {
         for (const DescriptorCatalogueEntry& Entry : m_Entries)
         {
@@ -1921,10 +1819,7 @@ namespace MiliastraPlusPlus
         return m_Identity == Other.m_Identity && m_Entries == Other.m_Entries;
     }
 
-    [[nodiscard]] inline std::expected<void, DiagnosticCollection>
-        ValidateNormalizedDescriptorRecord(
-            const NormalizedNodeDescriptorRecord& Record
-        )
+    [[nodiscard]] inline std::expected<void, DiagnosticCollection> ValidateNormalizedDescriptorRecord(const NormalizedNodeDescriptorRecord& Record)
     {
         const std::vector<NormalizedNodeDescriptorRecord> Records = {Record};
         std::vector<DescriptorCatalogueDetail::PendingDiagnostic> PendingDiagnostics =
@@ -2089,11 +1984,10 @@ namespace MiliastraPlusPlus
 
     /// Compares a graph binding with the trusted identity selected by a later catalogue loader.
     /// Numeric descriptor IDs are deliberately outside this operation.
-    [[nodiscard]] inline std::expected<void, DiagnosticCollection>
-        ValidateDescriptorCatalogueCompatibility(
-            const DescriptorCatalogueBinding& GraphBinding,
-            const DescriptorCatalogueIdentity& AvailableCatalogueIdentity
-        )
+    [[nodiscard]] inline std::expected<void, DiagnosticCollection> ValidateDescriptorCatalogueCompatibility(
+        const DescriptorCatalogueBinding& GraphBinding,
+        const DescriptorCatalogueIdentity& AvailableCatalogueIdentity
+    )
     {
         std::vector<DescriptorCatalogueDetail::PendingDiagnostic> PendingDiagnostics;
 

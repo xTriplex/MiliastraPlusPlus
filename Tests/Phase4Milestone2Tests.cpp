@@ -19,11 +19,7 @@ namespace MiliastraPlusPlus
 {
     struct GraphBuilderPhase4TestAccess final
     {
-        static void SetNextExecutionIdentifiers(
-            GraphBuilder& Builder,
-            std::uint64_t EntryIdentifier,
-            std::uint64_t RegionIdentifier
-        )
+        static void SetNextExecutionIdentifiers(GraphBuilder& Builder, std::uint64_t EntryIdentifier, std::uint64_t RegionIdentifier)
         {
             Builder.m_NextExecutionEntryIdentifier = EntryIdentifier;
             Builder.m_NextExecutionRegionIdentifier = RegionIdentifier;
@@ -41,8 +37,7 @@ namespace
         std::abort();
     }
 
-    void Check(bool Condition, const char* Expression,
-        const std::source_location& Location = std::source_location::current())
+    void Check(bool Condition, const char* Expression, const std::source_location& Location = std::source_location::current())
     {
         if (!Condition)
         {
@@ -60,8 +55,7 @@ namespace
     constexpr NodeDescriptorId BooleanExpressionId(3006U);
     constexpr NodeDescriptorId SchemaLessFlowId(3007U);
 
-    PinSchema Flow(const char* Name, PinDirection Direction,
-        PinCardinality Cardinality = PinCardinality::Single)
+    PinSchema Flow(const char* Name, PinDirection Direction, PinCardinality Cardinality = PinCardinality::Single)
     {
         return PinSchema(Name, TypeDesc::Flow(), Direction, PinCategory::Execution,
             Cardinality);

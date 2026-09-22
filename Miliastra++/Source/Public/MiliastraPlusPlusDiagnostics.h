@@ -16,8 +16,7 @@ namespace MiliastraPlusPlus
     public:
         SourceProvenance() = default;
 
-        SourceProvenance(std::string SourceDocumentIdentifier,
-            std::string SourceRecordIdentifier)
+        SourceProvenance(std::string SourceDocumentIdentifier, std::string SourceRecordIdentifier)
             : m_SourceDocumentIdentifier(std::move(SourceDocumentIdentifier))
             , m_SourceRecordIdentifier(std::move(SourceRecordIdentifier))
         {
@@ -25,8 +24,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] bool IsValid() const
         {
-            return !m_SourceDocumentIdentifier.empty() &&
-                !m_SourceRecordIdentifier.empty();
+            return !m_SourceDocumentIdentifier.empty() && !m_SourceRecordIdentifier.empty();
         }
 
         [[nodiscard]] const std::string& GetSourceDocumentIdentifier() const

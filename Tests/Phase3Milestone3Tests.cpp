@@ -14,10 +14,7 @@ using namespace MiliastraPlusPlus;
 
 namespace
 {
-    [[noreturn]] void ReportFailure(
-        const char* Expression,
-        const std::source_location& Location
-    )
+    [[noreturn]] void ReportFailure(const char* Expression, const std::source_location& Location)
     {
         std::fprintf(
             stderr,
@@ -30,11 +27,7 @@ namespace
         std::abort();
     }
 
-    void Check(
-        bool Condition,
-        const char* Expression,
-        const std::source_location& Location = std::source_location::current()
-    )
+    void Check(bool Condition, const char* Expression, const std::source_location& Location = std::source_location::current())
     {
         if (!Condition)
         {
@@ -220,12 +213,7 @@ namespace
         );
     }
 
-    void AddVariableBinding(
-        GraphIR& Graph,
-        NodeInstanceId DestinationNode,
-        PinIndex DestinationPin,
-        GraphVariableId Variable
-    )
+    void AddVariableBinding(GraphIR& Graph, NodeInstanceId DestinationNode, PinIndex DestinationPin, GraphVariableId Variable)
     {
         Graph.BindInput(
             DestinationNode,

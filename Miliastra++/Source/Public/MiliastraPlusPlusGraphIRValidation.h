@@ -20,10 +20,7 @@ namespace MiliastraPlusPlus
     class GraphIRValidator
     {
     public:
-        [[nodiscard]] static DiagnosticCollection Validate(
-            const GraphIR& Graph,
-            const NodeDescriptorRegistry& Descriptors
-        )
+        [[nodiscard]] static DiagnosticCollection Validate(const GraphIR& Graph, const NodeDescriptorRegistry& Descriptors)
         {
             DiagnosticCollection Diagnostics;
 
@@ -222,10 +219,7 @@ namespace MiliastraPlusPlus
             return false;
         }
 
-        static std::size_t CountEntries(
-            const GraphIR& Graph,
-            ExecutionEntryId Identifier
-        )
+        static std::size_t CountEntries(const GraphIR& Graph, ExecutionEntryId Identifier)
         {
             std::size_t Count = 0U;
             for (const ExecutionEntry& Entry : Graph.GetExecutionEntries())
@@ -238,10 +232,7 @@ namespace MiliastraPlusPlus
             return Count;
         }
 
-        static std::size_t CountRegions(
-            const GraphIR& Graph,
-            ExecutionRegionId Identifier
-        )
+        static std::size_t CountRegions(const GraphIR& Graph, ExecutionRegionId Identifier)
         {
             std::size_t Count = 0U;
             for (const ExecutionRegion& Region : Graph.GetExecutionRegions())
@@ -254,11 +245,7 @@ namespace MiliastraPlusPlus
             return Count;
         }
 
-        static std::size_t CountRegionsForEntry(
-            const GraphIR& Graph,
-            ExecutionEntryId Entry,
-            ExecutionRegionKind Kind
-        )
+        static std::size_t CountRegionsForEntry(const GraphIR& Graph, ExecutionEntryId Entry, ExecutionRegionKind Kind)
         {
             std::size_t Count = 0U;
             for (const ExecutionRegion& Region : Graph.GetExecutionRegions())
@@ -271,11 +258,7 @@ namespace MiliastraPlusPlus
             return Count;
         }
 
-        static std::size_t CountOwnerRegions(
-            const GraphIR& Graph,
-            NodeInstanceId Owner,
-            ExecutionRegionKind Kind
-        )
+        static std::size_t CountOwnerRegions(const GraphIR& Graph, NodeInstanceId Owner, ExecutionRegionKind Kind)
         {
             std::size_t Count = 0U;
             for (const ExecutionRegion& Region : Graph.GetExecutionRegions())
@@ -288,12 +271,7 @@ namespace MiliastraPlusPlus
             return Count;
         }
 
-        static std::size_t CountOwnerRegionsAtPin(
-            const GraphIR& Graph,
-            NodeInstanceId Owner,
-            ExecutionRegionKind Kind,
-            PinIndex Pin
-        )
+        static std::size_t CountOwnerRegionsAtPin(const GraphIR& Graph, NodeInstanceId Owner, ExecutionRegionKind Kind, PinIndex Pin)
         {
             std::size_t Count = 0U;
             for (const ExecutionRegion& Region : Graph.GetExecutionRegions())
@@ -307,10 +285,7 @@ namespace MiliastraPlusPlus
             return Count;
         }
 
-        static std::size_t CountRootReferences(
-            const GraphIR& Graph,
-            NodeInstanceId Root
-        )
+        static std::size_t CountRootReferences(const GraphIR& Graph, NodeInstanceId Root)
         {
             std::size_t Count = 0U;
             for (const ExecutionEntry& Entry : Graph.GetExecutionEntries())
@@ -323,11 +298,7 @@ namespace MiliastraPlusPlus
             return Count;
         }
 
-        static bool RegionOwnerPinMatches(
-            const NodeDescriptor& Descriptor,
-            ExecutionRegionKind Kind,
-            PinIndex OwnerPin
-        )
+        static bool RegionOwnerPinMatches(const NodeDescriptor& Descriptor, ExecutionRegionKind Kind, PinIndex OwnerPin)
         {
             if (!Descriptor.GetExecutionControlSchema().has_value())
             {
@@ -353,11 +324,7 @@ namespace MiliastraPlusPlus
             }, *Descriptor.GetExecutionControlSchema());
         }
 
-        static void ValidateExecutionMetadata(
-            const GraphIR& Graph,
-            const NodeDescriptorRegistry& Descriptors,
-            DiagnosticCollection& Diagnostics
-        )
+        static void ValidateExecutionMetadata(const GraphIR& Graph, const NodeDescriptorRegistry& Descriptors, DiagnosticCollection& Diagnostics)
         {
             if (!IsValidExecutionModel(Graph.GetExecutionModel()))
             {
@@ -744,11 +711,7 @@ namespace MiliastraPlusPlus
             return std::get_if<Schema>(&*Descriptor->GetExecutionControlSchema());
         }
 
-        static const ExecutionRegion* FindBranchArmRegion(
-            const GraphIR& Graph,
-            NodeInstanceId BranchNode,
-            PinIndex OutputPin
-        )
+        static const ExecutionRegion* FindBranchArmRegion(const GraphIR& Graph, NodeInstanceId BranchNode, PinIndex OutputPin)
         {
             for (const ExecutionRegion& Region : Graph.GetExecutionRegions())
             {
@@ -761,11 +724,7 @@ namespace MiliastraPlusPlus
             return nullptr;
         }
 
-        static const ExecutionRegion* FindLoopBodyRegion(
-            const GraphIR& Graph,
-            NodeInstanceId LoopNode,
-            PinIndex BodyOutput
-        )
+        static const ExecutionRegion* FindLoopBodyRegion(const GraphIR& Graph, NodeInstanceId LoopNode, PinIndex BodyOutput)
         {
             for (const ExecutionRegion& Region : Graph.GetExecutionRegions())
             {
@@ -778,11 +737,7 @@ namespace MiliastraPlusPlus
             return nullptr;
         }
 
-        static const ExecutionRegion* EffectiveSourceRegion(
-            const GraphIR& Graph,
-            const NodeDescriptorRegistry& Descriptors,
-            const ControlEdge& Edge
-        )
+        static const ExecutionRegion* EffectiveSourceRegion(const GraphIR& Graph, const NodeDescriptorRegistry& Descriptors, const ControlEdge& Edge)
         {
             const NodeInstance* Source = Graph.FindNode(Edge.SourceNode);
             const NodeDescriptor* Descriptor = Source == nullptr
@@ -802,10 +757,7 @@ namespace MiliastraPlusPlus
                 ? Graph.FindExecutionRegion(*Source->ExecutionRegion) : nullptr;
         }
 
-        static bool IsInsideLoopBody(
-            const GraphIR& Graph,
-            const NodeInstance& Node
-        )
+        static bool IsInsideLoopBody(const GraphIR& Graph, const NodeInstance& Node)
         {
             if (!Node.ExecutionRegion.has_value())
             {
@@ -836,31 +788,21 @@ namespace MiliastraPlusPlus
             return false;
         }
 
-        static bool IsLoopControlNode(
-            const NodeInstance& Node,
-            const NodeDescriptorRegistry& Descriptors
-        )
+        static bool IsLoopControlNode(const NodeInstance& Node, const NodeDescriptorRegistry& Descriptors)
         {
             const NodeDescriptor* Descriptor = Node.Descriptor.IsValid()
                 ? Descriptors.Find(Node.Descriptor) : nullptr;
             return GetControlSchema<LoopControlSchema>(Descriptor) != nullptr;
         }
 
-        static bool IsReturnNode(
-            const NodeInstance& Node,
-            const NodeDescriptorRegistry& Descriptors
-        )
+        static bool IsReturnNode(const NodeInstance& Node, const NodeDescriptorRegistry& Descriptors)
         {
             const NodeDescriptor* Descriptor = Node.Descriptor.IsValid()
                 ? Descriptors.Find(Node.Descriptor) : nullptr;
             return GetControlSchema<ReturnControlSchema>(Descriptor) != nullptr;
         }
 
-        static void ValidateReturnTerminalTopology(
-            const GraphIR& Graph,
-            const NodeDescriptorRegistry& Descriptors,
-            DiagnosticCollection& Diagnostics
-        )
+        static void ValidateReturnTerminalTopology(const GraphIR& Graph, const NodeDescriptorRegistry& Descriptors, DiagnosticCollection& Diagnostics)
         {
             if (Graph.GetExecutionModel() != ExecutionModel::Structured)
             {
@@ -896,11 +838,7 @@ namespace MiliastraPlusPlus
             }
         }
 
-        static bool IsLoopTransferEdge(
-            const GraphIR& Graph,
-            const NodeDescriptorRegistry& Descriptors,
-            const ControlEdge& Edge
-        )
+        static bool IsLoopTransferEdge(const GraphIR& Graph, const NodeDescriptorRegistry& Descriptors, const ControlEdge& Edge)
         {
             const NodeInstance* Destination = Graph.FindNode(Edge.DestinationNode);
             if (Destination == nullptr)
@@ -915,11 +853,7 @@ namespace MiliastraPlusPlus
                     Edge.DestinationInputPin == DestinationLoop->BreakInput);
         }
 
-        static std::size_t CountOutgoingEndpoint(
-            const GraphIR& Graph,
-            NodeInstanceId Node,
-            PinIndex Pin
-        )
+        static std::size_t CountOutgoingEndpoint(const GraphIR& Graph, NodeInstanceId Node, PinIndex Pin)
         {
             std::size_t Count = 0U;
             for (const ControlEdge& Edge : Graph.GetControlEdges())
@@ -932,11 +866,7 @@ namespace MiliastraPlusPlus
             return Count;
         }
 
-        static std::size_t CountIncomingEndpoint(
-            const GraphIR& Graph,
-            NodeInstanceId Node,
-            PinIndex Pin
-        )
+        static std::size_t CountIncomingEndpoint(const GraphIR& Graph, NodeInstanceId Node, PinIndex Pin)
         {
             std::size_t Count = 0U;
             for (const ControlEdge& Edge : Graph.GetControlEdges())
@@ -949,11 +879,7 @@ namespace MiliastraPlusPlus
             return Count;
         }
 
-        static void ValidateStructuredExecution(
-            const GraphIR& Graph,
-            const NodeDescriptorRegistry& Descriptors,
-            DiagnosticCollection& Diagnostics
-        )
+        static void ValidateStructuredExecution(const GraphIR& Graph, const NodeDescriptorRegistry& Descriptors, DiagnosticCollection& Diagnostics)
         {
             if (Graph.GetExecutionModel() != ExecutionModel::Structured)
             {
@@ -1167,12 +1093,7 @@ namespace MiliastraPlusPlus
             ValidateLoopExecution(Graph, Descriptors, Diagnostics);
         }
 
-        static void ValidateBranchOutcomes(
-            const GraphIR& Graph,
-            const NodeDescriptorRegistry& Descriptors,
-            ExecutionEntryId Entry,
-            DiagnosticCollection& Diagnostics
-        )
+        static void ValidateBranchOutcomes(const GraphIR& Graph, const NodeDescriptorRegistry& Descriptors, ExecutionEntryId Entry, DiagnosticCollection& Diagnostics)
         {
             for (const NodeInstance& Node : Graph.GetNodes())
             {
@@ -1404,11 +1325,7 @@ namespace MiliastraPlusPlus
             }
         }
 
-        static bool IsRegionWithin(
-            const GraphIR& Graph,
-            ExecutionRegionId RegionIdentifier,
-            ExecutionRegionId AncestorIdentifier
-        )
+        static bool IsRegionWithin(const GraphIR& Graph, ExecutionRegionId RegionIdentifier, ExecutionRegionId AncestorIdentifier)
         {
             const ExecutionRegion* Region = Graph.FindExecutionRegion(RegionIdentifier);
             std::vector<ExecutionRegionId> Visited;
@@ -1432,11 +1349,7 @@ namespace MiliastraPlusPlus
             return false;
         }
 
-        static const ExecutionRegion* FindNearestLoopBodyRegion(
-            const GraphIR& Graph,
-            const NodeDescriptorRegistry& Descriptors,
-            const ExecutionRegion* Start
-        )
+        static const ExecutionRegion* FindNearestLoopBodyRegion(const GraphIR& Graph, const NodeDescriptorRegistry& Descriptors, const ExecutionRegion* Start)
         {
             const ExecutionRegion* Region = Start;
             std::vector<ExecutionRegionId> Visited;
@@ -1472,11 +1385,7 @@ namespace MiliastraPlusPlus
             return nullptr;
         }
 
-        static const LoopControlSchema* FindLoopSchema(
-            const GraphIR& Graph,
-            const NodeDescriptorRegistry& Descriptors,
-            NodeInstanceId NodeIdentifier
-        )
+        static const LoopControlSchema* FindLoopSchema(const GraphIR& Graph, const NodeDescriptorRegistry& Descriptors, NodeInstanceId NodeIdentifier)
         {
             const NodeInstance* Node = Graph.FindNode(NodeIdentifier);
             const NodeDescriptor* Descriptor = Node == nullptr
@@ -1484,11 +1393,7 @@ namespace MiliastraPlusPlus
             return GetControlSchema<LoopControlSchema>(Descriptor);
         }
 
-        static bool IsAuthorizedLoopTransfer(
-            const GraphIR& Graph,
-            const NodeDescriptorRegistry& Descriptors,
-            const ControlEdge& Edge
-        )
+        static bool IsAuthorizedLoopTransfer(const GraphIR& Graph, const NodeDescriptorRegistry& Descriptors, const ControlEdge& Edge)
         {
             const NodeInstance* Target = Graph.FindNode(Edge.DestinationNode);
             const NodeInstance* Source = Graph.FindNode(Edge.SourceNode);
@@ -1525,10 +1430,7 @@ namespace MiliastraPlusPlus
                 Target->ExecutionRegion == TargetBody->Parent;
         }
 
-        static void AddReachableNode(
-            std::vector<NodeInstanceId>& Reachable,
-            NodeInstanceId Node
-        )
+        static void AddReachableNode(std::vector<NodeInstanceId>& Reachable, NodeInstanceId Node)
         {
             if (std::find(Reachable.begin(), Reachable.end(), Node) == Reachable.end())
             {
@@ -1536,18 +1438,12 @@ namespace MiliastraPlusPlus
             }
         }
 
-        static bool ContainsNode(
-            const std::vector<NodeInstanceId>& Nodes,
-            NodeInstanceId Node
-        )
+        static bool ContainsNode(const std::vector<NodeInstanceId>& Nodes, NodeInstanceId Node)
         {
             return std::find(Nodes.begin(), Nodes.end(), Node) != Nodes.end();
         }
 
-        static bool ContainsEntryLoop(
-            const std::vector<NodeInstanceId>& Loops,
-            NodeInstanceId Loop
-        )
+        static bool ContainsEntryLoop(const std::vector<NodeInstanceId>& Loops, NodeInstanceId Loop)
         {
             return ContainsNode(Loops, Loop);
         }
@@ -1645,21 +1541,14 @@ namespace MiliastraPlusPlus
             return Reachable;
         }
 
-        static bool IsExecutionNode(
-            const NodeInstance& Node,
-            const NodeDescriptorRegistry& Descriptors
-        )
+        static bool IsExecutionNode(const NodeInstance& Node, const NodeDescriptorRegistry& Descriptors)
         {
             const NodeDescriptor* Descriptor = Node.Descriptor.IsValid()
                 ? Descriptors.Find(Node.Descriptor) : nullptr;
             return Descriptor != nullptr && Descriptor->GetExecutionControlSchema().has_value();
         }
 
-        static void ValidateLoopExecution(
-            const GraphIR& Graph,
-            const NodeDescriptorRegistry& Descriptors,
-            DiagnosticCollection& Diagnostics
-        )
+        static void ValidateLoopExecution(const GraphIR& Graph, const NodeDescriptorRegistry& Descriptors, DiagnosticCollection& Diagnostics)
         {
             if (Graph.GetExecutionModel() != ExecutionModel::Structured)
             {
@@ -2305,11 +2194,7 @@ namespace MiliastraPlusPlus
             }
         }
 
-        static void ValidateExecutionDataDominance(
-            const GraphIR& Graph,
-            const NodeDescriptorRegistry& Descriptors,
-            DiagnosticCollection& Diagnostics
-        )
+        static void ValidateExecutionDataDominance(const GraphIR& Graph, const NodeDescriptorRegistry& Descriptors, DiagnosticCollection& Diagnostics)
         {
             struct ProvenanceRecord
             {
@@ -2583,11 +2468,7 @@ namespace MiliastraPlusPlus
             }
         }
 
-        static void Add(
-            DiagnosticCollection& Diagnostics,
-            DiagnosticCode Code,
-            const char* Message
-        )
+        static void Add(DiagnosticCollection& Diagnostics, DiagnosticCode Code, const char* Message)
         {
             Diagnostics.push_back(Diagnostic{
                 .Severity = DiagnosticSeverity::Error,
@@ -2596,11 +2477,7 @@ namespace MiliastraPlusPlus
             });
         }
 
-        static const NodeInstance* FindPriorNode(
-            const GraphIR& Graph,
-            NodeInstanceId Identifier,
-            std::size_t EndIndex
-        )
+        static const NodeInstance* FindPriorNode(const GraphIR& Graph, NodeInstanceId Identifier, std::size_t EndIndex)
         {
             for (std::size_t Index = 0U; Index < EndIndex; ++Index)
             {
@@ -2612,11 +2489,7 @@ namespace MiliastraPlusPlus
             return nullptr;
         }
 
-        static const GraphVariable* FindPriorVariable(
-            const GraphIR& Graph,
-            GraphVariableId Identifier,
-            std::size_t EndIndex
-        )
+        static const GraphVariable* FindPriorVariable(const GraphIR& Graph, GraphVariableId Identifier, std::size_t EndIndex)
         {
             for (std::size_t Index = 0U; Index < EndIndex; ++Index)
             {
@@ -2628,11 +2501,7 @@ namespace MiliastraPlusPlus
             return nullptr;
         }
 
-        static bool HasPriorControlEdge(
-            const GraphIR& Graph,
-            const ControlEdge& Edge,
-            std::size_t EndIndex
-        )
+        static bool HasPriorControlEdge(const GraphIR& Graph, const ControlEdge& Edge, std::size_t EndIndex)
         {
             for (std::size_t Index = 0U; Index < EndIndex; ++Index)
             {
@@ -2648,11 +2517,7 @@ namespace MiliastraPlusPlus
             return false;
         }
 
-        static const PinSchema* FindPin(
-            const NodeInstance* Node,
-            PinIndex Index,
-            const NodeDescriptorRegistry& Descriptors
-        )
+        static const PinSchema* FindPin(const NodeInstance* Node, PinIndex Index, const NodeDescriptorRegistry& Descriptors)
         {
             if (Node == nullptr || !Node->Descriptor.IsValid() || !Index.IsValid())
             {
@@ -2666,11 +2531,7 @@ namespace MiliastraPlusPlus
             return &Descriptor->GetPins()[Index.GetValue()];
         }
 
-        static std::size_t CountBindings(
-            const GraphIR& Graph,
-            NodeInstanceId Node,
-            PinIndex Pin
-        )
+        static std::size_t CountBindings(const GraphIR& Graph, NodeInstanceId Node, PinIndex Pin)
         {
             std::size_t Count = 0U;
             for (const InputBindingRecord& Record : Graph.GetInputBindings())

@@ -545,11 +545,7 @@ namespace MiliastraPlusPlus
             return std::nullopt;
         }
 
-        [[nodiscard]] static Diagnostic CreateLinkDiagnostic(
-            DiagnosticCode Code,
-            std::string Message,
-            const Link& GraphLink
-        )
+        [[nodiscard]] static Diagnostic CreateLinkDiagnostic(DiagnosticCode Code, std::string Message, const Link& GraphLink)
         {
             return {
                 .Severity = DiagnosticSeverity::Error,
@@ -600,10 +596,7 @@ namespace MiliastraPlusPlus
             return GenericPins;
         }
 
-        [[nodiscard]] static std::optional<std::size_t> FindGenericPinIndex(
-            const std::vector<GenericPinRecord>& GenericPins,
-            const PinReference& Reference
-        )
+        [[nodiscard]] static std::optional<std::size_t> FindGenericPinIndex(const std::vector<GenericPinRecord>& GenericPins, const PinReference& Reference)
         {
             for (std::size_t GenericPinIndex = 0;
                  GenericPinIndex < GenericPins.size();

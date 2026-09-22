@@ -15,12 +15,7 @@ namespace
         PinReference Input;
     };
 
-    std::unique_ptr<Node> MakeNode(
-        NodeIdentifier Identifier,
-        EPinCategory Category,
-        EPinType Type,
-        std::int32_t TypeGroupIdentifier = -1
-    )
+    std::unique_ptr<Node> MakeNode(NodeIdentifier Identifier, EPinCategory Category, EPinType Type, std::int32_t TypeGroupIdentifier = -1)
     {
         auto GraphNode = std::make_unique<Node>(Identifier, "Test Node");
         const auto OutputResult = GraphNode->AddPin(std::make_unique<Pin>(
@@ -46,11 +41,7 @@ namespace
         };
     }
 
-    Link MakeLink(
-        std::uint32_t Identifier,
-        const PinReference& SourcePinReference,
-        const PinReference& DestinationPinReference
-    )
+    Link MakeLink(std::uint32_t Identifier, const PinReference& SourcePinReference, const PinReference& DestinationPinReference)
     {
         return Link(LinkIdentifier(Identifier), SourcePinReference, DestinationPinReference);
     }

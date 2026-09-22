@@ -27,11 +27,7 @@ namespace
         std::exit(EXIT_FAILURE);
     }
 
-    void Check(
-        bool Condition,
-        const char* Expression,
-        const std::source_location& Location = std::source_location::current()
-    )
+    void Check(bool Condition, const char* Expression, const std::source_location& Location = std::source_location::current())
     {
         if (!Condition)
         {
@@ -62,10 +58,7 @@ namespace
         ));
     }
 
-    SourceProvenance MakeProvenance(
-        std::string SourceDocumentIdentifier,
-        std::string SourceRecordIdentifier
-    )
+    SourceProvenance MakeProvenance(std::string SourceDocumentIdentifier, std::string SourceRecordIdentifier)
     {
         return SourceProvenance(
             std::move(SourceDocumentIdentifier),
@@ -93,11 +86,7 @@ namespace
         );
     }
 
-    NormalizedPinRecord MakeExecutionPin(
-        std::string Name,
-        PinDirection Direction,
-        PinCardinality Cardinality = PinCardinality::Single
-    )
+    NormalizedPinRecord MakeExecutionPin(std::string Name, PinDirection Direction, PinCardinality Cardinality = PinCardinality::Single)
     {
         return NormalizedPinRecord(
             std::move(Name),
@@ -132,22 +121,14 @@ namespace
         return ExecutionControlSchema(EntryControlSchema{PinIndex(ExecutionOutput)});
     }
 
-    std::optional<ExecutionControlSchema> MakeSequenceControl(
-        std::uint32_t ExecutionInput,
-        std::uint32_t ExecutionOutput
-    )
+    std::optional<ExecutionControlSchema> MakeSequenceControl(std::uint32_t ExecutionInput, std::uint32_t ExecutionOutput)
     {
         return ExecutionControlSchema(SequenceControlSchema{
             PinIndex(ExecutionInput), PinIndex(ExecutionOutput)
         });
     }
 
-    std::optional<ExecutionControlSchema> MakeBranchControl(
-        std::uint32_t ExecutionInput,
-        std::uint32_t ConditionInput,
-        std::uint32_t TrueOutput,
-        std::uint32_t FalseOutput
-    )
+    std::optional<ExecutionControlSchema> MakeBranchControl(std::uint32_t ExecutionInput, std::uint32_t ConditionInput, std::uint32_t TrueOutput, std::uint32_t FalseOutput)
     {
         return ExecutionControlSchema(BranchControlSchema{
             PinIndex(ExecutionInput),
@@ -157,20 +138,14 @@ namespace
         });
     }
 
-    std::optional<ExecutionControlSchema> MakeJoinControl(
-        std::uint32_t ExecutionInput,
-        std::uint32_t ExecutionOutput
-    )
+    std::optional<ExecutionControlSchema> MakeJoinControl(std::uint32_t ExecutionInput, std::uint32_t ExecutionOutput)
     {
         return ExecutionControlSchema(JoinControlSchema{
             PinIndex(ExecutionInput), PinIndex(ExecutionOutput)
         });
     }
 
-    std::optional<ExecutionControlSchema> MakeLoopControl(
-        bool Conditional,
-        std::uint32_t ConditionInput = 0U
-    )
+    std::optional<ExecutionControlSchema> MakeLoopControl(bool Conditional, std::uint32_t ConditionInput = 0U)
     {
         return ExecutionControlSchema(LoopControlSchema{
             .ExecutionInput = PinIndex(0U),
@@ -192,10 +167,7 @@ namespace
         return ExecutionControlSchema(ReturnControlSchema{PinIndex(ExecutionInput)});
     }
 
-    NormalizedNodeDescriptorRecord MakeLoopRecord(
-        std::string ExternalKey,
-        bool Conditional
-    )
+    NormalizedNodeDescriptorRecord MakeLoopRecord(std::string ExternalKey, bool Conditional)
     {
         std::vector<NormalizedPinRecord> Pins;
         Pins.push_back(MakeExecutionPin("ExecutionInput", PinDirection::Input));
@@ -231,10 +203,7 @@ namespace
         );
     }
 
-    std::size_t CountDiagnosticCode(
-        const DiagnosticCollection& Diagnostics,
-        DiagnosticCode Code
-    )
+    std::size_t CountDiagnosticCode(const DiagnosticCollection& Diagnostics, DiagnosticCode Code)
     {
         return static_cast<std::size_t>(std::count_if(
             Diagnostics.begin(),
@@ -246,10 +215,7 @@ namespace
         ));
     }
 
-    bool SameDiagnostics(
-        const DiagnosticCollection& Left,
-        const DiagnosticCollection& Right
-    )
+    bool SameDiagnostics(const DiagnosticCollection& Left, const DiagnosticCollection& Right)
     {
         if (Left.size() != Right.size())
         {
@@ -271,20 +237,14 @@ namespace
         return true;
     }
 
-    void CheckDigest(
-        const std::vector<NormalizedNodeDescriptorRecord>& Records,
-        const char* ExpectedDigest
-    )
+    void CheckDigest(const std::vector<NormalizedNodeDescriptorRecord>& Records, const char* ExpectedDigest)
     {
         const auto Result = DeriveDescriptorCatalogueContentIdentifier(Records);
         MPP_CHECK(Result.has_value());
         MPP_CHECK(Result->GetValue() == ExpectedDigest);
     }
 
-    std::uint32_t RotateRightForIndependentHash(
-        std::uint32_t Value,
-        std::uint32_t Shift
-    )
+    std::uint32_t RotateRightForIndependentHash(std::uint32_t Value, std::uint32_t Shift)
     {
         return (Value >> Shift) | (Value << (32U - Shift));
     }

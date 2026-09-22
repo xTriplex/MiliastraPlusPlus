@@ -159,8 +159,7 @@ namespace MiliastraPlusPlus
         }
 
     private:
-        [[nodiscard]] const GiaBackendPinMapping* FindPinMapping(
-            PinIndex SemanticPin) const
+        [[nodiscard]] const GiaBackendPinMapping* FindPinMapping(PinIndex SemanticPin) const
         {
             for (const GiaBackendPinMapping& MappingValue : Mapping.GetPinMappings())
             {
@@ -172,9 +171,7 @@ namespace MiliastraPlusPlus
             return nullptr;
         }
 
-        [[nodiscard]] static bool IsLiteralCompatible(
-            const LiteralValue& Literal,
-            const TypeDesc& Type)
+        [[nodiscard]] static bool IsLiteralCompatible(const LiteralValue& Literal, const TypeDesc& Type)
         {
             if (!Literal.IsValid() || !Type.IsValid())
             {
@@ -194,9 +191,7 @@ namespace MiliastraPlusPlus
             }
         }
 
-        [[nodiscard]] static bool IsSupportedInputMappingTuple(
-            const GiaBackendInputValue& Input,
-            const GiaBackendPinMapping& PinMapping)
+        [[nodiscard]] static bool IsSupportedInputMappingTuple(const GiaBackendInputValue& Input, const GiaBackendPinMapping& PinMapping)
         {
             if (PinMapping.GetPinKind() != GiaPinKind::InputParameter ||
                 PinMapping.GetEmissionPolicy() != GiaPinEmissionPolicy::Emit)
@@ -275,7 +270,8 @@ namespace MiliastraPlusPlus
 
     namespace GiaBackendGraphDetail
     {
-        [[nodiscard]] GiaBackendGraph CreateForTesting(GiaBackendGraphHeader Header,
+        [[nodiscard]] GiaBackendGraph CreateForTesting(
+            GiaBackendGraphHeader Header,
             std::vector<GiaBackendNode> Nodes,
             std::vector<GiaBackendDataConnection> DataConnections,
             std::vector<GiaBackendControlConnection> ControlConnections);
@@ -395,15 +391,19 @@ namespace MiliastraPlusPlus
 
     private:
         friend class GiaGraphLowerer;
-        friend GiaBackendGraph GiaBackendGraphDetail::CreateForTesting(GiaBackendGraphHeader Header,
+        friend GiaBackendGraph GiaBackendGraphDetail::CreateForTesting(
+            GiaBackendGraphHeader Header,
             std::vector<GiaBackendNode> Nodes,
             std::vector<GiaBackendDataConnection> DataConnections,
-            std::vector<GiaBackendControlConnection> ControlConnections);
+            std::vector<GiaBackendControlConnection> ControlConnections
+        );
 
-        GiaBackendGraph(GiaBackendGraphHeader Header,
+        GiaBackendGraph(
+            GiaBackendGraphHeader Header,
             std::vector<GiaBackendNode> Nodes,
             std::vector<GiaBackendDataConnection> DataConnections,
-            std::vector<GiaBackendControlConnection> ControlConnections)
+            std::vector<GiaBackendControlConnection> ControlConnections
+        )
             : m_Header(std::move(Header))
             , m_Nodes(std::move(Nodes))
             , m_DataConnections(std::move(DataConnections))
@@ -423,17 +423,13 @@ namespace MiliastraPlusPlus
             return nullptr;
         }
 
-        [[nodiscard]] static bool IsCanonicalConnectionOrder(
-            const std::vector<GiaBackendDataConnection>& Connections,
-            std::size_t Index)
+        [[nodiscard]] static bool IsCanonicalConnectionOrder(const std::vector<GiaBackendDataConnection>& Connections, std::size_t Index)
         {
             return Index == 0U ||
                 Connections[Index - 1U] < Connections[Index];
         }
 
-        [[nodiscard]] static bool IsCanonicalConnectionOrder(
-            const std::vector<GiaBackendControlConnection>& Connections,
-            std::size_t Index)
+        [[nodiscard]] static bool IsCanonicalConnectionOrder(const std::vector<GiaBackendControlConnection>& Connections, std::size_t Index)
         {
             return Index == 0U ||
                 Connections[Index - 1U] < Connections[Index];
@@ -488,8 +484,7 @@ namespace MiliastraPlusPlus
                 DestinationMapping->GetPinKind() == GiaPinKind::InputFlow;
         }
 
-        [[nodiscard]] static const GiaBackendPinMapping* FindMapping(const GiaBackendNode& Node,
-            PinIndex Pin)
+        [[nodiscard]] static const GiaBackendPinMapping* FindMapping(const GiaBackendNode& Node, PinIndex Pin)
         {
             for (const GiaBackendPinMapping& Mapping : Node.Mapping.GetPinMappings())
             {
@@ -501,8 +496,7 @@ namespace MiliastraPlusPlus
             return nullptr;
         }
 
-        [[nodiscard]] static const GiaBackendInputValue* FindInput(const GiaBackendNode& Node,
-            PinIndex Pin)
+        [[nodiscard]] static const GiaBackendInputValue* FindInput(const GiaBackendNode& Node, PinIndex Pin)
         {
             for (const GiaBackendInputValue& Input : Node.Inputs)
             {
@@ -522,10 +516,12 @@ namespace MiliastraPlusPlus
 
     namespace GiaBackendGraphDetail
     {
-        inline GiaBackendGraph CreateForTesting(GiaBackendGraphHeader Header,
+        inline GiaBackendGraph CreateForTesting(
+            GiaBackendGraphHeader Header,
             std::vector<GiaBackendNode> Nodes,
             std::vector<GiaBackendDataConnection> DataConnections,
-            std::vector<GiaBackendControlConnection> ControlConnections)
+            std::vector<GiaBackendControlConnection> ControlConnections
+        )
         {
             return GiaBackendGraph(
                 std::move(Header),

@@ -47,10 +47,7 @@ namespace
         return false;
     }
 
-    void RequireReadCode(
-        const std::string& SnapshotJson,
-        DiagnosticCode Code
-    )
+    void RequireReadCode(const std::string& SnapshotJson, DiagnosticCode Code)
     {
         const auto Result = DescriptorCatalogueSnapshotPersistence::Read(
             SnapshotJson
@@ -59,10 +56,7 @@ namespace
         MPP_CHECK(HasCode(Result.error(), Code));
     }
 
-    bool HasExactMembers(
-        const JsonValue& Value,
-        std::initializer_list<const char*> Names
-    )
+    bool HasExactMembers(const JsonValue& Value, std::initializer_list<const char*> Names)
     {
         if (!Value.is_object() || Value.size() != Names.size())
         {
@@ -80,10 +74,7 @@ namespace
         return true;
     }
 
-    JsonValue* FindJsonEntry(
-        JsonValue& Document,
-        const std::string& Identity
-    )
+    JsonValue* FindJsonEntry(JsonValue& Document, const std::string& Identity)
     {
         for (JsonValue& Entry : Document["entries"])
         {
@@ -96,10 +87,7 @@ namespace
         return nullptr;
     }
 
-    const DescriptorCatalogueEntry* FindCatalogueEntry(
-        const DescriptorCatalogue& Catalogue,
-        const std::string& Identity
-    )
+    const DescriptorCatalogueEntry* FindCatalogueEntry(const DescriptorCatalogue& Catalogue, const std::string& Identity)
     {
         return Catalogue.FindByExternalIdentity(ExternalNodeIdentity(Identity));
     }
@@ -142,11 +130,7 @@ namespace
         );
     }
 
-    NormalizedPinRecord MakeExecution(
-        std::string Name,
-        PinDirection Direction,
-        PinCardinality Cardinality = PinCardinality::Single
-    )
+    NormalizedPinRecord MakeExecution(std::string Name, PinDirection Direction, PinCardinality Cardinality = PinCardinality::Single)
     {
         return NormalizedPinRecord(
             std::move(Name),
@@ -694,9 +678,7 @@ namespace
         return *Result;
     }
 
-    DescriptorSpecializationResult MakeMismatchedSpecialization(
-        const SnapshotFixture& Fixture
-    )
+    DescriptorSpecializationResult MakeMismatchedSpecialization(const SnapshotFixture& Fixture)
     {
         const DescriptorSpecializationFamily& Family =
             Fixture.Specialization.GetFamilies().front();
@@ -722,10 +704,7 @@ namespace
         return *Result;
     }
 
-    void CheckCatalogueFields(
-        const DescriptorCatalogue& Expected,
-        const DescriptorCatalogue& Actual
-    )
+    void CheckCatalogueFields(const DescriptorCatalogue& Expected, const DescriptorCatalogue& Actual)
     {
         MPP_CHECK(Expected == Actual);
         MPP_CHECK(
@@ -762,10 +741,7 @@ namespace
         }
     }
 
-    void CheckNodeDescriptor(
-        const NodeDescriptor& Actual,
-        const DescriptorCatalogueEntry& Expected
-    )
+    void CheckNodeDescriptor(const NodeDescriptor& Actual, const DescriptorCatalogueEntry& Expected)
     {
         const NormalizedNodeDescriptorRecord& Record = Expected.GetRecord();
         MPP_CHECK(Actual.GetIdentifier() == Expected.GetDescriptorIdentifier());

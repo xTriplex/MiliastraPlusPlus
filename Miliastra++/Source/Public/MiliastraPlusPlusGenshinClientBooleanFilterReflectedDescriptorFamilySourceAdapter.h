@@ -92,12 +92,7 @@ namespace MiliastraPlusPlus
             "connectionType"
         };
 
-        inline void AddDiagnostic(
-            std::vector<PendingDiagnostic>& Diagnostics,
-            DiagnosticCode Code,
-            std::string Message,
-            const SourceContext& Context = {}
-        )
+        inline void AddDiagnostic(std::vector<PendingDiagnostic>& Diagnostics, DiagnosticCode Code, std::string Message, const SourceContext& Context = {})
         {
             Diagnostics.push_back({
                 .ExternalKey = Context.ExternalKey,
@@ -108,11 +103,7 @@ namespace MiliastraPlusPlus
             });
         }
 
-        inline void AddMissingField(
-            std::vector<PendingDiagnostic>& Diagnostics,
-            std::string_view Field,
-            const SourceContext& Context = {}
-        )
+        inline void AddMissingField(std::vector<PendingDiagnostic>& Diagnostics, std::string_view Field, const SourceContext& Context = {})
         {
             AddDiagnostic(
                 Diagnostics,
@@ -123,11 +114,7 @@ namespace MiliastraPlusPlus
             );
         }
 
-        inline void AddUnsupported(
-            std::vector<PendingDiagnostic>& Diagnostics,
-            std::string Message,
-            const SourceContext& Context = {}
-        )
+        inline void AddUnsupported(std::vector<PendingDiagnostic>& Diagnostics, std::string Message, const SourceContext& Context = {})
         {
             AddDiagnostic(
                 Diagnostics,
@@ -137,10 +124,7 @@ namespace MiliastraPlusPlus
             );
         }
 
-        [[nodiscard]] inline const JsonValue* FindMember(
-            const JsonValue& Object,
-            std::string_view Name
-        )
+        [[nodiscard]] inline const JsonValue* FindMember(const JsonValue& Object, std::string_view Name)
         {
             const auto Iterator = Object.find(std::string(Name));
             return Iterator == Object.end() ? nullptr : &(*Iterator);
@@ -177,8 +161,7 @@ namespace MiliastraPlusPlus
             return Valid;
         }
 
-        [[nodiscard]] inline std::optional<std::uint64_t>
-            TryConvertUnsignedInteger(const JsonValue& Value)
+        [[nodiscard]] inline std::optional<std::uint64_t> TryConvertUnsignedInteger(const JsonValue& Value)
         {
             try
             {
@@ -372,10 +355,7 @@ namespace MiliastraPlusPlus
             return Valid;
         }
 
-        [[nodiscard]] inline ModeMembership ParseModeDocument(
-            const JsonValue& Document,
-            std::vector<PendingDiagnostic>& Diagnostics
-        )
+        [[nodiscard]] inline ModeMembership ParseModeDocument(const JsonValue& Document, std::vector<PendingDiagnostic>& Diagnostics)
         {
             ModeMembership Mode;
             if (!Document.is_object())
@@ -544,14 +524,13 @@ namespace MiliastraPlusPlus
             );
         }
 
-        [[nodiscard]] inline std::optional<DescriptorSpecializationPinBinding>
-            ParseBinding(
-                const JsonValue& Pin,
-                std::uint64_t ConcreteId,
-                std::vector<bool>& SeenPins,
-                std::vector<PendingDiagnostic>& Diagnostics,
-                const SourceContext& Context
-            )
+        [[nodiscard]] inline std::optional<DescriptorSpecializationPinBinding> ParseBinding(
+            const JsonValue& Pin,
+            std::uint64_t ConcreteId,
+            std::vector<bool>& SeenPins,
+            std::vector<PendingDiagnostic>& Diagnostics,
+            const SourceContext& Context
+        )
         {
             if (!Pin.is_object())
             {
@@ -655,13 +634,12 @@ namespace MiliastraPlusPlus
             );
         }
 
-        [[nodiscard]] inline std::optional<DescriptorSpecializationVariant>
-            ParseVariant(
-                const JsonValue& Variant,
-                const std::string& FamilyKey,
-                std::vector<PendingDiagnostic>& Diagnostics,
-                const SourceContext& Context
-            )
+        [[nodiscard]] inline std::optional<DescriptorSpecializationVariant> ParseVariant(
+            const JsonValue& Variant,
+            const std::string& FamilyKey,
+            std::vector<PendingDiagnostic>& Diagnostics,
+            const SourceContext& Context
+        )
         {
             if (!Variant.is_object())
             {
@@ -752,12 +730,11 @@ namespace MiliastraPlusPlus
             );
         }
 
-        [[nodiscard]] inline std::optional<DescriptorSpecializationFamily>
-            ParseRecord(
-                const JsonValue& Record,
-                const ModeMembership& Mode,
-                std::vector<PendingDiagnostic>& Diagnostics
-            )
+        [[nodiscard]] inline std::optional<DescriptorSpecializationFamily> ParseRecord(
+            const JsonValue& Record,
+            const ModeMembership& Mode,
+            std::vector<PendingDiagnostic>& Diagnostics
+        )
         {
             SourceContext Context;
             if (!Record.is_object())

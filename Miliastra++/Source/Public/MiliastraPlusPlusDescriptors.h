@@ -368,10 +368,7 @@ namespace MiliastraPlusPlus
             return false;
         }
 
-        [[nodiscard]] static bool IsLiteralCompatible(
-            const LiteralValue& Literal,
-            const TypeDesc& Type
-        )
+        [[nodiscard]] static bool IsLiteralCompatible(const LiteralValue& Literal, const TypeDesc& Type)
         {
             if (!Literal.IsValid() || !Type.IsValid())
             {
@@ -426,8 +423,7 @@ namespace MiliastraPlusPlus
                 DeclaredRoles.push_back(Index);
                 return true;
             };
-            const auto AddFlowRole = [&AddRole](PinIndex Index, PinDirection Direction,
-                PinCardinality Cardinality = PinCardinality::Single) -> bool
+            const auto AddFlowRole = [&AddRole](PinIndex Index, PinDirection Direction, PinCardinality Cardinality = PinCardinality::Single) -> bool
             {
                 return AddRole(Index, Direction, PinCategory::Execution,
                     TypeDesc::Flow(), Cardinality);
@@ -599,9 +595,7 @@ namespace MiliastraPlusPlus
             return nullptr;
         }
 
-        [[nodiscard]] std::expected<const NodeDescriptor*, Diagnostic> Get(
-            NodeDescriptorId Identifier
-        ) const
+        [[nodiscard]] std::expected<const NodeDescriptor*, Diagnostic> Get(NodeDescriptorId Identifier) const
         {
             const NodeDescriptor* Descriptor = Find(Identifier);
             if (Descriptor == nullptr)

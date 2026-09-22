@@ -22,11 +22,7 @@ namespace
         std::exit(EXIT_FAILURE);
     }
 
-    void Check(
-        bool Condition,
-        const char* Expression,
-        const std::source_location& Location = std::source_location::current()
-    )
+    void Check(bool Condition, const char* Expression, const std::source_location& Location = std::source_location::current())
     {
         if (!Condition)
         {
@@ -51,10 +47,7 @@ namespace
         );
     }
 
-    SourceProvenance MakeSourceProvenance(
-        std::string SourceDocumentIdentifier,
-        std::string SourceRecordIdentifier
-    )
+    SourceProvenance MakeSourceProvenance(std::string SourceDocumentIdentifier, std::string SourceRecordIdentifier)
     {
         return SourceProvenance(
             std::move(SourceDocumentIdentifier),
@@ -85,10 +78,7 @@ namespace
         );
     }
 
-    std::size_t CountDiagnosticCode(
-        const DiagnosticCollection& Diagnostics,
-        DiagnosticCode Code
-    )
+    std::size_t CountDiagnosticCode(const DiagnosticCollection& Diagnostics, DiagnosticCode Code)
     {
         return static_cast<std::size_t>(std::count_if(
             Diagnostics.begin(),
@@ -100,10 +90,7 @@ namespace
         ));
     }
 
-    bool SameDiagnostics(
-        const DiagnosticCollection& Left,
-        const DiagnosticCollection& Right
-    )
+    bool SameDiagnostics(const DiagnosticCollection& Left, const DiagnosticCollection& Right)
     {
         if (Left.size() != Right.size())
         {
@@ -129,10 +116,7 @@ namespace
         return true;
     }
 
-    const Diagnostic* FindDiagnostic(
-        const DiagnosticCollection& Diagnostics,
-        DiagnosticCode Code
-    )
+    const Diagnostic* FindDiagnostic(const DiagnosticCollection& Diagnostics, DiagnosticCode Code)
     {
         const auto Iterator = std::find_if(
             Diagnostics.begin(),

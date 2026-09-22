@@ -42,7 +42,8 @@ namespace MiliastraPlusPlus
             std::optional<SourceProvenance> RelatedSourceProvenance;
         };
 
-        inline void Add(std::vector<PendingDiagnostic>& Diagnostics,
+        inline void Add(
+            std::vector<PendingDiagnostic>& Diagnostics,
             ValidationStage Stage,
             DiagnosticCode Code,
             std::string Message,
@@ -50,7 +51,8 @@ namespace MiliastraPlusPlus
             std::optional<PinIndex> Pin = std::nullopt,
             std::string ExternalIdentityKey = {},
             std::optional<SourceProvenance> PrimarySourceProvenance = std::nullopt,
-            std::optional<SourceProvenance> RelatedSourceProvenance = std::nullopt)
+            std::optional<SourceProvenance> RelatedSourceProvenance = std::nullopt
+        )
         {
             Diagnostics.push_back(PendingDiagnostic{
                 Stage,
@@ -120,8 +122,7 @@ namespace MiliastraPlusPlus
                 Type.GetEnumTypeIdentity() == EnumTypeIdentity("filter_return_type");
         }
 
-        [[nodiscard]] inline bool IsLiteralCompatible(const LiteralValue& Literal,
-            const TypeDesc& Type)
+        [[nodiscard]] inline bool IsLiteralCompatible(const LiteralValue& Literal, const TypeDesc& Type)
         {
             if (!IsSupportedType(Type) || !Literal.IsValid())
             {
@@ -136,8 +137,7 @@ namespace MiliastraPlusPlus
                 Type.GetEnumTypeIdentity();
         }
 
-        [[nodiscard]] inline const GiaBackendPinMapping* FindMapping(const GiaBackendNodeMapping& Mapping,
-            PinIndex SemanticPin)
+        [[nodiscard]] inline const GiaBackendPinMapping* FindMapping(const GiaBackendNodeMapping& Mapping, PinIndex SemanticPin)
         {
             for (const GiaBackendPinMapping& PinMapping : Mapping.GetPinMappings())
             {
@@ -149,9 +149,7 @@ namespace MiliastraPlusPlus
             return nullptr;
         }
 
-        [[nodiscard]] inline const InputBindingRecord* FindBinding(const GraphIR& Graph,
-            NodeInstanceId Node,
-            PinIndex Pin)
+        [[nodiscard]] inline const InputBindingRecord* FindBinding(const GraphIR& Graph, NodeInstanceId Node, PinIndex Pin)
         {
             for (const InputBindingRecord& Record : Graph.GetInputBindings())
             {
@@ -164,14 +162,12 @@ namespace MiliastraPlusPlus
             return nullptr;
         }
 
-        [[nodiscard]] inline const NodeInstance* FindNode(const GraphIR& Graph,
-            NodeInstanceId Identifier)
+        [[nodiscard]] inline const NodeInstance* FindNode(const GraphIR& Graph, NodeInstanceId Identifier)
         {
             return Graph.FindNode(Identifier);
         }
 
-        [[nodiscard]] inline const PinSchema* FindPin(const NodeDescriptor& Descriptor,
-            PinIndex Index)
+        [[nodiscard]] inline const PinSchema* FindPin(const NodeDescriptor& Descriptor, PinIndex Index)
         {
             if (!Index.IsValid() || Index.GetValue() >= Descriptor.GetPins().size())
             {
@@ -204,8 +200,7 @@ namespace MiliastraPlusPlus
                 Pin.GetDirection() == PinDirection::Output;
         }
 
-        [[nodiscard]] inline bool IsBooleanTuple(const PinSchema& Pin,
-            const GiaBackendPinMapping& Mapping)
+        [[nodiscard]] inline bool IsBooleanTuple(const PinSchema& Pin, const GiaBackendPinMapping& Mapping)
         {
             return Pin.GetType().GetKind() == TypeDesc::Kind::Boolean &&
                 Mapping.GetPinKind() == GiaPinKind::InputParameter &&
@@ -213,8 +208,7 @@ namespace MiliastraPlusPlus
                 Mapping.GetLiteralEncoding() == GiaLiteralEncodingKind::Boolean;
         }
 
-        [[nodiscard]] inline bool IsEnumTuple(const PinSchema& Pin,
-            const GiaBackendPinMapping& Mapping)
+        [[nodiscard]] inline bool IsEnumTuple(const PinSchema& Pin, const GiaBackendPinMapping& Mapping)
         {
             return Pin.GetType().GetKind() == TypeDesc::Kind::Enum &&
                 Pin.GetType().GetEnumTypeIdentity() ==
@@ -224,8 +218,7 @@ namespace MiliastraPlusPlus
                 Mapping.GetLiteralEncoding() == GiaLiteralEncodingKind::Enum;
         }
 
-        [[nodiscard]] inline bool IsSupportedDataTypeTuple(const PinSchema& Pin,
-            const GiaBackendPinMapping& Mapping)
+        [[nodiscard]] inline bool IsSupportedDataTypeTuple(const PinSchema& Pin, const GiaBackendPinMapping& Mapping)
         {
             const bool DirectionMatches =
                 (Pin.GetDirection() == PinDirection::Input &&
@@ -246,8 +239,7 @@ namespace MiliastraPlusPlus
                 Mapping.GetBackendTypeCode().GetValue() == 13;
         }
 
-        [[nodiscard]] inline bool IsSupportedLiteralEncoding(const PinSchema& Pin,
-            const GiaBackendPinMapping& Mapping)
+        [[nodiscard]] inline bool IsSupportedLiteralEncoding(const PinSchema& Pin, const GiaBackendPinMapping& Mapping)
         {
             if (Pin.GetType().GetKind() == TypeDesc::Kind::Boolean)
             {
@@ -258,8 +250,7 @@ namespace MiliastraPlusPlus
                 Mapping.GetLiteralEncoding() == GiaLiteralEncodingKind::Enum;
         }
 
-        [[nodiscard]] inline bool IsSupportedLiteralEncoding(const LiteralValue& Literal,
-            const GiaBackendPinMapping& Mapping)
+        [[nodiscard]] inline bool IsSupportedLiteralEncoding(const LiteralValue& Literal, const GiaBackendPinMapping& Mapping)
         {
             if (Literal.Is<bool>())
             {
@@ -274,14 +265,12 @@ namespace MiliastraPlusPlus
             return false;
         }
 
-        [[nodiscard]] inline bool IsCanonicalDataConnectionOrder(const GiaBackendDataConnection& Left,
-            const GiaBackendDataConnection& Right)
+        [[nodiscard]] inline bool IsCanonicalDataConnectionOrder(const GiaBackendDataConnection& Left, const GiaBackendDataConnection& Right)
         {
             return Left < Right;
         }
 
-        [[nodiscard]] inline bool IsCanonicalControlConnectionOrder(const GiaBackendControlConnection& Left,
-            const GiaBackendControlConnection& Right)
+        [[nodiscard]] inline bool IsCanonicalControlConnectionOrder(const GiaBackendControlConnection& Left, const GiaBackendControlConnection& Right)
         {
             return Left < Right;
         }
@@ -294,15 +283,12 @@ namespace MiliastraPlusPlus
             const GiaBackendNodeMapping* Mapping = nullptr;
         };
 
-        [[nodiscard]] inline std::string NodeMessage(NodeInstanceId Node,
-            const std::string& Message)
+        [[nodiscard]] inline std::string NodeMessage(NodeInstanceId Node, const std::string& Message)
         {
             return "Graph node " + std::to_string(Node.GetValue()) + ": " + Message;
         }
 
-        [[nodiscard]] inline std::string PinMessage(NodeInstanceId Node,
-            PinIndex Pin,
-            const std::string& Message)
+        [[nodiscard]] inline std::string PinMessage(NodeInstanceId Node, PinIndex Pin, const std::string& Message)
         {
             return NodeMessage(
                 Node,
@@ -344,9 +330,7 @@ namespace MiliastraPlusPlus
     class GiaGraphLowerer final
     {
     public:
-        [[nodiscard]] static std::expected<GiaBackendGraph, DiagnosticCollection> Lower(
-            const GraphIR& Graph,
-            const GiaExportContext& Context)
+        [[nodiscard]] static std::expected<GiaBackendGraph, DiagnosticCollection> Lower(const GraphIR& Graph, const GiaExportContext& Context)
         {
             using namespace GiaGraphLowererDetail;
 

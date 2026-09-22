@@ -1720,10 +1720,7 @@ namespace
         return Document.dump();
     }
 
-    bool HasDiagnosticCode(
-        const DiagnosticCollection& Diagnostics,
-        DiagnosticCode Code
-    )
+    bool HasDiagnosticCode(const DiagnosticCollection& Diagnostics, DiagnosticCode Code)
     {
         return std::any_of(
             Diagnostics.begin(),
@@ -1735,10 +1732,7 @@ namespace
         );
     }
 
-    bool SameDiagnostics(
-        const DiagnosticCollection& Left,
-        const DiagnosticCollection& Right
-    )
+    bool SameDiagnostics(const DiagnosticCollection& Left, const DiagnosticCollection& Right)
     {
         if (Left.size() != Right.size())
         {
@@ -1763,12 +1757,7 @@ namespace
     }
 
     template<typename Mutation>
-    void CheckSourceRejected(
-        Mutation MutationFunction,
-        DiagnosticCode Expected =
-            DiagnosticCode::
-                UnsupportedGenshinClientBooleanFilterReflectedDescriptorFamilySourceForm
-    )
+    void CheckSourceRejected(Mutation MutationFunction, DiagnosticCode Expected = DiagnosticCode:: UnsupportedGenshinClientBooleanFilterReflectedDescriptorFamilySourceForm)
     {
         const auto Result =
             GenshinClientBooleanFilterReflectedDescriptorFamilySourceAdapter::Adapt(
@@ -1799,10 +1788,7 @@ namespace
         return *Result;
     }
 
-    const NormalizedNodeDescriptorRecord* FindConcreteRecord(
-        const DescriptorSpecializationResult& Result,
-        std::string_view Key
-    )
+    const NormalizedNodeDescriptorRecord* FindConcreteRecord(const DescriptorSpecializationResult& Result, std::string_view Key)
     {
         for (const NormalizedNodeDescriptorRecord& Record :
             Result.GetConcreteRecords())

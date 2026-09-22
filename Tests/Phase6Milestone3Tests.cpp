@@ -129,9 +129,11 @@ namespace
         );
     }
 
-    NormalizedNodeDescriptorRecord MakeRecord(std::string Identity,
+    NormalizedNodeDescriptorRecord MakeRecord(
+        std::string Identity,
         std::vector<NormalizedPinRecord> Pins,
-        std::optional<ExecutionControlSchema> ControlSchema = std::nullopt)
+        std::optional<ExecutionControlSchema> ControlSchema = std::nullopt
+    )
     {
         return NormalizedNodeDescriptorRecord(
             ExternalNodeIdentity(std::move(Identity)),
@@ -143,8 +145,7 @@ namespace
         );
     }
 
-    NormalizedNodeDescriptorRecord MakeBooleanInputRecord(std::string Identity,
-        std::optional<LiteralValue> DefaultValue = std::nullopt)
+    NormalizedNodeDescriptorRecord MakeBooleanInputRecord(std::string Identity, std::optional<LiteralValue> DefaultValue = std::nullopt)
     {
         return MakeRecord(
             std::move(Identity),
@@ -293,8 +294,7 @@ namespace
         };
     }
 
-    GiaExportConfiguration MakeConfiguration(std::int64_t GraphIdentifierValue = 63001,
-        std::int64_t UniqueIdentifierValue = 63002)
+    GiaExportConfiguration MakeConfiguration(std::int64_t GraphIdentifierValue = 63001, std::int64_t UniqueIdentifierValue = 63002)
     {
         const auto Result = GiaExportConfiguration::Create(
             GiaExportTargetProfile::ClientBooleanFilter,
@@ -308,13 +308,15 @@ namespace
         return *Result;
     }
 
-    GiaBackendPinMapping MakeInputMapping(std::uint32_t SemanticPin,
+    GiaBackendPinMapping MakeInputMapping(
+        std::uint32_t SemanticPin,
         std::int32_t BackendTypeCode = 5,
         GiaLiteralEncodingKind Encoding = GiaLiteralEncodingKind::Boolean,
         GiaPinEmissionPolicy EmissionPolicy = GiaPinEmissionPolicy::Emit,
         bool Connectable = true,
         std::int32_t BackendIndex = -1,
-        std::optional<std::int32_t> SecondaryIndex = std::nullopt)
+        std::optional<std::int32_t> SecondaryIndex = std::nullopt
+    )
     {
         const std::int32_t EffectiveBackendIndex = BackendIndex < 0
             ? static_cast<std::int32_t>(SemanticPin)
@@ -333,9 +335,11 @@ namespace
         );
     }
 
-    GiaBackendPinMapping MakeOutputMapping(std::uint32_t SemanticPin,
+    GiaBackendPinMapping MakeOutputMapping(
+        std::uint32_t SemanticPin,
         std::int32_t BackendIndex,
-        std::optional<std::int32_t> SecondaryIndex = std::nullopt)
+        std::optional<std::int32_t> SecondaryIndex = std::nullopt
+    )
     {
         return GiaBackendPinMapping(
             PinIndex(SemanticPin),
@@ -351,10 +355,12 @@ namespace
         );
     }
 
-    GiaBackendPinMapping MakeFlowMapping(std::uint32_t SemanticPin,
+    GiaBackendPinMapping MakeFlowMapping(
+        std::uint32_t SemanticPin,
         GiaPinKind Kind,
         std::int32_t BackendIndex,
-        GiaPinEmissionPolicy EmissionPolicy = GiaPinEmissionPolicy::Emit)
+        GiaPinEmissionPolicy EmissionPolicy = GiaPinEmissionPolicy::Emit
+    )
     {
         return GiaBackendPinMapping(
             PinIndex(SemanticPin),
@@ -369,10 +375,12 @@ namespace
     }
 
     template<typename MappingFactory>
-    std::expected<GiaExportContext, DiagnosticCollection> MakeContext(std::vector<NormalizedNodeDescriptorRecord> Records,
+    std::expected<GiaExportContext, DiagnosticCollection> MakeContext(
+        std::vector<NormalizedNodeDescriptorRecord> Records,
         MappingFactory MappingFactoryFunction,
         std::string SourceNamespace = "p63.fixture",
-        std::string SourceRevision = "p63.fixture@1")
+        std::string SourceRevision = "p63.fixture@1"
+    )
     {
         const auto Catalogue = DescriptorCatalogueBuilder::Build(
             std::move(SourceNamespace),
@@ -452,8 +460,7 @@ namespace
         );
     }
 
-    NodeDescriptorId GetDescriptorId(const GiaExportContext& Context,
-        std::string_view Identity)
+    NodeDescriptorId GetDescriptorId(const GiaExportContext& Context, std::string_view Identity)
     {
         const auto* Entry = Context.GetRegistryContext().GetCatalogue().
             FindByExternalIdentity(ExternalNodeIdentity(std::string(Identity)));
@@ -472,8 +479,7 @@ namespace
         return Graph;
     }
 
-    std::expected<GiaBackendGraph, DiagnosticCollection> Lower(const GraphIR& Graph,
-        const GiaExportContext& Context)
+    std::expected<GiaBackendGraph, DiagnosticCollection> Lower(const GraphIR& Graph, const GiaExportContext& Context)
     {
         return GiaGraphLowerer::Lower(Graph, Context);
     }
@@ -489,8 +495,7 @@ namespace
         return Records;
     }
 
-    std::vector<GiaBackendNodeMapping> MakeThreeNodeMappings(const DescriptorCatalogueIdentity&,
-        bool Reverse)
+    std::vector<GiaBackendNodeMapping> MakeThreeNodeMappings(const DescriptorCatalogueIdentity&, bool Reverse)
     {
         std::vector<GiaBackendNodeMapping> Mappings{
             GiaBackendNodeMapping(
@@ -544,10 +549,7 @@ namespace
         );
     }
 
-    GraphIR MakeThreeNodeGraph(const GiaExportContext& Context,
-        bool ReverseNodes,
-        bool ReverseBindings,
-        bool ReverseControlEdges)
+    GraphIR MakeThreeNodeGraph(const GiaExportContext& Context, bool ReverseNodes, bool ReverseBindings, bool ReverseControlEdges)
     {
         const std::vector<NodeInstance> Nodes{
             {NodeInstanceId(1U), GetDescriptorId(Context, "three-source"), std::nullopt},
@@ -635,11 +637,7 @@ namespace
     {
         const NodeDescriptorId Descriptor =
             Template.GetNodes()[0U].Trace.Descriptor;
-        const auto MakeNode = [Descriptor](
-            NodeInstanceId GraphNode,
-            std::string Identity,
-            GiaNodeGenericId Generic
-        )
+        const auto MakeNode = [Descriptor](NodeInstanceId GraphNode, std::string Identity, GiaNodeGenericId Generic)
         {
             return GiaBackendNode{
                 .Trace = GiaBackendNodeTrace{
@@ -690,8 +688,7 @@ namespace
         );
     }
 
-    GiaBackendGraph MakeUnsupportedKindGraph(const GiaBackendGraph& Template,
-        GiaPinKind Kind)
+    GiaBackendGraph MakeUnsupportedKindGraph(const GiaBackendGraph& Template, GiaPinKind Kind)
     {
         const GiaBackendNode& Original = Template.GetNodes()[0U];
         const GiaBackendPinMapping Mapping(
@@ -798,8 +795,7 @@ namespace
         );
     }
 
-    GiaBackendGraph MakeNonAdjacentControlDestinationGraph(
-        const GiaBackendGraph& Template)
+    GiaBackendGraph MakeNonAdjacentControlDestinationGraph(const GiaBackendGraph& Template)
     {
         std::vector<GiaBackendNode> Nodes = Template.GetNodes();
         GiaBackendNode FourthSource = Nodes[0U];
@@ -849,9 +845,7 @@ namespace
         );
     }
 
-    void ReplaceResolvedPin(GiaResolvedNode& Node,
-        PinIndex SemanticPin,
-        const std::function<void(GiaResolvedPin&)>& Mutator)
+    void ReplaceResolvedPin(GiaResolvedNode& Node, PinIndex SemanticPin, const std::function<void(GiaResolvedPin&)>& Mutator)
     {
         for (GiaResolvedPin& Pin : Node.Pins)
         {

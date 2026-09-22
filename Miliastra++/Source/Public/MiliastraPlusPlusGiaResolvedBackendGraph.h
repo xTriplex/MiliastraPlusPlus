@@ -153,8 +153,7 @@ namespace MiliastraPlusPlus
                 Kind == GiaPinKind::OutputParameter;
         }
 
-        [[nodiscard]] inline bool IsValidLiteralEncoding(
-            GiaLiteralEncodingKind LiteralEncoding) noexcept
+        [[nodiscard]] inline bool IsValidLiteralEncoding(GiaLiteralEncodingKind LiteralEncoding) noexcept
         {
             return LiteralEncoding == GiaLiteralEncodingKind::None ||
                 LiteralEncoding == GiaLiteralEncodingKind::Boolean ||
@@ -169,8 +168,7 @@ namespace MiliastraPlusPlus
                         EnumTypeIdentity("filter_return_type"));
         }
 
-        [[nodiscard]] inline bool IsLiteralCompatible(const LiteralValue& Literal,
-            const TypeDesc& Type)
+        [[nodiscard]] inline bool IsLiteralCompatible(const LiteralValue& Literal, const TypeDesc& Type)
         {
             if (!Literal.IsValid() || !Type.IsValid())
             {
@@ -192,7 +190,8 @@ namespace MiliastraPlusPlus
             return false;
         }
 
-        [[nodiscard]] inline bool IsInputTupleValid(const TypeDesc& SemanticType,
+        [[nodiscard]] inline bool IsInputTupleValid(
+            const TypeDesc& SemanticType,
             GiaBackendTypeCode BackendTypeCode,
             GiaLiteralEncodingKind LiteralEncoding,
             GiaBackendInputValueSourceKind SourceKind,
@@ -477,8 +476,7 @@ namespace MiliastraPlusPlus
             };
         }
 
-        [[nodiscard]] inline ControlConnectionOrderKeyType ControlConnectionOrderKey(
-            const GiaResolvedControlConnection& Connection)
+        [[nodiscard]] inline ControlConnectionOrderKeyType ControlConnectionOrderKey(const GiaResolvedControlConnection& Connection)
         {
             return std::tuple{
                 EndpointOrderKey(Connection.Source),
@@ -486,8 +484,7 @@ namespace MiliastraPlusPlus
             };
         }
 
-        [[nodiscard]] inline GiaResolvedPinEndpoint MakeEndpoint(const GiaResolvedNode& Node,
-            const GiaResolvedPin& Pin)
+        [[nodiscard]] inline GiaResolvedPinEndpoint MakeEndpoint(const GiaResolvedNode& Node, const GiaResolvedPin& Pin)
         {
             return GiaResolvedPinEndpoint{
                 Node.NodeIndex,
@@ -497,20 +494,17 @@ namespace MiliastraPlusPlus
             };
         }
 
-        [[nodiscard]] inline bool SameEndpoint(const GiaResolvedPinEndpoint& Left,
-            const GiaResolvedPinEndpoint& Right)
+        [[nodiscard]] inline bool SameEndpoint(const GiaResolvedPinEndpoint& Left, const GiaResolvedPinEndpoint& Right)
         {
             return Left == Right;
         }
 
-        [[nodiscard]] inline bool IsStrictlyBefore(const GiaResolvedDataConnection& Left,
-            const GiaResolvedDataConnection& Right)
+        [[nodiscard]] inline bool IsStrictlyBefore(const GiaResolvedDataConnection& Left, const GiaResolvedDataConnection& Right)
         {
             return DataConnectionOrderKey(Left) < DataConnectionOrderKey(Right);
         }
 
-        [[nodiscard]] inline bool IsStrictlyBefore(const GiaResolvedControlConnection& Left,
-            const GiaResolvedControlConnection& Right)
+        [[nodiscard]] inline bool IsStrictlyBefore(const GiaResolvedControlConnection& Left, const GiaResolvedControlConnection& Right)
         {
             return ControlConnectionOrderKey(Left) <
                 ControlConnectionOrderKey(Right);
@@ -522,7 +516,8 @@ namespace MiliastraPlusPlus
 
     namespace GiaResolvedBackendGraphDetail
     {
-        [[nodiscard]] GiaResolvedBackendGraph CreateForTesting(GiaResolvedGraphHeader Header,
+        [[nodiscard]] GiaResolvedBackendGraph CreateForTesting(
+            GiaResolvedGraphHeader Header,
             std::vector<GiaResolvedNode> Nodes,
             std::vector<GiaResolvedDataConnection> DataConnections,
             std::vector<GiaResolvedControlConnection> ControlConnections);
@@ -696,15 +691,19 @@ namespace MiliastraPlusPlus
     private:
         friend class GiaGraphResolver;
 
-        friend GiaResolvedBackendGraph GiaResolvedBackendGraphDetail::CreateForTesting(GiaResolvedGraphHeader Header,
-                std::vector<GiaResolvedNode> Nodes,
-                std::vector<GiaResolvedDataConnection> DataConnections,
-                std::vector<GiaResolvedControlConnection> ControlConnections);
-
-        GiaResolvedBackendGraph(GiaResolvedGraphHeader Header,
+        friend GiaResolvedBackendGraph GiaResolvedBackendGraphDetail::CreateForTesting(
+            GiaResolvedGraphHeader Header,
             std::vector<GiaResolvedNode> Nodes,
             std::vector<GiaResolvedDataConnection> DataConnections,
-            std::vector<GiaResolvedControlConnection> ControlConnections)
+            std::vector<GiaResolvedControlConnection> ControlConnections
+        );
+
+        GiaResolvedBackendGraph(
+            GiaResolvedGraphHeader Header,
+            std::vector<GiaResolvedNode> Nodes,
+            std::vector<GiaResolvedDataConnection> DataConnections,
+            std::vector<GiaResolvedControlConnection> ControlConnections
+        )
             : m_Header(std::move(Header))
             , m_Nodes(std::move(Nodes))
             , m_DataConnections(std::move(DataConnections))
@@ -724,8 +723,7 @@ namespace MiliastraPlusPlus
             return nullptr;
         }
 
-        [[nodiscard]] static const GiaResolvedPin* FindPin(const GiaResolvedNode& Node,
-            const GiaResolvedPinEndpoint& Endpoint)
+        [[nodiscard]] static const GiaResolvedPin* FindPin(const GiaResolvedNode& Node, const GiaResolvedPinEndpoint& Endpoint)
         {
             for (const GiaResolvedPin& Pin : Node.Pins)
             {
@@ -821,7 +819,8 @@ namespace MiliastraPlusPlus
 
     namespace GiaResolvedBackendGraphDetail
     {
-        [[nodiscard]] inline GiaResolvedBackendGraph CreateForTesting(GiaResolvedGraphHeader Header,
+        [[nodiscard]] inline GiaResolvedBackendGraph CreateForTesting(
+            GiaResolvedGraphHeader Header,
             std::vector<GiaResolvedNode> Nodes,
             std::vector<GiaResolvedDataConnection> DataConnections,
             std::vector<GiaResolvedControlConnection> ControlConnections)

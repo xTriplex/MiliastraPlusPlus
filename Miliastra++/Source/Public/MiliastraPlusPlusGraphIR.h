@@ -185,12 +185,7 @@ namespace MiliastraPlusPlus
             return nullptr;
         }
 
-        void BindInput(
-            NodeInstanceId DestinationNode,
-            PinIndex DestinationInputPin,
-            InputBinding Binding,
-            std::optional<TypeDesc> OutputTypeConstraint = std::nullopt
-        )
+        void BindInput(NodeInstanceId DestinationNode, PinIndex DestinationInputPin, InputBinding Binding, std::optional<TypeDesc> OutputTypeConstraint = std::nullopt)
         {
             m_InputBindings.push_back(InputBindingRecord{
                 DestinationNode,
@@ -200,10 +195,7 @@ namespace MiliastraPlusPlus
             });
         }
 
-        [[nodiscard]] const InputBinding* GetInputBinding(
-            NodeInstanceId DestinationNode,
-            PinIndex DestinationInputPin
-        ) const
+        [[nodiscard]] const InputBinding* GetInputBinding(NodeInstanceId DestinationNode, PinIndex DestinationInputPin) const
         {
             for (const InputBindingRecord& Record : m_InputBindings)
             {

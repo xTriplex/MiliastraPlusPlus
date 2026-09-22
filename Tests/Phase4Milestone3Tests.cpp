@@ -37,8 +37,7 @@ namespace
         std::abort();
     }
 
-    void Check(bool Condition, const char* Expression,
-        const std::source_location& Location = std::source_location::current())
+    void Check(bool Condition, const char* Expression, const std::source_location& Location = std::source_location::current())
     {
         if (!Condition)
         {
@@ -56,8 +55,7 @@ namespace
     constexpr NodeDescriptorId UnconditionalLoopId(5006U);
     constexpr NodeDescriptorId BooleanExpressionId(5007U);
 
-    PinSchema Flow(const char* Name, PinDirection Direction,
-        PinCardinality Cardinality = PinCardinality::Single)
+    PinSchema Flow(const char* Name, PinDirection Direction, PinCardinality Cardinality = PinCardinality::Single)
     {
         return PinSchema(Name, TypeDesc::Flow(), Direction, PinCategory::Execution,
             Cardinality);
@@ -329,12 +327,7 @@ namespace
             MPP_CHECK(GraphIRValidator::Validate(*Graph, Registry).empty());
         }
 
-        const auto VerifyTransferOnly = [&Registry](
-            NodeDescriptorId LoopDescriptor,
-            bool IsConditional,
-            bool IsBreak,
-            bool ExpectedExit
-        )
+        const auto VerifyTransferOnly = [&Registry](NodeDescriptorId LoopDescriptor, bool IsConditional, bool IsBreak, bool ExpectedExit)
         {
             GraphBuilder Builder(Registry);
             auto Entry = Builder.BeginEntry(EntryId);
@@ -700,8 +693,7 @@ namespace
 
     void TestBranchTransferPairs(const NodeDescriptorRegistry& Registry)
     {
-        const auto VerifyPair = [&Registry](bool TrueBreak, bool FalseBreak,
-            std::size_t ExpectedBreaks, std::size_t ExpectedRepeats)
+        const auto VerifyPair = [&Registry](bool TrueBreak, bool FalseBreak, std::size_t ExpectedBreaks, std::size_t ExpectedRepeats)
         {
             GraphBuilder Builder(Registry);
             auto Entry = Builder.BeginEntry(EntryId);

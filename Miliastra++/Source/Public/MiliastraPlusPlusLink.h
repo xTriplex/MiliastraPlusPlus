@@ -12,11 +12,7 @@ namespace MiliastraPlusPlus
     class Link
     {
     public:
-        Link(
-            LinkIdentifier Identifier,
-            PinReference SourcePinReference,
-            PinReference DestinationPinReference
-        )
+        Link(LinkIdentifier Identifier, PinReference SourcePinReference, PinReference DestinationPinReference)
             : m_Identifier(Identifier)
             , m_SourcePinReference(std::move(SourcePinReference))
             , m_DestinationPinReference(std::move(DestinationPinReference))

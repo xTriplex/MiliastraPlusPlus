@@ -140,10 +140,7 @@ namespace MiliastraPlusPlus
     class DescriptorSpecializationPinBinding final
     {
     public:
-        DescriptorSpecializationPinBinding(
-            PinIndex FamilyPinIndex,
-            TypeDesc ConcreteType
-        )
+        DescriptorSpecializationPinBinding(PinIndex FamilyPinIndex, TypeDesc ConcreteType)
             : m_FamilyPinIndex(FamilyPinIndex)
             , m_ConcreteType(std::move(ConcreteType))
         {
@@ -186,8 +183,7 @@ namespace MiliastraPlusPlus
             std::sort(
                 m_PinBindings.begin(),
                 m_PinBindings.end(),
-                [](const DescriptorSpecializationPinBinding& Left,
-                    const DescriptorSpecializationPinBinding& Right)
+                [](const DescriptorSpecializationPinBinding& Left, const DescriptorSpecializationPinBinding& Right)
                 {
                     return Left.GetFamilyPinIndex() < Right.GetFamilyPinIndex();
                 }
@@ -204,8 +200,7 @@ namespace MiliastraPlusPlus
             return true;
         }
 
-        [[nodiscard]] const ExternalNodeIdentity&
-            GetConcreteExternalIdentity() const
+        [[nodiscard]] const ExternalNodeIdentity& GetConcreteExternalIdentity() const
         {
             return m_ConcreteExternalIdentity;
         }
@@ -215,8 +210,7 @@ namespace MiliastraPlusPlus
             return m_SpecializationKey;
         }
 
-        [[nodiscard]] const std::vector<DescriptorSpecializationPinBinding>&
-            GetPinBindings() const
+        [[nodiscard]] const std::vector<DescriptorSpecializationPinBinding>& GetPinBindings() const
         {
             return m_PinBindings;
         }
@@ -258,8 +252,7 @@ namespace MiliastraPlusPlus
             std::sort(
                 m_Variants.begin(),
                 m_Variants.end(),
-                [](const DescriptorSpecializationVariant& Left,
-                    const DescriptorSpecializationVariant& Right)
+                [](const DescriptorSpecializationVariant& Left, const DescriptorSpecializationVariant& Right)
                 {
                     return Left.GetConcreteExternalIdentity() <
                         Right.GetConcreteExternalIdentity();
@@ -318,8 +311,7 @@ namespace MiliastraPlusPlus
             return true;
         }
 
-        [[nodiscard]] const ExternalNodeIdentity&
-            GetFamilyExternalIdentity() const
+        [[nodiscard]] const ExternalNodeIdentity& GetFamilyExternalIdentity() const
         {
             return m_FamilyExternalIdentity;
         }
@@ -339,20 +331,17 @@ namespace MiliastraPlusPlus
             return m_Pins;
         }
 
-        [[nodiscard]] const std::optional<ExecutionControlSchema>&
-            GetExecutionControlSchema() const
+        [[nodiscard]] const std::optional<ExecutionControlSchema>& GetExecutionControlSchema() const
         {
             return m_ControlSchema;
         }
 
-        [[nodiscard]] const std::optional<SourceProvenance>&
-            GetSourceProvenance() const
+        [[nodiscard]] const std::optional<SourceProvenance>& GetSourceProvenance() const
         {
             return m_SourceProvenance;
         }
 
-        [[nodiscard]] const std::vector<DescriptorSpecializationVariant>&
-            GetVariants() const
+        [[nodiscard]] const std::vector<DescriptorSpecializationVariant>& GetVariants() const
         {
             return m_Variants;
         }
@@ -392,29 +381,19 @@ namespace MiliastraPlusPlus
     class DescriptorSpecializationResult final
     {
     public:
-        DescriptorSpecializationResult(
-            const DescriptorSpecializationResult&
-        ) = default;
-        DescriptorSpecializationResult(
-            DescriptorSpecializationResult&&
-        ) = default;
-        DescriptorSpecializationResult& operator=(
-            const DescriptorSpecializationResult&
-        ) = default;
-        DescriptorSpecializationResult& operator=(
-            DescriptorSpecializationResult&&
-        ) = default;
+        DescriptorSpecializationResult(const DescriptorSpecializationResult&) = default;
+        DescriptorSpecializationResult(DescriptorSpecializationResult&&) = default;
+        DescriptorSpecializationResult& operator=(const DescriptorSpecializationResult&) = default;
+        DescriptorSpecializationResult& operator=(DescriptorSpecializationResult&&) = default;
 
         [[nodiscard]] bool IsValid() const;
 
-        [[nodiscard]] const std::vector<DescriptorSpecializationFamily>&
-            GetFamilies() const
+        [[nodiscard]] const std::vector<DescriptorSpecializationFamily>& GetFamilies() const
         {
             return m_Families;
         }
 
-        [[nodiscard]] const std::vector<NormalizedNodeDescriptorRecord>&
-            GetConcreteRecords() const
+        [[nodiscard]] const std::vector<NormalizedNodeDescriptorRecord>& GetConcreteRecords() const
         {
             return m_ConcreteRecords;
         }
@@ -426,10 +405,7 @@ namespace MiliastraPlusPlus
         }
 
     private:
-        DescriptorSpecializationResult(
-            std::vector<DescriptorSpecializationFamily> Families,
-            std::vector<NormalizedNodeDescriptorRecord> ConcreteRecords
-        )
+        DescriptorSpecializationResult(std::vector<DescriptorSpecializationFamily> Families, std::vector<NormalizedNodeDescriptorRecord> ConcreteRecords)
             : m_Families(std::move(Families))
             , m_ConcreteRecords(std::move(ConcreteRecords))
         {
@@ -463,10 +439,7 @@ namespace MiliastraPlusPlus
             });
         }
 
-        [[nodiscard]] inline const DescriptorSpecializationPinBinding* FindBinding(
-            const DescriptorSpecializationVariant& Variant,
-            PinIndex FamilyPinIndex
-        )
+        [[nodiscard]] inline const DescriptorSpecializationPinBinding* FindBinding(const DescriptorSpecializationVariant& Variant, PinIndex FamilyPinIndex)
         {
             for (const DescriptorSpecializationPinBinding& Binding :
                 Variant.GetPinBindings())
@@ -560,11 +533,10 @@ namespace MiliastraPlusPlus
             return Valid;
         }
 
-        [[nodiscard]] inline std::optional<NormalizedNodeDescriptorRecord>
-            MakeConcreteRecord(
-                const DescriptorSpecializationFamily& Family,
-                const DescriptorSpecializationVariant& Variant
-            )
+        [[nodiscard]] inline std::optional<NormalizedNodeDescriptorRecord> MakeConcreteRecord(
+            const DescriptorSpecializationFamily& Family,
+            const DescriptorSpecializationVariant& Variant
+        )
         {
             if (!IsVariantBindingRelationValid(Family, Variant, nullptr))
             {
@@ -742,8 +714,7 @@ namespace MiliastraPlusPlus
             std::sort(
                 Families.begin(),
                 Families.end(),
-                [](const DescriptorSpecializationFamily& Left,
-                    const DescriptorSpecializationFamily& Right)
+                [](const DescriptorSpecializationFamily& Left, const DescriptorSpecializationFamily& Right)
                 {
                     return Left.GetFamilyExternalIdentity() <
                         Right.GetFamilyExternalIdentity();
@@ -835,8 +806,7 @@ namespace MiliastraPlusPlus
             std::sort(
                 ConcreteRecords.begin(),
                 ConcreteRecords.end(),
-                [](const NormalizedNodeDescriptorRecord& Left,
-                    const NormalizedNodeDescriptorRecord& Right)
+                [](const NormalizedNodeDescriptorRecord& Left, const NormalizedNodeDescriptorRecord& Right)
                 {
                     return Left.GetExternalIdentity() < Right.GetExternalIdentity();
                 }

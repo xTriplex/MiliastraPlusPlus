@@ -15,8 +15,7 @@ namespace
         }
     }
 
-    void CheckUnifies(const TypeDesc& FirstType, const TypeDesc& SecondType, const TypeDesc& ExpectedType,
-        int FailureCode)
+    void CheckUnifies(const TypeDesc& FirstType, const TypeDesc& SecondType, const TypeDesc& ExpectedType, int FailureCode)
     {
         const auto Result = FirstType.Unify(SecondType);
         Check(Result.has_value() && Result.value() == ExpectedType, FailureCode);

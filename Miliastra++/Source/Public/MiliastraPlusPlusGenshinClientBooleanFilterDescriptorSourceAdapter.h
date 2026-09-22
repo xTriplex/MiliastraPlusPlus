@@ -99,11 +99,7 @@ namespace MiliastraPlusPlus
             });
         }
 
-        inline void AddMissingFieldDiagnostic(
-            std::vector<PendingDiagnostic>& PendingDiagnostics,
-            std::string_view Field,
-            const SourceRecordContext& Context
-        )
+        inline void AddMissingFieldDiagnostic(std::vector<PendingDiagnostic>& PendingDiagnostics, std::string_view Field, const SourceRecordContext& Context)
         {
             AddPendingDiagnostic(
                 PendingDiagnostics,
@@ -114,11 +110,7 @@ namespace MiliastraPlusPlus
             );
         }
 
-        inline void AddUnsupportedFormDiagnostic(
-            std::vector<PendingDiagnostic>& PendingDiagnostics,
-            std::string Message,
-            const SourceRecordContext& Context
-        )
+        inline void AddUnsupportedFormDiagnostic(std::vector<PendingDiagnostic>& PendingDiagnostics, std::string Message, const SourceRecordContext& Context)
         {
             AddPendingDiagnostic(
                 PendingDiagnostics,
@@ -129,10 +121,7 @@ namespace MiliastraPlusPlus
             );
         }
 
-        inline const JsonValue* FindMember(
-            const JsonValue& Object,
-            std::string_view Name
-        )
+        inline const JsonValue* FindMember(const JsonValue& Object, std::string_view Name)
         {
             const auto Iterator = Object.find(std::string(Name));
             return Iterator == Object.end() ? nullptr : &(*Iterator);
@@ -168,8 +157,7 @@ namespace MiliastraPlusPlus
             return Valid;
         }
 
-        [[nodiscard]] inline std::optional<std::uint64_t>
-            TryConvertUnsignedInteger(const JsonValue& Value)
+        [[nodiscard]] inline std::optional<std::uint64_t> TryConvertUnsignedInteger(const JsonValue& Value)
         {
             try
             {
@@ -197,13 +185,12 @@ namespace MiliastraPlusPlus
             return std::nullopt;
         }
 
-        [[nodiscard]] inline std::optional<std::uint64_t>
-            ReadRequiredUnsignedInteger(
-                const JsonValue& Object,
-                std::string_view Field,
-                std::vector<PendingDiagnostic>& PendingDiagnostics,
-                const SourceRecordContext& Context
-            )
+        [[nodiscard]] inline std::optional<std::uint64_t> ReadRequiredUnsignedInteger(
+            const JsonValue& Object,
+            std::string_view Field,
+            std::vector<PendingDiagnostic>& PendingDiagnostics,
+            const SourceRecordContext& Context
+        )
         {
             const JsonValue* Value = FindMember(Object, Field);
             if (Value == nullptr)
@@ -265,9 +252,7 @@ namespace MiliastraPlusPlus
             return Result;
         }
 
-        [[nodiscard]] inline std::string ToCanonicalDecimal(
-            std::uint64_t Value
-        )
+        [[nodiscard]] inline std::string ToCanonicalDecimal(std::uint64_t Value)
         {
             std::array<char, 20U> Buffer{};
             const auto Conversion = std::to_chars(
@@ -283,8 +268,7 @@ namespace MiliastraPlusPlus
             return std::string(Buffer.data(), Conversion.ptr);
         }
 
-        [[nodiscard]] inline std::optional<SourceTypeMapping>
-            GetSourceTypeMapping(const std::string& SourceType)
+        [[nodiscard]] inline std::optional<SourceTypeMapping> GetSourceTypeMapping(const std::string& SourceType)
         {
             if (SourceType == "bool")
             {
@@ -314,8 +298,7 @@ namespace MiliastraPlusPlus
             return std::nullopt;
         }
 
-        [[nodiscard]] inline std::optional<float>
-            TryConvertFiniteFloat32(const JsonValue& Value)
+        [[nodiscard]] inline std::optional<float> TryConvertFiniteFloat32(const JsonValue& Value)
         {
             if (!Value.is_number())
             {
@@ -774,12 +757,11 @@ namespace MiliastraPlusPlus
             }
         }
 
-        [[nodiscard]] inline std::optional<NormalizedNodeDescriptorRecord>
-            ParseRecord(
-                const JsonValue& Record,
-                const ModeMembership& Mode,
-                std::vector<PendingDiagnostic>& PendingDiagnostics
-            )
+        [[nodiscard]] inline std::optional<NormalizedNodeDescriptorRecord> ParseRecord(
+            const JsonValue& Record,
+            const ModeMembership& Mode,
+            std::vector<PendingDiagnostic>& PendingDiagnostics
+        )
         {
             if (!Record.is_object())
             {
@@ -1088,10 +1070,7 @@ namespace MiliastraPlusPlus
             return Valid;
         }
 
-        inline ModeMembership ParseModeDocument(
-            const JsonValue& ModeDocument,
-            std::vector<PendingDiagnostic>& PendingDiagnostics
-        )
+        inline ModeMembership ParseModeDocument(const JsonValue& ModeDocument, std::vector<PendingDiagnostic>& PendingDiagnostics)
         {
             ModeMembership Mode;
             if (!ModeDocument.is_object())
@@ -1219,9 +1198,7 @@ namespace MiliastraPlusPlus
             return Mode;
         }
 
-        [[nodiscard]] inline DiagnosticCollection MaterializeDiagnostics(
-            std::vector<PendingDiagnostic> PendingDiagnostics
-        )
+        [[nodiscard]] inline DiagnosticCollection MaterializeDiagnostics(std::vector<PendingDiagnostic> PendingDiagnostics)
         {
             return DescriptorCatalogueDetail::MaterializePendingDiagnostics(
                 std::move(PendingDiagnostics)
@@ -1327,8 +1304,7 @@ namespace MiliastraPlusPlus
             std::sort(
                 Records.begin(),
                 Records.end(),
-                [](const NormalizedNodeDescriptorRecord& Left,
-                    const NormalizedNodeDescriptorRecord& Right)
+                [](const NormalizedNodeDescriptorRecord& Left, const NormalizedNodeDescriptorRecord& Right)
                 {
                     return Left.GetExternalIdentity() < Right.GetExternalIdentity();
                 }

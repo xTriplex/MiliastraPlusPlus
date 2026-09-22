@@ -26,8 +26,7 @@ namespace
         std::abort();
     }
 
-    void Check(bool Condition, const char* Expression,
-        const std::source_location& Location = std::source_location::current())
+    void Check(bool Condition, const char* Expression, const std::source_location& Location = std::source_location::current())
     {
         if (!Condition) Fail(Expression, Location);
     }
@@ -45,8 +44,7 @@ namespace
     constexpr NodeDescriptorId LegacyFlowSourceId(1009U);
     constexpr NodeDescriptorId LegacyFlowDestinationId(1010U);
 
-    PinSchema FlowPin(const char* Name, PinDirection Direction,
-        PinCardinality Cardinality = PinCardinality::Single)
+    PinSchema FlowPin(const char* Name, PinDirection Direction, PinCardinality Cardinality = PinCardinality::Single)
     {
         return PinSchema(Name, TypeDesc::Flow(), Direction, PinCategory::Execution,
             Cardinality);

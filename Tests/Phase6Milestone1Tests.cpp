@@ -24,10 +24,7 @@ using namespace MiliastraPlusPlus;
 
 namespace
 {
-    bool HasCode(
-        const DiagnosticCollection& Diagnostics,
-        DiagnosticCode Code
-    )
+    bool HasCode(const DiagnosticCollection& Diagnostics, DiagnosticCode Code)
     {
         for (const Diagnostic& DiagnosticValue : Diagnostics)
         {
@@ -39,10 +36,7 @@ namespace
         return false;
     }
 
-    const Diagnostic* FindDiagnostic(
-        const DiagnosticCollection& Diagnostics,
-        DiagnosticCode Code
-    )
+    const Diagnostic* FindDiagnostic(const DiagnosticCollection& Diagnostics, DiagnosticCode Code)
     {
         for (const Diagnostic& DiagnosticValue : Diagnostics)
         {
@@ -54,10 +48,7 @@ namespace
         return nullptr;
     }
 
-    bool DiagnosticsEqual(
-        const DiagnosticCollection& Left,
-        const DiagnosticCollection& Right
-    )
+    bool DiagnosticsEqual(const DiagnosticCollection& Left, const DiagnosticCollection& Right)
     {
         if (Left.size() != Right.size())
         {
@@ -83,10 +74,7 @@ namespace
         DescriptorCatalogueBinding Binding;
         DescriptorCatalogueRegistryContext Context;
 
-        RegistryFixture(
-            DescriptorCatalogueIdentity IdentityValue,
-            DescriptorCatalogueRegistryContext ContextValue
-        )
+        RegistryFixture(DescriptorCatalogueIdentity IdentityValue, DescriptorCatalogueRegistryContext ContextValue)
             : Identity(std::move(IdentityValue))
             , Binding(Identity)
             , Context(std::move(ContextValue))
@@ -150,10 +138,7 @@ namespace
         return *Result;
     }
 
-    GiaBackendPinMapping MakeBooleanPin(
-        std::int32_t SemanticPin,
-        std::int32_t BackendPin
-    )
+    GiaBackendPinMapping MakeBooleanPin(std::int32_t SemanticPin, std::int32_t BackendPin)
     {
         return GiaBackendPinMapping(
             PinIndex(static_cast<std::uint32_t>(SemanticPin)),
@@ -239,10 +224,7 @@ namespace
         return *Result;
     }
 
-    std::expected<GiaExportContext, DiagnosticCollection> MakeContext(
-        const RegistryFixture& Fixture,
-        GiaBackendMappingPackage Package
-    )
+    std::expected<GiaExportContext, DiagnosticCollection> MakeContext(const RegistryFixture& Fixture, GiaBackendMappingPackage Package)
     {
         return GiaExportContext::Create(
             Fixture.Binding,

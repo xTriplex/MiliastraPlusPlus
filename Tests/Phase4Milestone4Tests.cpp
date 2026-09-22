@@ -54,8 +54,7 @@ namespace
         std::exit(EXIT_FAILURE);
     }
 
-    void Check(bool Condition, const char* Expression,
-        const std::source_location& Location = std::source_location::current())
+    void Check(bool Condition, const char* Expression, const std::source_location& Location = std::source_location::current())
     {
         if (!Condition)
         {
@@ -73,8 +72,7 @@ namespace
     constexpr NodeDescriptorId UnconditionalLoopId(5406U);
     constexpr NodeDescriptorId ReturnId(5407U);
 
-    PinSchema Flow(const char* Name, PinDirection Direction,
-        PinCardinality Cardinality = PinCardinality::Single)
+    PinSchema Flow(const char* Name, PinDirection Direction, PinCardinality Cardinality = PinCardinality::Single)
     {
         return PinSchema(Name, TypeDesc::Flow(), Direction, PinCategory::Execution,
             Cardinality);
@@ -412,12 +410,7 @@ namespace
         }
     }
 
-    void BuildLoopReturnTransferPair(
-        const NodeDescriptorRegistry& Registry,
-        bool UseBreak,
-        bool IsConditional,
-        bool ExpectedExit
-    )
+    void BuildLoopReturnTransferPair(const NodeDescriptorRegistry& Registry, bool UseBreak, bool IsConditional, bool ExpectedExit)
     {
         GraphBuilder Builder(Registry);
         auto Entry = Builder.BeginEntry(EntryId);
@@ -995,9 +988,7 @@ namespace
         MPP_CHECK(GraphIRValidator::Validate(*MultiGraph, Registry).empty());
     }
 
-    void TestRawUnreachableReturnAndCrossEntryIsolation(
-        const NodeDescriptorRegistry& Registry
-    )
+    void TestRawUnreachableReturnAndCrossEntryIsolation(const NodeDescriptorRegistry& Registry)
     {
         GraphBuilder Builder(Registry);
         auto Entry = Builder.BeginEntry(EntryId);
@@ -1045,9 +1036,7 @@ namespace
         MPP_CHECK(HasCode(CrossEntryDiagnostics, DiagnosticCode::InvalidExecutionOwnership));
     }
 
-    void TestRawReturnCannotTransferOrAuthorizeLoopExit(
-        const NodeDescriptorRegistry& Registry
-    )
+    void TestRawReturnCannotTransferOrAuthorizeLoopExit(const NodeDescriptorRegistry& Registry)
     {
         GraphBuilder Builder(Registry);
         auto Entry = Builder.BeginEntry(EntryId);

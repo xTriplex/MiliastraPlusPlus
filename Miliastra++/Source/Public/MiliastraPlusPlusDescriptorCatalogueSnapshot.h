@@ -27,10 +27,7 @@ namespace MiliastraPlusPlus
         using Json = nlohmann::json;
         using OrderedJson = nlohmann::ordered_json;
 
-        inline DiagnosticCollection Failure(
-            DiagnosticCode Code,
-            std::string Message
-        )
+        inline DiagnosticCollection Failure(DiagnosticCode Code, std::string Message)
         {
             return DiagnosticCollection{
                 Diagnostic{
@@ -42,10 +39,7 @@ namespace MiliastraPlusPlus
         }
 
         template<typename Type>
-        [[nodiscard]] inline std::expected<Type, DiagnosticCollection> FailureExpected(
-            DiagnosticCode Code,
-            std::string Message
-        )
+        [[nodiscard]] inline std::expected<Type, DiagnosticCollection> FailureExpected(DiagnosticCode Code, std::string Message)
         {
             return std::unexpected(Failure(Code, std::move(Message)));
         }
@@ -90,11 +84,7 @@ namespace MiliastraPlusPlus
             bool start_array(std::size_t) override { return true; }
             bool end_array() override { return true; }
 
-            bool parse_error(
-                std::size_t,
-                const std::string&,
-                const nlohmann::detail::exception&
-            ) override
+            bool parse_error(std::size_t, const std::string&, const nlohmann::detail::exception&) override
             {
                 m_HasParseError = true;
                 return false;
@@ -109,10 +99,7 @@ namespace MiliastraPlusPlus
             bool m_HasParseError = false;
         };
 
-        [[nodiscard]] inline bool HasExactMembers(
-            const Json& Object,
-            std::initializer_list<std::string_view> Names
-        )
+        [[nodiscard]] inline bool HasExactMembers(const Json& Object, std::initializer_list<std::string_view> Names)
         {
             if (!Object.is_object() || Object.size() != Names.size())
             {
@@ -136,10 +123,7 @@ namespace MiliastraPlusPlus
                 Value.get<std::uint64_t>() <= std::numeric_limits<std::uint32_t>::max();
         }
 
-        [[nodiscard]] inline std::expected<
-            std::uint32_t,
-            DiagnosticCollection
-        > ParseUint32(const Json& Value)
+        [[nodiscard]] inline std::expected<std::uint32_t, DiagnosticCollection> ParseUint32(const Json& Value)
         {
             if (!IsUint32(Value))
             {
@@ -151,8 +135,7 @@ namespace MiliastraPlusPlus
             return static_cast<std::uint32_t>(Value.get<std::uint64_t>());
         }
 
-        [[nodiscard]] inline std::expected<std::int64_t, DiagnosticCollection>
-            ParseInt64(const Json& Value)
+        [[nodiscard]] inline std::expected<std::int64_t, DiagnosticCollection> ParseInt64(const Json& Value)
         {
             if (Value.is_number_integer())
             {
@@ -170,8 +153,7 @@ namespace MiliastraPlusPlus
             );
         }
 
-        [[nodiscard]] inline std::expected<std::uint64_t, DiagnosticCollection>
-            ParseUint64(const Json& Value)
+        [[nodiscard]] inline std::expected<std::uint64_t, DiagnosticCollection> ParseUint64(const Json& Value)
         {
             if (!Value.is_number_unsigned())
             {
@@ -183,8 +165,7 @@ namespace MiliastraPlusPlus
             return Value.get<std::uint64_t>();
         }
 
-        [[nodiscard]] inline std::expected<std::string, DiagnosticCollection>
-            ParseString(const Json& Value)
+        [[nodiscard]] inline std::expected<std::string, DiagnosticCollection> ParseString(const Json& Value)
         {
             if (!Value.is_string())
             {
@@ -197,23 +178,13 @@ namespace MiliastraPlusPlus
         }
 
         [[nodiscard]] inline OrderedJson EncodeType(const TypeDesc& Type);
-        [[nodiscard]] inline std::expected<TypeDesc, DiagnosticCollection>
-            DecodeType(const Json& Value, bool AllowEnum);
+        [[nodiscard]] inline std::expected<TypeDesc, DiagnosticCollection> DecodeType(const Json& Value, bool AllowEnum);
         [[nodiscard]] inline OrderedJson EncodeLiteral(const LiteralValue& Value);
-        [[nodiscard]] inline std::expected<LiteralValue, DiagnosticCollection>
-            DecodeLiteral(const Json& Value, bool AllowEnum);
-        [[nodiscard]] inline OrderedJson EncodeControl(
-            const std::optional<ExecutionControlSchema>& Control
-        );
-        [[nodiscard]] inline std::expected<
-            std::optional<ExecutionControlSchema>,
-            DiagnosticCollection
-        > DecodeControl(const Json& Value);
+        [[nodiscard]] inline std::expected<LiteralValue, DiagnosticCollection> DecodeLiteral(const Json& Value, bool AllowEnum);
+        [[nodiscard]] inline OrderedJson EncodeControl(const std::optional<ExecutionControlSchema>& Control);
+        [[nodiscard]] inline std::expected<std::optional<ExecutionControlSchema>, DiagnosticCollection> DecodeControl(const Json& Value);
 
-        [[nodiscard]] inline std::string HexEncode(
-            std::uint64_t Value,
-            std::size_t Digits
-        )
+        [[nodiscard]] inline std::string HexEncode(std::uint64_t Value, std::size_t Digits)
         {
             constexpr char DigitsTable[] = "0123456789abcdef";
             std::string Result(Digits, '0');
@@ -225,8 +196,7 @@ namespace MiliastraPlusPlus
             return Result;
         }
 
-        [[nodiscard]] inline std::expected<std::uint64_t, DiagnosticCollection>
-            DecodeHex(const Json& Value, std::size_t Digits)
+        [[nodiscard]] inline std::expected<std::uint64_t, DiagnosticCollection> DecodeHex(const Json& Value, std::size_t Digits)
         {
             const auto StringResult = ParseString(Value);
             if (!StringResult.has_value() || StringResult->size() != Digits)
@@ -324,8 +294,7 @@ namespace MiliastraPlusPlus
             return Result;
         }
 
-        [[nodiscard]] inline std::expected<LiteralValue, DiagnosticCollection>
-            DecodeLiteral(const Json& Value, bool AllowEnum)
+        [[nodiscard]] inline std::expected<LiteralValue, DiagnosticCollection> DecodeLiteral(const Json& Value, bool AllowEnum)
         {
             if (!Value.is_object() || !Value.contains("kind") || !Value["kind"].is_string())
             {
@@ -396,10 +365,7 @@ namespace MiliastraPlusPlus
                 });
             }
 
-            const auto DecodeUnsignedLiteral = [&Value](
-                const char* ExpectedKind,
-                auto Constructor
-            ) -> std::expected<LiteralValue, DiagnosticCollection>
+            const auto DecodeUnsignedLiteral = [&Value](const char* ExpectedKind, auto Constructor) -> std::expected<LiteralValue, DiagnosticCollection>
             {
                 if (!HasExactMembers(Value, {"kind", "value"}))
                 {
@@ -483,8 +449,7 @@ namespace MiliastraPlusPlus
             return Result;
         }
 
-        [[nodiscard]] inline std::expected<TypeDesc, DiagnosticCollection>
-            DecodeType(const Json& Value, bool AllowEnum)
+        [[nodiscard]] inline std::expected<TypeDesc, DiagnosticCollection> DecodeType(const Json& Value, bool AllowEnum)
         {
             if (!Value.is_object() || !Value.contains("kind") || !Value["kind"].is_string())
             {
@@ -567,9 +532,7 @@ namespace MiliastraPlusPlus
             return FailureExpected<TypeDesc>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Snapshot type kind is unsupported.");
         }
 
-        [[nodiscard]] inline OrderedJson EncodeControl(
-            const std::optional<ExecutionControlSchema>& Control
-        )
+        [[nodiscard]] inline OrderedJson EncodeControl(const std::optional<ExecutionControlSchema>& Control)
         {
             if (!Control.has_value()) return nullptr;
             OrderedJson Result = OrderedJson::object();
@@ -623,8 +586,7 @@ namespace MiliastraPlusPlus
             return Result;
         }
 
-        [[nodiscard]] inline std::expected<std::optional<ExecutionControlSchema>, DiagnosticCollection>
-            DecodeControl(const Json& Value)
+        [[nodiscard]] inline std::expected<std::optional<ExecutionControlSchema>, DiagnosticCollection> DecodeControl(const Json& Value)
         {
             if (Value.is_null()) return std::optional<ExecutionControlSchema>{};
             if (!Value.is_object() || !Value.contains("kind") || !Value["kind"].is_string())
@@ -713,8 +675,7 @@ namespace MiliastraPlusPlus
             return Result;
         }
 
-        [[nodiscard]] inline std::expected<std::vector<NodeAvailability>, DiagnosticCollection>
-            DecodeAvailability(const Json& Value)
+        [[nodiscard]] inline std::expected<std::vector<NodeAvailability>, DiagnosticCollection> DecodeAvailability(const Json& Value)
         {
             if (!Value.is_array()) return FailureExpected<std::vector<NodeAvailability>>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Availability must be an array.");
             std::vector<NodeAvailability> Result;
@@ -786,8 +747,7 @@ namespace MiliastraPlusPlus
             return Result;
         }
 
-        [[nodiscard]] inline std::expected<std::optional<SourceProvenance>, DiagnosticCollection>
-            DecodeProvenance(const Json& Value)
+        [[nodiscard]] inline std::expected<std::optional<SourceProvenance>, DiagnosticCollection> DecodeProvenance(const Json& Value)
         {
             if (Value.is_null()) return std::optional<SourceProvenance>{};
             if (!HasExactMembers(Value, {"sourceDocumentIdentifier", "sourceRecordIdentifier"})) return FailureExpected<std::optional<SourceProvenance>>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Provenance shape is invalid.");
@@ -811,8 +771,7 @@ namespace MiliastraPlusPlus
             return Result;
         }
 
-        [[nodiscard]] inline std::expected<NormalizedPinRecord, DiagnosticCollection>
-            DecodeNormalizedPin(const Json& Value, bool AllowEnum)
+        [[nodiscard]] inline std::expected<NormalizedPinRecord, DiagnosticCollection> DecodeNormalizedPin(const Json& Value, bool AllowEnum)
         {
             if (!HasExactMembers(Value, {"name", "type", "direction", "category", "cardinality", "allowsLiteral", "default"})) return FailureExpected<NormalizedPinRecord>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Normalized pin shape is invalid.");
             const auto Name = ParseString(Value["name"]); const auto Type = DecodeType(Value["type"], AllowEnum); const auto Direction = DecodeDirection(Value["direction"]); const auto Category = DecodeCategory(Value["category"]); const auto Cardinality = DecodeCardinality(Value["cardinality"]);
@@ -838,8 +797,7 @@ namespace MiliastraPlusPlus
             return Result;
         }
 
-        [[nodiscard]] inline std::expected<NormalizedNodeDescriptorRecord, DiagnosticCollection>
-            DecodeRecord(const Json& Value, bool AllowEnum)
+        [[nodiscard]] inline std::expected<NormalizedNodeDescriptorRecord, DiagnosticCollection> DecodeRecord(const Json& Value, bool AllowEnum)
         {
             if (!HasExactMembers(Value, {"availability", "displayName", "executionControl", "externalIdentity", "pins", "provenance"})) return FailureExpected<NormalizedNodeDescriptorRecord>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Normalized record shape is invalid.");
             const auto Availability = DecodeAvailability(Value["availability"]); const auto DisplayName = ParseString(Value["displayName"]); const auto Identity = ParseString(Value["externalIdentity"]); const auto Control = DecodeControl(Value["executionControl"]); const auto Provenance = DecodeProvenance(Value["provenance"]);
@@ -865,8 +823,7 @@ namespace MiliastraPlusPlus
             return Result;
         }
 
-        [[nodiscard]] inline std::expected<DescriptorSpecializationPin, DiagnosticCollection>
-            DecodeFamilyPin(const Json& Value, bool AllowEnum)
+        [[nodiscard]] inline std::expected<DescriptorSpecializationPin, DiagnosticCollection> DecodeFamilyPin(const Json& Value, bool AllowEnum)
         {
             if (!HasExactMembers(Value, {"name", "fixedType", "reflected", "direction", "category", "cardinality", "allowsLiteral", "default"})) return FailureExpected<DescriptorSpecializationPin>(DiagnosticCode::MalformedDescriptorCatalogueSnapshot, "Specialization family pin shape is invalid.");
             const auto Name = ParseString(Value["name"]); const auto Direction = DecodeDirection(Value["direction"]); const auto Category = DecodeCategory(Value["category"]); const auto Cardinality = DecodeCardinality(Value["cardinality"]);
@@ -957,19 +914,13 @@ namespace MiliastraPlusPlus
             }
         }
 
-        [[nodiscard]] inline bool SameRecordByIdentity(
-            const DescriptorCatalogueEntry& Entry,
-            const NormalizedNodeDescriptorRecord& Record
-        )
+        [[nodiscard]] inline bool SameRecordByIdentity(const DescriptorCatalogueEntry& Entry, const NormalizedNodeDescriptorRecord& Record)
         {
             return Entry.GetExternalIdentity() == Record.GetExternalIdentity() &&
                 Entry.GetRecord() == Record;
         }
 
-        [[nodiscard]] inline bool SameNodeDescriptor(
-            const NodeDescriptor& Left,
-            const NodeDescriptor& Right
-        )
+        [[nodiscard]] inline bool SameNodeDescriptor(const NodeDescriptor& Left, const NodeDescriptor& Right)
         {
             if (Left.GetIdentifier() != Right.GetIdentifier() || Left.GetName() != Right.GetName() || Left.GetAvailability() != Right.GetAvailability() || Left.GetPins().size() != Right.GetPins().size() || Left.GetExecutionControlSchema().has_value() != Right.GetExecutionControlSchema().has_value()) return false;
             for (std::size_t Index = 0U; Index < Left.GetPins().size(); ++Index)

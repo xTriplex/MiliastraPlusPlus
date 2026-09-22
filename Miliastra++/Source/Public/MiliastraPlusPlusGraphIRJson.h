@@ -37,9 +37,7 @@ namespace MiliastraPlusPlus::GraphIRJson
             return std::unexpected(Error(Message));
         }
 
-        inline bool HasObjectFields(
-            const Json& Value,
-            std::initializer_list<const char*> Fields)
+        inline bool HasObjectFields(const Json& Value, std::initializer_list<const char*> Fields)
         {
             if (!Value.is_object())
             {
@@ -57,9 +55,7 @@ namespace MiliastraPlusPlus::GraphIRJson
             return true;
         }
 
-        inline std::expected<std::uint32_t, DiagnosticCollection> UInt32(
-            const Json& Value,
-            const char* Name);
+        inline std::expected<std::uint32_t, DiagnosticCollection> UInt32(const Json& Value, const char* Name);
 
         inline const char* ExecutionModelToString(ExecutionModel Model)
         {
@@ -168,9 +164,7 @@ namespace MiliastraPlusPlus::GraphIRJson
             return Result;
         }
 
-        inline std::expected<TypeDesc, DiagnosticCollection> TypeFromJson(
-            const Json& Value,
-            bool AllowEnum)
+        inline std::expected<TypeDesc, DiagnosticCollection> TypeFromJson(const Json& Value, bool AllowEnum)
         {
             if (!Value.is_object()
                 || !Value.contains("kind")
@@ -403,9 +397,7 @@ namespace MiliastraPlusPlus::GraphIRJson
             return Result;
         }
 
-        inline std::expected<LiteralValue, DiagnosticCollection> LiteralFromJson(
-            const Json& Value,
-            bool AllowEnum)
+        inline std::expected<LiteralValue, DiagnosticCollection> LiteralFromJson(const Json& Value, bool AllowEnum)
         {
             if (!Value.is_object()
                 || !Value.contains("kind")
@@ -572,9 +564,7 @@ namespace MiliastraPlusPlus::GraphIRJson
                 "Malformed or unknown LiteralValue kind: " + Kind);
         }
 
-        inline std::expected<std::uint64_t, DiagnosticCollection> Id(
-            const Json& Value,
-            const char* Name)
+        inline std::expected<std::uint64_t, DiagnosticCollection> Id(const Json& Value, const char* Name)
         {
             if (!Value.contains(Name) || !Value[Name].is_number_unsigned())
             {
@@ -585,9 +575,7 @@ namespace MiliastraPlusPlus::GraphIRJson
         }
 
         template<typename Identifier>
-        inline std::expected<Identifier, DiagnosticCollection> StrongId(
-            const Json& Value,
-            const char* Name)
+        inline std::expected<Identifier, DiagnosticCollection> StrongId(const Json& Value, const char* Name)
         {
             const auto Parsed = Id(Value, Name);
             if (!Parsed)
@@ -598,9 +586,7 @@ namespace MiliastraPlusPlus::GraphIRJson
         }
 
         template<typename Identifier>
-        inline std::expected<std::optional<Identifier>, DiagnosticCollection> OptionalId(
-            const Json& Value,
-            const char* Name)
+        inline std::expected<std::optional<Identifier>, DiagnosticCollection> OptionalId(const Json& Value, const char* Name)
         {
             if (!Value.contains(Name))
             {
@@ -620,9 +606,7 @@ namespace MiliastraPlusPlus::GraphIRJson
             return std::optional<Identifier>(*Parsed);
         }
 
-        inline std::expected<std::uint32_t, DiagnosticCollection> UInt32(
-            const Json& Value,
-            const char* Name)
+        inline std::expected<std::uint32_t, DiagnosticCollection> UInt32(const Json& Value, const char* Name)
         {
             if (!Value.contains(Name)
                 || !Value[Name].is_number_unsigned()

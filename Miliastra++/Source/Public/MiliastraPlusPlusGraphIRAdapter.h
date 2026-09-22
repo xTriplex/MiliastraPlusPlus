@@ -32,10 +32,7 @@ namespace MiliastraPlusPlus
     class GraphIRAdapter
     {
     public:
-        [[nodiscard]] static std::expected<GraphIR, DiagnosticCollection> Convert(
-            const Graph& SourceGraph,
-            const GraphIRAdapterMapping& Mapping
-        )
+        [[nodiscard]] static std::expected<GraphIR, DiagnosticCollection> Convert(const Graph& SourceGraph, const GraphIRAdapterMapping& Mapping)
         {
             DiagnosticCollection Diagnostics;
             GraphIR Result;
@@ -172,10 +169,7 @@ namespace MiliastraPlusPlus
         }
 
     private:
-        static const GraphIRNodeMapping* FindNodeMapping(
-            const GraphIRAdapterMapping& Mapping,
-            NodeIdentifier Identifier
-        )
+        static const GraphIRNodeMapping* FindNodeMapping(const GraphIRAdapterMapping& Mapping, NodeIdentifier Identifier)
         {
             for (const GraphIRNodeMapping& NodeMapping : Mapping.Nodes)
             {
@@ -187,10 +181,7 @@ namespace MiliastraPlusPlus
             return nullptr;
         }
 
-        static const PinIndex* FindPinMapping(
-            const GraphIRNodeMapping* NodeMapping,
-            PinIdentifier Identifier
-        )
+        static const PinIndex* FindPinMapping(const GraphIRNodeMapping* NodeMapping, PinIdentifier Identifier)
         {
             if (NodeMapping == nullptr)
             {
@@ -206,11 +197,7 @@ namespace MiliastraPlusPlus
             return nullptr;
         }
 
-        static void Add(
-            DiagnosticCollection& Diagnostics,
-            DiagnosticCode Code,
-            const char* Message
-        )
+        static void Add(DiagnosticCollection& Diagnostics, DiagnosticCode Code, const char* Message)
         {
             Diagnostics.push_back(Diagnostic{
                 .Severity = DiagnosticSeverity::Error,

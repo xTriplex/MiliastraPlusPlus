@@ -45,10 +45,12 @@ namespace MiliastraPlusPlus
     class GiaBackendMappingIdentity final
     {
     public:
-        explicit GiaBackendMappingIdentity(DescriptorCatalogueIdentity CatalogueIdentity,
+        explicit GiaBackendMappingIdentity(
+            DescriptorCatalogueIdentity CatalogueIdentity,
             GiaBackendMappingSchemaVersion SchemaVersion,
             GiaExportTargetProfile TargetProfile,
-            GiaExportMode Mode)
+            GiaExportMode Mode
+        )
             : m_CatalogueIdentity(std::move(CatalogueIdentity))
             , m_SchemaVersion(SchemaVersion)
             , m_TargetProfile(TargetProfile)
@@ -218,14 +220,16 @@ namespace MiliastraPlusPlus
     class GiaBackendPinMapping final
     {
     public:
-        explicit GiaBackendPinMapping(PinIndex SemanticPinIndex,
+        explicit GiaBackendPinMapping(
+            PinIndex SemanticPinIndex,
             GiaPinKind PinKind,
             GiaPinIndex BackendIndex,
             std::optional<GiaPinIndex> SecondaryIndex,
             GiaBackendTypeCode BackendTypeCode,
             GiaLiteralEncodingKind LiteralEncoding,
             GiaPinEmissionPolicy EmissionPolicy,
-            bool IsConnectable)
+            bool IsConnectable
+        )
             : m_SemanticPinIndex(SemanticPinIndex)
             , m_PinKind(PinKind)
             , m_BackendIndex(BackendIndex)
@@ -296,11 +300,13 @@ namespace MiliastraPlusPlus
     class GiaBackendNodeMapping final
     {
     public:
-        explicit GiaBackendNodeMapping(ExternalNodeIdentity ExternalIdentity,
+        explicit GiaBackendNodeMapping(
+            ExternalNodeIdentity ExternalIdentity,
             GiaNodeGenericId GenericNodeIdentifier,
             std::optional<GiaNodeConcreteId> ConcreteNodeIdentifier,
             std::vector<GiaBackendPinMapping> PinMappings,
-            std::optional<SourceProvenance> Provenance = std::nullopt)
+            std::optional<SourceProvenance> Provenance = std::nullopt
+        )
             : m_ExternalIdentity(std::move(ExternalIdentity))
             , m_GenericNodeIdentifier(GenericNodeIdentifier)
             , m_ConcreteNodeIdentifier(std::move(ConcreteNodeIdentifier))
@@ -379,8 +385,7 @@ namespace MiliastraPlusPlus
             return m_NodeMappings.size();
         }
 
-        [[nodiscard]] const GiaBackendNodeMapping* FindByExternalIdentity(
-            const ExternalNodeIdentity& Identity) const noexcept;
+        [[nodiscard]] const GiaBackendNodeMapping* FindByExternalIdentity(const ExternalNodeIdentity& Identity) const noexcept;
 
         [[nodiscard]] bool IsValid() const noexcept;
 
@@ -391,8 +396,7 @@ namespace MiliastraPlusPlus
         }
 
     private:
-        GiaBackendMappingPackage(GiaBackendMappingIdentity Identity,
-            std::vector<GiaBackendNodeMapping> NodeMappings)
+        GiaBackendMappingPackage(GiaBackendMappingIdentity Identity, std::vector<GiaBackendNodeMapping> NodeMappings)
             : m_Identity(std::move(Identity))
             , m_NodeMappings(std::move(NodeMappings))
         {
@@ -404,7 +408,8 @@ namespace MiliastraPlusPlus
 
     namespace GiaBackendMappingDetail
     {
-        [[nodiscard]] inline Diagnostic MakeDiagnostic(DiagnosticCode Code,
+        [[nodiscard]] inline Diagnostic MakeDiagnostic(
+            DiagnosticCode Code,
             std::string Message,
             std::optional<std::string> ExternalIdentityKey = std::nullopt,
             std::optional<SourceProvenance> Provenance = std::nullopt)
@@ -468,8 +473,7 @@ namespace MiliastraPlusPlus
             return false;
         }
 
-        [[nodiscard]] inline std::optional<std::string> GetIdentityKey(
-            const ExternalNodeIdentity& Identity)
+        [[nodiscard]] inline std::optional<std::string> GetIdentityKey(const ExternalNodeIdentity& Identity)
         {
             if (!Identity.IsValid())
             {
@@ -478,8 +482,7 @@ namespace MiliastraPlusPlus
             return Identity.GetKey();
         }
 
-        [[nodiscard]] inline bool ComparePinMappings(const GiaBackendPinMapping& Left,
-            const GiaBackendPinMapping& Right)
+        [[nodiscard]] inline bool ComparePinMappings(const GiaBackendPinMapping& Left, const GiaBackendPinMapping& Right)
         {
             return std::tuple{
                 Left.GetSemanticPinIndex().GetValue(),
@@ -502,8 +505,7 @@ namespace MiliastraPlusPlus
             };
         }
 
-        [[nodiscard]] inline bool CompareNodeMappings(const GiaBackendNodeMapping& Left,
-            const GiaBackendNodeMapping& Right)
+        [[nodiscard]] inline bool CompareNodeMappings(const GiaBackendNodeMapping& Left, const GiaBackendNodeMapping& Right)
         {
             if (Left.GetExternalIdentity().GetKey() !=
                 Right.GetExternalIdentity().GetKey())
@@ -540,8 +542,7 @@ namespace MiliastraPlusPlus
             return Left.GetSourceProvenance() < Right.GetSourceProvenance();
         }
 
-        [[nodiscard]] inline std::string DescribePinMapping(
-            const GiaBackendPinMapping& PinMapping)
+        [[nodiscard]] inline std::string DescribePinMapping(const GiaBackendPinMapping& PinMapping)
         {
             return "semantic pin " +
                 std::to_string(PinMapping.GetSemanticPinIndex().GetValue()) +
@@ -551,9 +552,7 @@ namespace MiliastraPlusPlus
                 std::to_string(PinMapping.GetBackendIndex().GetValue());
         }
 
-        [[nodiscard]] inline bool HasDuplicateSemanticPin(
-            const std::vector<GiaBackendPinMapping>& PinMappings,
-            std::size_t Index)
+        [[nodiscard]] inline bool HasDuplicateSemanticPin(const std::vector<GiaBackendPinMapping>& PinMappings, std::size_t Index)
         {
             const PinIndex Current = PinMappings[Index].GetSemanticPinIndex();
             for (std::size_t PriorIndex = 0U; PriorIndex < Index; ++PriorIndex)
@@ -566,9 +565,7 @@ namespace MiliastraPlusPlus
             return false;
         }
 
-        [[nodiscard]] inline bool HasDuplicateBackendCoordinate(
-            const std::vector<GiaBackendPinMapping>& PinMappings,
-            std::size_t Index)
+        [[nodiscard]] inline bool HasDuplicateBackendCoordinate(const std::vector<GiaBackendPinMapping>& PinMappings, std::size_t Index)
         {
             const GiaBackendPinMapping& Current = PinMappings[Index];
             if (Current.GetEmissionPolicy() != GiaPinEmissionPolicy::Emit)
@@ -610,14 +607,12 @@ namespace MiliastraPlusPlus
             }
         }
 
-        [[nodiscard]] inline std::string GetDiagnosticExternalKey(
-            const Diagnostic& DiagnosticValue)
+        [[nodiscard]] inline std::string GetDiagnosticExternalKey(const Diagnostic& DiagnosticValue)
         {
             return DiagnosticValue.ExternalIdentityKey.value_or(std::string{});
         }
 
-        [[nodiscard]] inline bool CompareDiagnostics(const Diagnostic& Left,
-            const Diagnostic& Right)
+        [[nodiscard]] inline bool CompareDiagnostics(const Diagnostic& Left, const Diagnostic& Right)
         {
             const auto LeftKey = std::tuple{
                 GetDiagnosticStage(Left.Code),
@@ -873,8 +868,7 @@ namespace MiliastraPlusPlus
         );
     }
 
-    inline const GiaBackendNodeMapping* GiaBackendMappingPackage::FindByExternalIdentity(
-        const ExternalNodeIdentity& Identity) const noexcept
+    inline const GiaBackendNodeMapping* GiaBackendMappingPackage::FindByExternalIdentity(const ExternalNodeIdentity& Identity) const noexcept
     {
         const auto Iterator = std::lower_bound(
             m_NodeMappings.begin(),

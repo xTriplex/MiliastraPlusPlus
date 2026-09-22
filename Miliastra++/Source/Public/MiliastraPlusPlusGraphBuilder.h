@@ -45,11 +45,7 @@ namespace MiliastraPlusPlus
         }
 
     private:
-        NodeHandle(
-            NodeInstanceId Identifier,
-            NodeDescriptorId Descriptor,
-            const std::shared_ptr<const Context>& ContextToken
-        )
+        NodeHandle(NodeInstanceId Identifier, NodeDescriptorId Descriptor, const std::shared_ptr<const Context>& ContextToken)
             : m_Identifier(Identifier)
             , m_Descriptor(Descriptor)
             , m_Context(ContextToken)
@@ -291,11 +287,7 @@ namespace MiliastraPlusPlus
         }
 
     private:
-        Output(
-            NodeInstanceId SourceNode,
-            PinIndex SourceOutputPin,
-            const std::shared_ptr<const NodeHandle::Context>& ContextToken
-        )
+        Output(NodeInstanceId SourceNode, PinIndex SourceOutputPin, const std::shared_ptr<const NodeHandle::Context>& ContextToken)
             : m_SourceNode(SourceNode)
             , m_SourceOutputPin(SourceOutputPin)
             , m_Context(ContextToken)
@@ -332,10 +324,7 @@ namespace MiliastraPlusPlus
         [[nodiscard]] ValueOrExpr<T> AsInput() const;
 
     private:
-        Variable(
-            GraphVariableId Identifier,
-            const std::shared_ptr<const NodeHandle::Context>& ContextToken
-        )
+        Variable(GraphVariableId Identifier, const std::shared_ptr<const NodeHandle::Context>& ContextToken)
             : m_Identifier(Identifier)
             , m_Context(ContextToken)
         {
@@ -918,9 +907,7 @@ namespace MiliastraPlusPlus
         GraphBuilder& operator=(GraphBuilder&&) = delete;
 
         /// Starts a structured entry with a real Entry root and its root Flow output.
-        [[nodiscard]] std::expected<EntryStart, DiagnosticCollection> BeginEntry(
-            NodeDescriptorId EntryDescriptorIdentifier
-        )
+        [[nodiscard]] std::expected<EntryStart, DiagnosticCollection> BeginEntry(NodeDescriptorId EntryDescriptorIdentifier)
         {
             if (m_IsClosed)
             {
@@ -1057,8 +1044,7 @@ namespace MiliastraPlusPlus
         }
 
         /// Appends a Sequence in the active region and returns its explicit live output.
-        [[nodiscard]] std::expected<ExecutionNodeResult, DiagnosticCollection>
-        AppendExecutionNode(
+        [[nodiscard]] std::expected<ExecutionNodeResult, DiagnosticCollection> AppendExecutionNode(
             EntryScope& Scope,
             const ExecutionHandle& Predecessor,
             NodeDescriptorId SequenceDescriptorIdentifier
@@ -1068,8 +1054,7 @@ namespace MiliastraPlusPlus
                 Scope.m_Context, Predecessor, SequenceDescriptorIdentifier);
         }
 
-        [[nodiscard]] std::expected<ExecutionNodeResult, DiagnosticCollection>
-        AppendExecutionNode(
+        [[nodiscard]] std::expected<ExecutionNodeResult, DiagnosticCollection> AppendExecutionNode(
             BranchArmScope& Scope,
             const ExecutionHandle& Predecessor,
             NodeDescriptorId SequenceDescriptorIdentifier
@@ -1079,8 +1064,7 @@ namespace MiliastraPlusPlus
                 Scope.m_Context, Predecessor, SequenceDescriptorIdentifier);
         }
 
-        [[nodiscard]] std::expected<ExecutionNodeResult, DiagnosticCollection>
-        AppendExecutionNode(
+        [[nodiscard]] std::expected<ExecutionNodeResult, DiagnosticCollection> AppendExecutionNode(
             LoopScope& Scope,
             const ExecutionHandle& Predecessor,
             NodeDescriptorId SequenceDescriptorIdentifier
@@ -1091,31 +1075,19 @@ namespace MiliastraPlusPlus
         }
 
         /// Appends a valueless Return and consumes Tail. Success produces no continuation handle.
-        [[nodiscard]] std::expected<void, DiagnosticCollection> Return(
-            EntryScope& Scope,
-            const ExecutionHandle& Tail,
-            NodeDescriptorId ReturnDescriptorIdentifier
-        )
+        [[nodiscard]] std::expected<void, DiagnosticCollection> Return(EntryScope& Scope, const ExecutionHandle& Tail, NodeDescriptorId ReturnDescriptorIdentifier)
         {
             return ReturnInScope(ExecutionScopeKind::Entry, Scope.m_Entry, Scope.m_Region,
                 Scope.m_Serial, Scope.m_Context, Tail, ReturnDescriptorIdentifier);
         }
 
-        [[nodiscard]] std::expected<void, DiagnosticCollection> Return(
-            BranchArmScope& Scope,
-            const ExecutionHandle& Tail,
-            NodeDescriptorId ReturnDescriptorIdentifier
-        )
+        [[nodiscard]] std::expected<void, DiagnosticCollection> Return(BranchArmScope& Scope, const ExecutionHandle& Tail, NodeDescriptorId ReturnDescriptorIdentifier)
         {
             return ReturnInScope(ExecutionScopeKind::BranchArm, Scope.m_Entry, Scope.m_Region,
                 Scope.m_Serial, Scope.m_Context, Tail, ReturnDescriptorIdentifier);
         }
 
-        [[nodiscard]] std::expected<void, DiagnosticCollection> Return(
-            LoopScope& Scope,
-            const ExecutionHandle& Tail,
-            NodeDescriptorId ReturnDescriptorIdentifier
-        )
+        [[nodiscard]] std::expected<void, DiagnosticCollection> Return(LoopScope& Scope, const ExecutionHandle& Tail, NodeDescriptorId ReturnDescriptorIdentifier)
         {
             return ReturnInScope(ExecutionScopeKind::Loop, Scope.m_Entry, Scope.m_BodyRegion,
                 Scope.m_Serial, Scope.m_Context, Tail, ReturnDescriptorIdentifier);
@@ -1155,10 +1127,7 @@ namespace MiliastraPlusPlus
         }
 
         /// Opens one arm; true and false arms may be built in either order.
-        [[nodiscard]] std::expected<BranchArmStart, DiagnosticCollection> BeginArm(
-            BranchScope& Branch,
-            BranchArm Arm
-        )
+        [[nodiscard]] std::expected<BranchArmStart, DiagnosticCollection> BeginArm(BranchScope& Branch, BranchArm Arm)
         {
             if (!IsBuilderOpen())
             {
@@ -1241,48 +1210,30 @@ namespace MiliastraPlusPlus
         }
 
         /// Closes an arm with its live tail. Use NoContinuation when the path has already terminated.
-        [[nodiscard]] std::expected<BranchArmOutcome, DiagnosticCollection> EndArm(
-            BranchArmScope&& Arm,
-            const ExecutionHandle& LiveTail
-        )
+        [[nodiscard]] std::expected<BranchArmOutcome, DiagnosticCollection> EndArm(BranchArmScope&& Arm, const ExecutionHandle& LiveTail)
         {
             return EndBranchArm(std::move(Arm), &LiveTail);
         }
 
-        [[nodiscard]] std::expected<BranchArmOutcome, DiagnosticCollection> EndArm(
-            BranchArmScope&& Arm,
-            NoContinuation
-        )
+        [[nodiscard]] std::expected<BranchArmOutcome, DiagnosticCollection> EndArm(BranchArmScope&& Arm, NoContinuation)
         {
             return EndBranchArm(std::move(Arm), nullptr);
         }
 
         /// Combines the two closed arms without implicitly joining their live tails.
-        [[nodiscard]] std::expected<BranchOutcome, DiagnosticCollection> EndBranch(
-            BranchScope&& Branch,
-            BranchArmOutcome&& TrueArm,
-            BranchArmOutcome&& FalseArm
-        )
+        [[nodiscard]] std::expected<BranchOutcome, DiagnosticCollection> EndBranch(BranchScope&& Branch, BranchArmOutcome&& TrueArm, BranchArmOutcome&& FalseArm)
         {
             return EndBranchConstruction(std::move(Branch), std::move(TrueArm), std::move(FalseArm));
         }
 
         /// Materializes the required merge for a branch with two live arms.
-        [[nodiscard]] std::expected<JoinResult, DiagnosticCollection> Join(
-            EntryScope& Parent,
-            BranchOutcome&& TwoLiveArms,
-            NodeDescriptorId JoinDescriptorIdentifier
-        )
+        [[nodiscard]] std::expected<JoinResult, DiagnosticCollection> Join(EntryScope& Parent, BranchOutcome&& TwoLiveArms, NodeDescriptorId JoinDescriptorIdentifier)
         {
             return JoinBranchOutcome(Parent.m_Entry, Parent.m_Region, Parent.m_Serial,
                 Parent.m_Context, std::move(TwoLiveArms), JoinDescriptorIdentifier);
         }
 
-        [[nodiscard]] std::expected<JoinResult, DiagnosticCollection> Join(
-            BranchArmScope& Parent,
-            BranchOutcome&& TwoLiveArms,
-            NodeDescriptorId JoinDescriptorIdentifier
-        )
+        [[nodiscard]] std::expected<JoinResult, DiagnosticCollection> Join(BranchArmScope& Parent, BranchOutcome&& TwoLiveArms, NodeDescriptorId JoinDescriptorIdentifier)
         {
             return JoinBranchOutcome(Parent.m_Entry, Parent.m_Region, Parent.m_Serial,
                 Parent.m_Context, std::move(TwoLiveArms), JoinDescriptorIdentifier);
@@ -1309,11 +1260,7 @@ namespace MiliastraPlusPlus
                 Parent.m_Context, std::move(OneLiveArm), SequenceDescriptorIdentifier);
         }
 
-        [[nodiscard]] std::expected<JoinResult, DiagnosticCollection> Join(
-            LoopScope& Parent,
-            BranchOutcome&& TwoLiveArms,
-            NodeDescriptorId JoinDescriptorIdentifier
-        )
+        [[nodiscard]] std::expected<JoinResult, DiagnosticCollection> Join(LoopScope& Parent, BranchOutcome&& TwoLiveArms, NodeDescriptorId JoinDescriptorIdentifier)
         {
             return JoinBranchOutcome(Parent.m_Entry, Parent.m_BodyRegion, Parent.m_Serial,
                 Parent.m_Context, std::move(TwoLiveArms), JoinDescriptorIdentifier);
@@ -1364,27 +1311,19 @@ namespace MiliastraPlusPlus
         }
 
         /// Consumes Tail into the nearest active loop's BreakInput.
-        [[nodiscard]] std::expected<void, DiagnosticCollection> Break(
-            LoopScope& NearestLoop,
-            const ExecutionHandle& Tail
-        )
+        [[nodiscard]] std::expected<void, DiagnosticCollection> Break(LoopScope& NearestLoop, const ExecutionHandle& Tail)
         {
             return AddLoopTransfer(NearestLoop, Tail, true);
         }
 
         /// Consumes Tail into the nearest active loop's RepeatInput.
-        [[nodiscard]] std::expected<void, DiagnosticCollection> Continue(
-            LoopScope& NearestLoop,
-            const ExecutionHandle& Tail
-        )
+        [[nodiscard]] std::expected<void, DiagnosticCollection> Continue(LoopScope& NearestLoop, const ExecutionHandle& Tail)
         {
             return AddLoopTransfer(NearestLoop, Tail, false);
         }
 
         /// Closes a resolved body without adding an implicit Repeat edge.
-        [[nodiscard]] std::expected<LoopResult, DiagnosticCollection> EndLoop(
-            LoopScope&& Scope
-        )
+        [[nodiscard]] std::expected<LoopResult, DiagnosticCollection> EndLoop(LoopScope&& Scope)
         {
             if (!IsBuilderOpen())
             {
@@ -1496,9 +1435,7 @@ namespace MiliastraPlusPlus
             return LoopResult{std::move(ExitOutput)};
         }
 
-        [[nodiscard]] std::expected<NodeHandle, DiagnosticCollection> AddNode(
-            NodeDescriptorId DescriptorIdentifier
-        )
+        [[nodiscard]] std::expected<NodeHandle, DiagnosticCollection> AddNode(NodeDescriptorId DescriptorIdentifier)
         {
             if (m_IsClosed)
             {
@@ -1560,10 +1497,7 @@ namespace MiliastraPlusPlus
         }
 
         template<typename T>
-        [[nodiscard]] std::expected<Output<T>, DiagnosticCollection> GetOutput(
-            const NodeHandle& Node,
-            PinIndex OutputPin
-        ) const
+        [[nodiscard]] std::expected<Output<T>, DiagnosticCollection> GetOutput(const NodeHandle& Node, PinIndex OutputPin) const
         {
             const auto TypeResult = GetCppTypeDesc<T>();
             if (!TypeResult.has_value())
@@ -1611,10 +1545,7 @@ namespace MiliastraPlusPlus
         }
 
         template<typename T>
-        [[nodiscard]] std::expected<Variable<T>, DiagnosticCollection> DeclareVariable(
-            std::string Name,
-            std::optional<LiteralValue> DefaultValue = std::nullopt
-        )
+        [[nodiscard]] std::expected<Variable<T>, DiagnosticCollection> DeclareVariable(std::string Name, std::optional<LiteralValue> DefaultValue = std::nullopt)
         {
             if (m_IsClosed)
             {
@@ -1668,11 +1599,7 @@ namespace MiliastraPlusPlus
         }
 
         template<typename T>
-        [[nodiscard]] std::expected<void, DiagnosticCollection> BindInput(
-            const NodeHandle& DestinationNode,
-            PinIndex DestinationPin,
-            const ValueOrExpr<T>& Expression
-        )
+        [[nodiscard]] std::expected<void, DiagnosticCollection> BindInput(const NodeHandle& DestinationNode, PinIndex DestinationPin, const ValueOrExpr<T>& Expression)
         {
             if (m_IsClosed)
             {
@@ -1895,9 +1822,7 @@ namespace MiliastraPlusPlus
             return !m_IsClosed && m_Context != nullptr;
         }
 
-        [[nodiscard]] bool HasSameContext(
-            const std::weak_ptr<const NodeHandle::Context>& HandleContext
-        ) const
+        [[nodiscard]] bool HasSameContext(const std::weak_ptr<const NodeHandle::Context>& HandleContext) const
         {
             if (m_Context == nullptr || HandleContext.expired())
             {
@@ -1941,9 +1866,7 @@ namespace MiliastraPlusPlus
             return Frame.Entry == Entry && Frame.Region == Region;
         }
 
-        [[nodiscard]] const NodeDescriptor* FindValidDescriptor(
-            NodeDescriptorId Identifier
-        ) const
+        [[nodiscard]] const NodeDescriptor* FindValidDescriptor(NodeDescriptorId Identifier) const
         {
             if (!Identifier.IsValid())
             {
@@ -1997,9 +1920,7 @@ namespace MiliastraPlusPlus
             return nullptr;
         }
 
-        [[nodiscard]] const BranchConstructionState* FindBranchState(
-            std::uint64_t Serial
-        ) const
+        [[nodiscard]] const BranchConstructionState* FindBranchState(std::uint64_t Serial) const
         {
             for (const BranchConstructionState& State : m_BranchStates)
             {
@@ -2023,9 +1944,7 @@ namespace MiliastraPlusPlus
             return false;
         }
 
-        [[nodiscard]] const OpenBranchOutcome* FindOpenBranchOutcome(
-            std::uint64_t Serial
-        ) const
+        [[nodiscard]] const OpenBranchOutcome* FindOpenBranchOutcome(std::uint64_t Serial) const
         {
             for (const OpenBranchOutcome& Outcome : m_OpenBranchOutcomes)
             {
@@ -2050,10 +1969,7 @@ namespace MiliastraPlusPlus
             }
         }
 
-        [[nodiscard]] std::size_t CountOutgoingEdges(
-            NodeInstanceId Node,
-            PinIndex OutputPin
-        ) const
+        [[nodiscard]] std::size_t CountOutgoingEdges(NodeInstanceId Node, PinIndex OutputPin) const
         {
             std::size_t Count = 0U;
             for (const ControlEdge& Edge : m_Graph.GetControlEdges())
@@ -2066,10 +1982,7 @@ namespace MiliastraPlusPlus
             return Count;
         }
 
-        [[nodiscard]] bool IsRegionWithin(
-            ExecutionRegionId RegionIdentifier,
-            ExecutionRegionId AncestorIdentifier
-        ) const
+        [[nodiscard]] bool IsRegionWithin(ExecutionRegionId RegionIdentifier, ExecutionRegionId AncestorIdentifier) const
         {
             const ExecutionRegion* Region = m_Graph.FindExecutionRegion(RegionIdentifier);
             std::vector<ExecutionRegionId> Visited;
@@ -2093,9 +2006,7 @@ namespace MiliastraPlusPlus
             return false;
         }
 
-        [[nodiscard]] bool HasOpenBranchOutcomeInRegion(
-            ExecutionRegionId RegionIdentifier
-        ) const
+        [[nodiscard]] bool HasOpenBranchOutcomeInRegion(ExecutionRegionId RegionIdentifier) const
         {
             for (const OpenBranchOutcome& Outcome : m_OpenBranchOutcomes)
             {
@@ -2108,11 +2019,7 @@ namespace MiliastraPlusPlus
             return false;
         }
 
-        [[nodiscard]] bool HasReachableLoopBreak(
-            NodeInstanceId LoopNodeIdentifier,
-            const LoopControlSchema& LoopSchema,
-            ExecutionRegionId BodyRegionIdentifier
-        ) const
+        [[nodiscard]] bool HasReachableLoopBreak(NodeInstanceId LoopNodeIdentifier, const LoopControlSchema& LoopSchema, ExecutionRegionId BodyRegionIdentifier) const
         {
             std::vector<NodeInstanceId> Reachable;
             Reachable.push_back(LoopNodeIdentifier);
@@ -2176,22 +2083,14 @@ namespace MiliastraPlusPlus
             return false;
         }
 
-        [[nodiscard]] bool IsBranchArmOutput(
-            NodeInstanceId Node,
-            PinIndex OutputPin,
-            ExecutionRegionId Region
-        ) const
+        [[nodiscard]] bool IsBranchArmOutput(NodeInstanceId Node, PinIndex OutputPin, ExecutionRegionId Region) const
         {
             const ExecutionRegion* ArmRegion = m_Graph.FindExecutionRegion(Region);
             return ArmRegion != nullptr && ArmRegion->Kind == ExecutionRegionKind::BranchArm &&
                 ArmRegion->OwnerNode == Node && ArmRegion->OwnerOutputPin == OutputPin;
         }
 
-        [[nodiscard]] DiagnosticCollection ValidateExecutionHandle(
-            const ExecutionHandle& Handle,
-            ExecutionEntryId Entry,
-            ExecutionRegionId Region
-        ) const
+        [[nodiscard]] DiagnosticCollection ValidateExecutionHandle(const ExecutionHandle& Handle, ExecutionEntryId Entry, ExecutionRegionId Region) const
         {
             if (!Handle.IsValid())
             {
@@ -2315,18 +2214,14 @@ namespace MiliastraPlusPlus
                 if (Outcome.Entry == Entry && Outcome.Serial != AllowedOutcomeSerial)
                 {
                     return DiagnosticCollection{
-                        MakeBranchOutcomeDiagnostic(
-                            "Resolve the current branch outcome before appending another node.")
+                        MakeBranchOutcomeDiagnostic("Resolve the current branch outcome before appending another node.")
                     };
                 }
             }
             return {};
         }
 
-        [[nodiscard]] DiagnosticCollection ValidateLoopScopeForTransfer(
-            const LoopScope& Scope,
-            const ExecutionHandle& Tail
-        ) const
+        [[nodiscard]] DiagnosticCollection ValidateLoopScopeForTransfer(const LoopScope& Scope, const ExecutionHandle& Tail) const
         {
             if (!IsBuilderOpen() || !Scope.IsValid())
             {
@@ -2388,11 +2283,7 @@ namespace MiliastraPlusPlus
             return ValidateExecutionHandle(Tail, Scope.m_Entry, Current.Region);
         }
 
-        [[nodiscard]] std::expected<void, DiagnosticCollection> AddLoopTransfer(
-            LoopScope& Scope,
-            const ExecutionHandle& Tail,
-            bool IsBreak
-        )
+        [[nodiscard]] std::expected<void, DiagnosticCollection> AddLoopTransfer(LoopScope& Scope, const ExecutionHandle& Tail, bool IsBreak)
         {
             DiagnosticCollection ScopeDiagnostics = ValidateLoopScopeForTransfer(Scope, Tail);
             if (!ScopeDiagnostics.empty())
@@ -2417,10 +2308,7 @@ namespace MiliastraPlusPlus
             return {};
         }
 
-        [[nodiscard]] DiagnosticCollection DescriptorFailure(
-            NodeDescriptorId Identifier,
-            const char* Message
-        ) const
+        [[nodiscard]] DiagnosticCollection DescriptorFailure(NodeDescriptorId Identifier, const char* Message) const
         {
             if (!Identifier.IsValid())
             {
@@ -2628,13 +2516,11 @@ namespace MiliastraPlusPlus
         }
 
         template<typename T>
-        [[nodiscard]] std::expected<InputBindingRecord, DiagnosticCollection>
-        PrepareInputBindingRecord(
+        [[nodiscard]] std::expected<InputBindingRecord, DiagnosticCollection> PrepareInputBindingRecord(
             NodeInstanceId DestinationNode,
             PinIndex DestinationPin,
             const PinSchema& Pin,
-            const ValueOrExpr<T>& Expression
-        ) const
+            const ValueOrExpr<T>& Expression) const
         {
             if (Pin.GetDirection() != PinDirection::Input || Pin.GetCategory() != PinCategory::Data)
             {
@@ -2705,11 +2591,7 @@ namespace MiliastraPlusPlus
             };
         }
 
-        [[nodiscard]] bool ExecutionProducerDominates(
-            ExecutionEntryId Entry,
-            NodeInstanceId Producer,
-            NodeInstanceId Consumer
-        ) const
+        [[nodiscard]] bool ExecutionProducerDominates(ExecutionEntryId Entry, NodeInstanceId Producer, NodeInstanceId Consumer) const
         {
             const ExecutionEntry* EntryRecord = m_Graph.FindExecutionEntry(Entry);
             if (EntryRecord == nullptr)
@@ -2815,8 +2697,7 @@ namespace MiliastraPlusPlus
             {
                 return false;
             }
-            std::vector<std::vector<bool>> Dominators(
-                AllNodes.size(), std::vector<bool>(AllNodes.size(), true));
+            std::vector<std::vector<bool>> Dominators(AllNodes.size(), std::vector<bool>(AllNodes.size(), true));
             for (std::size_t Candidate = 0U; Candidate < AllNodes.size(); ++Candidate)
             {
                 Dominators[RootIndex][Candidate] = Candidate == RootIndex;
@@ -2864,9 +2745,7 @@ namespace MiliastraPlusPlus
             return Dominators[ConsumerIndex][ProducerIndex];
         }
 
-        [[nodiscard]] const LoopControlSchema* FindLoopSchemaInBuilder(
-            NodeInstanceId NodeIdentifier
-        ) const
+        [[nodiscard]] const LoopControlSchema* FindLoopSchemaInBuilder(NodeInstanceId NodeIdentifier) const
         {
             const NodeInstance* Node = m_Graph.FindNode(NodeIdentifier);
             const NodeDescriptor* Descriptor = Node == nullptr
@@ -2875,10 +2754,7 @@ namespace MiliastraPlusPlus
                 ? nullptr : GetControlSchema<LoopControlSchema>(*Descriptor);
         }
 
-        [[nodiscard]] bool HasAnyLoopBreakEdge(
-            NodeInstanceId LoopNode,
-            const LoopControlSchema& Schema
-        ) const
+        [[nodiscard]] bool HasAnyLoopBreakEdge(NodeInstanceId LoopNode, const LoopControlSchema& Schema) const
         {
             for (const ControlEdge& Edge : m_Graph.GetControlEdges())
             {
@@ -2891,11 +2767,7 @@ namespace MiliastraPlusPlus
             return false;
         }
 
-        [[nodiscard]] DiagnosticCollection ValidateLoopConditionProvenance(
-            const ValueOrExpr<bool>& Condition,
-            ExecutionEntryId Entry,
-            NodeInstanceId Predecessor
-        ) const
+        [[nodiscard]] DiagnosticCollection ValidateLoopConditionProvenance(const ValueOrExpr<bool>& Condition, ExecutionEntryId Entry, NodeInstanceId Predecessor) const
         {
             const Output<bool>* OutputValue = std::get_if<Output<bool>>(&Condition.GetValue());
             if (OutputValue == nullptr)
@@ -3190,10 +3062,7 @@ namespace MiliastraPlusPlus
             return BranchStart{std::move(Scope), std::move(Node)};
         }
 
-        [[nodiscard]] std::expected<BranchArmOutcome, DiagnosticCollection> EndBranchArm(
-            BranchArmScope&& Arm,
-            const ExecutionHandle* LiveTail
-        )
+        [[nodiscard]] std::expected<BranchArmOutcome, DiagnosticCollection> EndBranchArm(BranchArmScope&& Arm, const ExecutionHandle* LiveTail)
         {
             if (!IsBuilderOpen())
             {
@@ -3273,11 +3142,7 @@ namespace MiliastraPlusPlus
             return Outcome;
         }
 
-        [[nodiscard]] std::expected<BranchOutcome, DiagnosticCollection> EndBranchConstruction(
-            BranchScope&& Branch,
-            BranchArmOutcome&& TrueArm,
-            BranchArmOutcome&& FalseArm
-        )
+        [[nodiscard]] std::expected<BranchOutcome, DiagnosticCollection> EndBranchConstruction(BranchScope&& Branch, BranchArmOutcome&& TrueArm, BranchArmOutcome&& FalseArm)
         {
             if (!IsBuilderOpen())
             {
@@ -3454,8 +3319,7 @@ namespace MiliastraPlusPlus
             return JoinResult{std::move(Node), std::move(Output)};
         }
 
-        [[nodiscard]] std::expected<ExecutionNodeResult, DiagnosticCollection>
-        ContinueBranchOutcome(
+        [[nodiscard]] std::expected<ExecutionNodeResult, DiagnosticCollection> ContinueBranchOutcome(
             ExecutionEntryId Entry,
             ExecutionRegionId ParentRegion,
             std::uint64_t ParentSerial,
@@ -3547,8 +3411,7 @@ namespace MiliastraPlusPlus
                 !m_OpenBranchOutcomes.empty())
             {
                 return DiagnosticCollection{
-                    MakeOpenExecutionScopeDiagnostic(
-                        "The graph builder has an open execution scope or unresolved branch outcome.")
+                    MakeOpenExecutionScopeDiagnostic("The graph builder has an open execution scope or unresolved branch outcome.")
                 };
             }
             return {};
@@ -3568,10 +3431,7 @@ namespace MiliastraPlusPlus
             Current = NextIdentifier(Current);
         }
 
-        [[nodiscard]] std::size_t CountBindings(
-            NodeInstanceId DestinationNode,
-            PinIndex DestinationPin
-        ) const
+        [[nodiscard]] std::size_t CountBindings(NodeInstanceId DestinationNode, PinIndex DestinationPin) const
         {
             std::size_t Count = 0U;
             for (const InputBindingRecord& Record : m_Graph.GetInputBindings())
@@ -3586,10 +3446,7 @@ namespace MiliastraPlusPlus
         }
 
         template<typename T>
-        [[nodiscard]] DiagnosticCollection ValidateOutput(
-            const Output<T>& OutputValue,
-            const TypeDesc& DestinationType
-        ) const
+        [[nodiscard]] DiagnosticCollection ValidateOutput(const Output<T>& OutputValue, const TypeDesc& DestinationType) const
         {
             const auto TypeResult = GetCppTypeDesc<T>();
             if (!TypeResult.has_value())
@@ -3613,8 +3470,7 @@ namespace MiliastraPlusPlus
             if (Descriptor == nullptr)
             {
                 return DiagnosticCollection{
-                    MakeMissingDescriptorDiagnostic(
-                        "The output source node descriptor is no longer registered.")
+                    MakeMissingDescriptorDiagnostic("The output source node descriptor is no longer registered.")
                 };
             }
             if (OutputValue.GetPin().GetValue() >= Descriptor->GetPins().size())
@@ -3642,10 +3498,7 @@ namespace MiliastraPlusPlus
         }
 
         template<typename T>
-        [[nodiscard]] DiagnosticCollection ValidateVariable(
-            const Variable<T>& VariableValue,
-            const TypeDesc& DestinationType
-        ) const
+        [[nodiscard]] DiagnosticCollection ValidateVariable(const Variable<T>& VariableValue, const TypeDesc& DestinationType) const
         {
             const auto TypeResult = GetCppTypeDesc<T>();
             if (!TypeResult.has_value())
@@ -3701,10 +3554,7 @@ namespace MiliastraPlusPlus
                 !HandleContext.owner_before(BuilderContext);
         }
 
-        [[nodiscard]] static bool IsLiteralCompatible(
-            const LiteralValue& Literal,
-            const TypeDesc& Type
-        )
+        [[nodiscard]] static bool IsLiteralCompatible(const LiteralValue& Literal, const TypeDesc& Type)
         {
             if (!Literal.IsValid() || !Type.IsValid())
             {

@@ -10,8 +10,7 @@ namespace MiliastraPlusPlus
 {
     namespace GiaExportContextDetail
     {
-        [[nodiscard]] inline Diagnostic MakeDiagnostic(DiagnosticCode Code,
-            std::string Message)
+        [[nodiscard]] inline Diagnostic MakeDiagnostic(DiagnosticCode Code, std::string Message)
         {
             return Diagnostic{
                 .Severity = DiagnosticSeverity::Error,
@@ -145,10 +144,12 @@ namespace MiliastraPlusPlus
         }
 
     private:
-        GiaExportContext(DescriptorCatalogueBinding Binding,
+        GiaExportContext(
+            DescriptorCatalogueBinding Binding,
             DescriptorCatalogueRegistryContext RegistryContext,
             GiaExportConfiguration Configuration,
-            GiaBackendMappingPackage MappingPackage)
+            GiaBackendMappingPackage MappingPackage
+        )
             : m_Binding(std::move(Binding))
             , m_RegistryContext(std::move(RegistryContext))
             , m_Configuration(std::move(Configuration))

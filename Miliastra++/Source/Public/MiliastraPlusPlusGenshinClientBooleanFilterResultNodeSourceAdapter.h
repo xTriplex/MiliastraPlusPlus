@@ -62,9 +62,7 @@ namespace MiliastraPlusPlus
             });
         }
 
-        [[nodiscard]] inline DiagnosticCollection Materialize(
-            std::vector<PendingDiagnostic> Diagnostics
-        )
+        [[nodiscard]] inline DiagnosticCollection Materialize(std::vector<PendingDiagnostic> Diagnostics)
         {
             std::sort(
                 Diagnostics.begin(),
@@ -111,10 +109,7 @@ namespace MiliastraPlusPlus
             return Result;
         }
 
-        [[nodiscard]] inline const Json* Find(
-            const Json& Object,
-            std::string_view Name
-        )
+        [[nodiscard]] inline const Json* Find(const Json& Object, std::string_view Name)
         {
             if (!Object.is_object())
             {
@@ -399,10 +394,7 @@ namespace MiliastraPlusPlus
             return true;
         }
 
-        [[nodiscard]] inline bool ValidateEnumEvidence(
-            const Json& Evidence,
-            std::vector<PendingDiagnostic>& Diagnostics
-        )
+        [[nodiscard]] inline bool ValidateEnumEvidence(const Json& Evidence, std::vector<PendingDiagnostic>& Diagnostics)
         {
             bool Valid = HasExactFields(
                 Evidence,
@@ -538,10 +530,7 @@ namespace MiliastraPlusPlus
             return Valid;
         }
 
-        [[nodiscard]] inline bool ValidateModes(
-            const Json& Modes,
-            std::vector<PendingDiagnostic>& Diagnostics
-        )
+        [[nodiscard]] inline bool ValidateModes(const Json& Modes, std::vector<PendingDiagnostic>& Diagnostics)
         {
             bool Valid = Modes.is_object();
             if (!Valid)
@@ -646,12 +635,7 @@ namespace MiliastraPlusPlus
             return Valid;
         }
 
-        [[nodiscard]] inline bool ValidatePin(
-            const Json& Pin,
-            std::uint64_t ExpectedIndex,
-            std::vector<PendingDiagnostic>& Diagnostics,
-            const SourceProvenance& Provenance
-        )
+        [[nodiscard]] inline bool ValidatePin(const Json& Pin, std::uint64_t ExpectedIndex, std::vector<PendingDiagnostic>& Diagnostics, const SourceProvenance& Provenance)
         {
             constexpr std::array<std::string_view, 8U> PinFields = {
                 "index", "kind", "type", "clientVarType", "defaultValue",

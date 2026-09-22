@@ -15,10 +15,7 @@ namespace MiliastraPlusPlus
     {
     public:
         /// Resolves legacy generic pins on the graph copy before serializing it.
-        static std::string CompileToJSON(
-            Graph TargetGraph,
-            DiagnosticCollection* Diagnostics = nullptr
-        )
+        static std::string CompileToJSON(Graph TargetGraph, DiagnosticCollection* Diagnostics = nullptr)
         {
             DiagnosticCollection PropagationDiagnostics = TargetGraph.PropagateTypes();
             const bool HasErrors = ContainsError(PropagationDiagnostics);
@@ -36,11 +33,7 @@ namespace MiliastraPlusPlus
             return Root.dump(4);
         }
 
-        static bool CompileToFile(
-            Graph TargetGraph,
-            const std::string& FilePath,
-            DiagnosticCollection* Diagnostics = nullptr
-        )
+        static bool CompileToFile(Graph TargetGraph, const std::string& FilePath, DiagnosticCollection* Diagnostics = nullptr)
         {
             try
             {

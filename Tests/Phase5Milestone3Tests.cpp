@@ -22,10 +22,7 @@ namespace
 {
     using JsonValue = nlohmann::json;
 
-    [[noreturn]] void Fail(
-        const char* Expression,
-        const std::source_location& Location
-    )
+    [[noreturn]] void Fail(const char* Expression, const std::source_location& Location)
     {
         std::fprintf(
             stderr,
@@ -37,11 +34,7 @@ namespace
         std::exit(EXIT_FAILURE);
     }
 
-    void Check(
-        bool Condition,
-        const char* Expression,
-        const std::source_location& Location = std::source_location::current()
-    )
+    void Check(bool Condition, const char* Expression, const std::source_location& Location = std::source_location::current())
     {
         if (!Condition)
         {
@@ -2383,10 +2376,7 @@ namespace
         return nullptr;
     }
 
-    bool HasDiagnosticCode(
-        const DiagnosticCollection& Diagnostics,
-        DiagnosticCode Code
-    )
+    bool HasDiagnosticCode(const DiagnosticCollection& Diagnostics, DiagnosticCode Code)
     {
         return std::any_of(
             Diagnostics.begin(),
@@ -2398,10 +2388,7 @@ namespace
         );
     }
 
-    std::size_t CountDiagnosticCode(
-        const DiagnosticCollection& Diagnostics,
-        DiagnosticCode Code
-    )
+    std::size_t CountDiagnosticCode(const DiagnosticCollection& Diagnostics, DiagnosticCode Code)
     {
         return static_cast<std::size_t>(std::count_if(
             Diagnostics.begin(),
@@ -2413,10 +2400,7 @@ namespace
         ));
     }
 
-    bool SameDiagnostics(
-        const DiagnosticCollection& Left,
-        const DiagnosticCollection& Right
-    )
+    bool SameDiagnostics(const DiagnosticCollection& Left, const DiagnosticCollection& Right)
     {
         if (Left.size() != Right.size())
         {
@@ -2483,9 +2467,7 @@ namespace
         return *Result;
     }
 
-    void CheckCanonicalRecordOrdering(
-        const std::vector<NormalizedNodeDescriptorRecord>& Records
-    )
+    void CheckCanonicalRecordOrdering(const std::vector<NormalizedNodeDescriptorRecord>& Records)
     {
         for (std::size_t Index = 1U; Index < Records.size(); ++Index)
         {

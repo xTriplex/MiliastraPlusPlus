@@ -134,17 +134,12 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
             return Root < m_Bindings.size() ? m_Bindings[Root] : EmptyBinding();
         }
 
-        [[nodiscard]] const std::optional<Binding>& GetBinding(
-            const GenericConstraintKey& Key
-        ) const
+        [[nodiscard]] const std::optional<Binding>& GetBinding(const GenericConstraintKey& Key) const
         {
             return GetBinding(FindIndex(Key));
         }
 
-        [[nodiscard]] std::size_t Union(
-            const GenericConstraintKey& Left,
-            const GenericConstraintKey& Right
-        )
+        [[nodiscard]] std::size_t Union(const GenericConstraintKey& Left, const GenericConstraintKey& Right)
         {
             std::size_t LeftRoot = FindRoot(Left);
             std::size_t RightRoot = FindRoot(Right);
@@ -170,10 +165,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
             return LeftRoot;
         }
 
-        [[nodiscard]] bool SetBinding(
-            const GenericConstraintKey& Key,
-            Binding Value
-        )
+        [[nodiscard]] bool SetBinding(const GenericConstraintKey& Key, Binding Value)
         {
             const std::size_t Root = FindRoot(Key);
             if (Root >= m_Bindings.size())
@@ -205,10 +197,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
         std::vector<std::optional<Binding>> m_Bindings;
     };
 
-    [[nodiscard]] inline const NodeDescriptor* FindDescriptor(
-        const NodeInstance* Node,
-        const NodeDescriptorRegistry& Descriptors
-    )
+    [[nodiscard]] inline const NodeDescriptor* FindDescriptor(const NodeInstance* Node, const NodeDescriptorRegistry& Descriptors)
     {
         if (Node == nullptr || !Node->Descriptor.IsValid())
         {
@@ -217,11 +206,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
         return Descriptors.Find(Node->Descriptor);
     }
 
-    [[nodiscard]] inline const PinSchema* FindPin(
-        const NodeInstance* Node,
-        PinIndex Index,
-        const NodeDescriptorRegistry& Descriptors
-    )
+    [[nodiscard]] inline const PinSchema* FindPin(const NodeInstance* Node, PinIndex Index, const NodeDescriptorRegistry& Descriptors)
     {
         const NodeDescriptor* Descriptor = FindDescriptor(Node, Descriptors);
         if (Descriptor == nullptr || !Index.IsValid() ||
@@ -232,19 +217,12 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
         return &Descriptor->GetPins()[Index.GetValue()];
     }
 
-    [[nodiscard]] inline GenericConstraintKey MakeKey(
-        const GenericOwnerScope& Scope,
-        GenericParameterId Parameter
-    )
+    [[nodiscard]] inline GenericConstraintKey MakeKey(const GenericOwnerScope& Scope, GenericParameterId Parameter)
     {
         return {Scope, Parameter};
     }
 
-    inline void CollectKeys(
-        const TypeDesc& Type,
-        const GenericOwnerScope& Scope,
-        std::vector<GenericConstraintKey>& Keys
-    )
+    inline void CollectKeys(const TypeDesc& Type, const GenericOwnerScope& Scope, std::vector<GenericConstraintKey>& Keys)
     {
         if (!Type.IsValid())
         {
@@ -307,10 +285,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
         }
     }
 
-    [[nodiscard]] inline std::optional<GenericConstraintKey> FirstGeneric(
-        const TypeDesc& Type,
-        const GenericOwnerScope& Scope
-    )
+    [[nodiscard]] inline std::optional<GenericConstraintKey> FirstGeneric(const TypeDesc& Type, const GenericOwnerScope& Scope)
     {
         if (!Type.IsValid())
         {
@@ -333,10 +308,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
         }
     }
 
-    [[nodiscard]] inline bool IsConcreteCompatible(
-        const TypeDesc& Left,
-        const TypeDesc& Right
-    )
+    [[nodiscard]] inline bool IsConcreteCompatible(const TypeDesc& Left, const TypeDesc& Right)
     {
         return !ContainsGeneric(Left) && !ContainsGeneric(Right) &&
             Left.IsCompatibleWith(Right);
@@ -464,18 +436,11 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
 
             for (const GraphVariable& Variable : m_Graph.GetVariables())
             {
-                CollectKeys(
-                    Variable.Type,
-                    GenericOwnerScope::ForVariable(Variable.Identifier),
-                    Keys
-                );
+                CollectKeys(Variable.Type, GenericOwnerScope::ForVariable(Variable.Identifier), Keys);
             }
         }
 
-        void CollectRelations(
-            std::vector<GenericConstraintKey>& Keys,
-            std::vector<TypeRelation>& Relations
-        ) const
+        void CollectRelations(std::vector<GenericConstraintKey>& Keys, std::vector<TypeRelation>& Relations) const
         {
             for (const InputBindingRecord& Record : m_Graph.GetInputBindings())
             {
@@ -526,14 +491,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
                     {
                         const GenericOwnerScope SourceScope =
                             GenericOwnerScope::ForNode(SourceNode->Identifier);
-                        AddRelation(
-                            SourcePin->GetType(),
-                            SourceScope,
-                            *Record.OutputTypeConstraint,
-                            SourceScope,
-                            Keys,
-                            Relations
-                        );
+                        AddRelation(SourcePin->GetType(), SourceScope, *Record.OutputTypeConstraint, SourceScope, Keys, Relations);
                     }
                 }
                 else if (const GraphVariableReference* Variable =
@@ -576,10 +534,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
             Relations.push_back(TypeRelation{Left, LeftScope, Right, RightScope});
         }
 
-        [[nodiscard]] bool IsActiveKey(
-            std::size_t Root,
-            const std::vector<GenericConstraintKey>& Active
-        ) const
+        [[nodiscard]] bool IsActiveKey(std::size_t Root, const std::vector<GenericConstraintKey>& Active) const
         {
             return std::any_of(Active.begin(), Active.end(), [this, Root](const auto& Key)
             {
@@ -588,10 +543,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
             });
         }
 
-        [[nodiscard]] bool IsActiveBindingPair(
-            std::size_t LeftRoot,
-            std::size_t RightRoot
-        ) const
+        [[nodiscard]] bool IsActiveBindingPair(std::size_t LeftRoot, std::size_t RightRoot) const
         {
             if (RightRoot < LeftRoot)
             {
@@ -614,11 +566,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
             );
         }
 
-        [[nodiscard]] TypeDesc Resolve(
-            const TypeDesc& Type,
-            const GenericOwnerScope& Scope,
-            std::vector<GenericConstraintKey>& Active
-        ) const
+        [[nodiscard]] TypeDesc Resolve(const TypeDesc& Type, const GenericOwnerScope& Scope, std::vector<GenericConstraintKey>& Active) const
         {
             if (!Type.IsValid())
             {
@@ -835,12 +783,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
             }
         }
 
-        void Bind(
-            const GenericConstraintKey& Key,
-            const TypeDesc& Type,
-            const GenericOwnerScope& Scope,
-            const std::optional<GenericConstraintKey>& FallbackKey
-        )
+        void Bind(const GenericConstraintKey& Key, const TypeDesc& Type, const GenericOwnerScope& Scope, const std::optional<GenericConstraintKey>& FallbackKey)
         {
             if (!m_Environment->Contains(Key))
             {
@@ -893,11 +836,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
             m_Unresolved = std::move(Unresolved);
         }
 
-        void AddConflict(
-            const GenericConstraintKey& Key,
-            const TypeDesc& Left,
-            const TypeDesc& Right
-        )
+        void AddConflict(const GenericConstraintKey& Key, const TypeDesc& Left, const TypeDesc& Right)
         {
             if (!m_Environment->Contains(Key))
             {
@@ -978,10 +917,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
 
     /// Derives generic constraints without changing GraphIR or treating execution
     /// regions as owners.
-    [[nodiscard]] inline DiagnosticCollection ValidateGenericTypes(
-        const GraphIR& Graph,
-        const NodeDescriptorRegistry& Descriptors
-    )
+    [[nodiscard]] inline DiagnosticCollection ValidateGenericTypes(const GraphIR& Graph, const NodeDescriptorRegistry& Descriptors)
     {
         return Solver(Graph, Descriptors).Run();
     }

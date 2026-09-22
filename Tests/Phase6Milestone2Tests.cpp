@@ -133,9 +133,7 @@ namespace
         );
     }
 
-    NormalizedNodeDescriptorRecord MakeBooleanInputRecord(
-        std::string Identity = "boolean-input"
-    )
+    NormalizedNodeDescriptorRecord MakeBooleanInputRecord(std::string Identity = "boolean-input")
     {
         return MakeRecord(
             std::move(Identity),
@@ -152,9 +150,7 @@ namespace
         );
     }
 
-    NormalizedNodeDescriptorRecord MakeTwoBooleanInputRecord(
-        std::string Identity = "two-input"
-    )
+    NormalizedNodeDescriptorRecord MakeTwoBooleanInputRecord(std::string Identity = "two-input")
     {
         return MakeRecord(
             std::move(Identity),
@@ -181,9 +177,7 @@ namespace
         );
     }
 
-    NormalizedNodeDescriptorRecord MakeBooleanOutputRecord(
-        std::string Identity = "boolean-output"
-    )
+    NormalizedNodeDescriptorRecord MakeBooleanOutputRecord(std::string Identity = "boolean-output")
     {
         return MakeRecord(
             std::move(Identity),
@@ -198,9 +192,7 @@ namespace
         );
     }
 
-    NormalizedNodeDescriptorRecord MakeBooleanInputOutputRecord(
-        std::string Identity = "boolean-input-output"
-    )
+    NormalizedNodeDescriptorRecord MakeBooleanInputOutputRecord(std::string Identity = "boolean-input-output")
     {
         return MakeRecord(
             std::move(Identity),
@@ -223,9 +215,7 @@ namespace
         );
     }
 
-    NormalizedNodeDescriptorRecord MakeFlowOutputRecord(
-        std::string Identity = "flow-output"
-    )
+    NormalizedNodeDescriptorRecord MakeFlowOutputRecord(std::string Identity = "flow-output")
     {
         return MakeRecord(
             std::move(Identity),
@@ -241,9 +231,7 @@ namespace
         );
     }
 
-    NormalizedNodeDescriptorRecord MakeFlowInputRecord(
-        std::string Identity = "flow-input"
-    )
+    NormalizedNodeDescriptorRecord MakeFlowInputRecord(std::string Identity = "flow-input")
     {
         return MakeRecord(
             std::move(Identity),
@@ -317,10 +305,7 @@ namespace
         );
     }
 
-    GiaBackendPinMapping MakeOutputMapping(
-        std::uint32_t SemanticPin,
-        std::int32_t BackendTypeCode = 5
-    )
+    GiaBackendPinMapping MakeOutputMapping(std::uint32_t SemanticPin, std::int32_t BackendTypeCode = 5)
     {
         return GiaBackendPinMapping(
             PinIndex(SemanticPin),
@@ -336,10 +321,7 @@ namespace
         );
     }
 
-    GiaBackendPinMapping MakeFlowMapping(
-        std::uint32_t SemanticPin,
-        GiaPinKind Kind
-    )
+    GiaBackendPinMapping MakeFlowMapping(std::uint32_t SemanticPin, GiaPinKind Kind)
     {
         return GiaBackendPinMapping(
             PinIndex(SemanticPin),
@@ -486,9 +468,7 @@ namespace
         return MakeContext(std::move(Records), Factory);
     }
 
-    std::vector<GiaBackendNodeMapping> MakeMappingsForSimpleData(
-        const DescriptorCatalogueIdentity&
-    )
+    std::vector<GiaBackendNodeMapping> MakeMappingsForSimpleData(const DescriptorCatalogueIdentity&)
     {
         std::vector<GiaBackendNodeMapping> Result;
         Result.emplace_back(
@@ -537,9 +517,7 @@ namespace
         };
     }
 
-    std::vector<GiaBackendNodeMapping> MakeOrderingMappingsForward(
-        const DescriptorCatalogueIdentity&
-    )
+    std::vector<GiaBackendNodeMapping> MakeOrderingMappingsForward(const DescriptorCatalogueIdentity&)
     {
         return {
             GiaBackendNodeMapping(
@@ -593,18 +571,14 @@ namespace
         };
     }
 
-    std::vector<GiaBackendNodeMapping> MakeOrderingMappingsReverse(
-        const DescriptorCatalogueIdentity& Identity
-    )
+    std::vector<GiaBackendNodeMapping> MakeOrderingMappingsReverse(const DescriptorCatalogueIdentity& Identity)
     {
         auto Result = MakeOrderingMappingsForward(Identity);
         std::reverse(Result.begin(), Result.end());
         return Result;
     }
 
-    std::expected<GiaExportContext, DiagnosticCollection> MakeOrderingContext(
-        bool ReverseMappings
-    )
+    std::expected<GiaExportContext, DiagnosticCollection> MakeOrderingContext(bool ReverseMappings)
     {
         return MakeSimpleContext(
             MakeOrderingRecords(),
@@ -632,10 +606,7 @@ namespace
         );
     }
 
-    NodeDescriptorId GetDescriptorId(
-        const GiaExportContext& Context,
-        std::string_view Identity
-    )
+    NodeDescriptorId GetDescriptorId(const GiaExportContext& Context, std::string_view Identity)
     {
         const auto* Entry = Context.GetRegistryContext().GetCatalogue().
             FindByExternalIdentity(ExternalNodeIdentity(std::string(Identity)));
@@ -643,12 +614,7 @@ namespace
         return Entry->GetDescriptorIdentifier();
     }
 
-    GraphIR MakeOrderingGraph(
-        const GiaExportContext& Context,
-        bool ReverseNodes,
-        bool ReverseBindings,
-        bool ReverseControlEdges
-    )
+    GraphIR MakeOrderingGraph(const GiaExportContext& Context, bool ReverseNodes, bool ReverseBindings, bool ReverseControlEdges)
     {
         const std::vector<NodeInstance> Nodes{
             {NodeInstanceId(1U), GetDescriptorId(Context, "data-output-a"), std::nullopt},
@@ -777,11 +743,7 @@ namespace
         };
     }
 
-    GiaBackendGraph ReplaceModelNode(
-        const GiaBackendGraph& Original,
-        NodeInstanceId Node,
-        GiaBackendNode Replacement
-    )
+    GiaBackendGraph ReplaceModelNode(const GiaBackendGraph& Original, NodeInstanceId Node, GiaBackendNode Replacement)
     {
         std::vector<GiaBackendNode> Nodes = Original.GetNodes();
         for (GiaBackendNode& Candidate : Nodes)
@@ -799,11 +761,7 @@ namespace
         );
     }
 
-    std::pair<NodeDescriptorId, NodeDescriptorId> GetDescriptorPair(
-        const GiaExportContext& Context,
-        std::string_view First,
-        std::string_view Second
-    )
+    std::pair<NodeDescriptorId, NodeDescriptorId> GetDescriptorPair(const GiaExportContext& Context, std::string_view First, std::string_view Second)
     {
         const auto* FirstEntry = Context.GetRegistryContext().GetCatalogue().FindByExternalIdentity(
             ExternalNodeIdentity(std::string(First))
