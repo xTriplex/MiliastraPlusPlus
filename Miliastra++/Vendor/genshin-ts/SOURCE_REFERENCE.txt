@@ -219,3 +219,60 @@ P6.2 lowers the validated one-node first fixture, plus synthetic semantic
 connection cases, into an owned protobuf-independent backend model. Final GIA
 pin coordinates, target remaps, layout, protobuf, and encoded bytes remain
 later milestone responsibilities.
+
+Phase 6 Milestone 3: Resolve GIA Pins, Connections, Target Semantics, and Layout
+--------------------------------------------------------------------------------
+
+Direct source-evidence consumer:
+Tests/Phase6Milestone3Tests.cpp
+
+Transitive backend-neutral semantic support:
+Miliastra++/Source/Public/MiliastraPlusPlusGiaResolvedBackendGraph.h
+Miliastra++/Source/Public/MiliastraPlusPlusGiaGraphResolver.h
+Miliastra++/Source/Public/MiliastraPlusPlusDiagnostics.h
+
+These production files resolve copied P6.2 mapping facts into an owned,
+deterministic target-semantic model. They do not parse or embed upstream source
+records. The test directly exercises the pinned evidence-backed authentic first
+target and clearly labeled synthetic endpoint/layout cases.
+
+Pinned revision:
+26bdf2a9a3fadba934423940489236f0b53eb3ea
+
+Additional P6.3 evidence resources:
+resources/client_node_static_metadata.json
+Pinned Git blob: 17d0290993c1fef2d84d5105b2f23b7429a77ba3
+
+src/thirdparty/Genshin-Impact-Miliastra-Wonderland-Code-Node-Editor-Pack/node_data/client_node_metadata.ts
+Pinned Git blob: 657589f1ebd11078e2c78ad1da5c2726032c36f5
+
+src/thirdparty/Genshin-Impact-Miliastra-Wonderland-Code-Node-Editor-Pack/node_data/node_pin_records.ts
+Pinned Git blob: 4cd90e4b2cb6147da442af2d79ff8abe61b6ee62
+
+src/thirdparty/Genshin-Impact-Miliastra-Wonderland-Code-Node-Editor-Pack/gia_gen/client_basic.ts
+Pinned Git blob: 7fad6e1f4d04d991667840694d598ac590a75dab
+
+src/compiler/ir_to_gia_transform/client_graph.ts
+Pinned Git blob: 5daf0088c7bb8f90e54077cbbb904d293f0a56fa
+
+src/compiler/ir_to_gia_transform/layout.ts
+Pinned Git blob: e5af968fe4cb6d2ea9b0f678f497213245a91e73
+
+src/thirdparty/Genshin-Impact-Miliastra-Wonderland-Code-Node-Editor-Pack/protobuf/gia.proto
+Pinned Git blob: 233bbb264fa89abb1dc708d4d0ad1142dc213b86
+
+scripts/client-nodegraph/smoke-client-exec-bindings.ts
+Pinned Git blob: faa3007db173590052812a3ad05e945ecbf1d607
+
+scripts/client-nodegraph/smoke-send-signal.ts
+Pinned Git blob: e2f2a8e3dbafb7c3c617fbd55ba688b62ef82a9c
+
+scripts/client-nodegraph/smoke-ordered-start-pins.ts
+Pinned Git blob: 6d33fde53db84a6d95a6ae17b742a3439e2b3920
+
+The gia.proto resource is schema evidence only. No protobuf runtime,
+generated code, raw .gia fixture, or encoded GIA bytes are introduced by P6.3.
+The bounded target rejects ClientExecution and ClientSignal while preserving
+their source-evidence attribution for a later separately audited expansion.
+The deterministic SCC/grid layout policy uses the evidence-backed coordinate
+type and spacing while avoiding source insertion-order behavior.

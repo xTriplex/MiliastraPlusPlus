@@ -83,6 +83,7 @@ set(TEST_TARGETS
     Phase6Milestone1Tests
     Phase6FirstFixtureCoverageTests
     Phase6Milestone2Tests
+    Phase6Milestone3Tests
 )
 
 foreach(TEST_NAME ${TEST_TARGETS})

@@ -16,10 +16,8 @@ namespace MiliastraPlusPlus
     public:
         SourceProvenance() = default;
 
-        SourceProvenance(
-            std::string SourceDocumentIdentifier,
-            std::string SourceRecordIdentifier
-        )
+        SourceProvenance(std::string SourceDocumentIdentifier,
+            std::string SourceRecordIdentifier)
             : m_SourceDocumentIdentifier(std::move(SourceDocumentIdentifier))
             , m_SourceRecordIdentifier(std::move(SourceRecordIdentifier))
         {
@@ -159,7 +157,15 @@ namespace MiliastraPlusPlus
         UnsupportedGiaBackendValue,
         InvalidGiaBackendInputResolution,
         InvalidGiaBackendConnection,
-        InvalidGiaBackendModel
+        InvalidGiaBackendModel,
+        InvalidGiaResolutionInput,
+        InvalidGiaResolvedNodeIdentity,
+        UnsupportedGiaResolvedPinKind,
+        InvalidGiaResolvedPinEndpoint,
+        InvalidGiaResolvedPinEmission,
+        InvalidGiaResolvedConnection,
+        InvalidGiaResolvedLayout,
+        InvalidGiaResolvedBackendModel
     };
 
     /// Callers can branch on Code; Message carries human-readable context.

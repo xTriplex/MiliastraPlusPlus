@@ -10,10 +10,8 @@ namespace MiliastraPlusPlus
 {
     namespace GiaExportContextDetail
     {
-        [[nodiscard]] inline Diagnostic MakeDiagnostic(
-            DiagnosticCode Code,
-            std::string Message
-        )
+        [[nodiscard]] inline Diagnostic MakeDiagnostic(DiagnosticCode Code,
+            std::string Message)
         {
             return Diagnostic{
                 .Severity = DiagnosticSeverity::Error,
@@ -31,15 +29,11 @@ namespace MiliastraPlusPlus
         GiaExportContext& operator=(const GiaExportContext&) = default;
         GiaExportContext& operator=(GiaExportContext&&) = default;
 
-        [[nodiscard]] static std::expected<
-            GiaExportContext,
-            DiagnosticCollection
-        > Create(
+        [[nodiscard]] static std::expected<GiaExportContext, DiagnosticCollection> Create(
             DescriptorCatalogueBinding Binding,
             DescriptorCatalogueRegistryContext RegistryContext,
             GiaExportConfiguration Configuration,
-            GiaBackendMappingPackage MappingPackage
-        )
+            GiaBackendMappingPackage MappingPackage)
         {
             if (!RegistryContext.IsValid())
             {
@@ -114,26 +108,22 @@ namespace MiliastraPlusPlus
             );
         }
 
-        [[nodiscard]] const DescriptorCatalogueBinding&
-            GetCatalogueBinding() const noexcept
+        [[nodiscard]] const DescriptorCatalogueBinding& GetCatalogueBinding() const noexcept
         {
             return m_Binding;
         }
 
-        [[nodiscard]] const DescriptorCatalogueRegistryContext&
-            GetRegistryContext() const noexcept
+        [[nodiscard]] const DescriptorCatalogueRegistryContext& GetRegistryContext() const noexcept
         {
             return m_RegistryContext;
         }
 
-        [[nodiscard]] const GiaExportConfiguration&
-            GetConfiguration() const noexcept
+        [[nodiscard]] const GiaExportConfiguration& GetConfiguration() const noexcept
         {
             return m_Configuration;
         }
 
-        [[nodiscard]] const GiaBackendMappingPackage&
-            GetMappingPackage() const noexcept
+        [[nodiscard]] const GiaBackendMappingPackage& GetMappingPackage() const noexcept
         {
             return m_MappingPackage;
         }
@@ -155,12 +145,10 @@ namespace MiliastraPlusPlus
         }
 
     private:
-        GiaExportContext(
-            DescriptorCatalogueBinding Binding,
+        GiaExportContext(DescriptorCatalogueBinding Binding,
             DescriptorCatalogueRegistryContext RegistryContext,
             GiaExportConfiguration Configuration,
-            GiaBackendMappingPackage MappingPackage
-        )
+            GiaBackendMappingPackage MappingPackage)
             : m_Binding(std::move(Binding))
             , m_RegistryContext(std::move(RegistryContext))
             , m_Configuration(std::move(Configuration))

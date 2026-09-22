@@ -24,10 +24,8 @@ namespace MiliastraPlusPlus
 
     namespace GiaExportConfigurationDetail
     {
-        [[nodiscard]] inline Diagnostic MakeDiagnostic(
-            DiagnosticCode Code,
-            std::string Message
-        )
+        [[nodiscard]] inline Diagnostic MakeDiagnostic(DiagnosticCode Code,
+            std::string Message)
         {
             return Diagnostic{
                 .Severity = DiagnosticSeverity::Error,
@@ -36,9 +34,7 @@ namespace MiliastraPlusPlus
             };
         }
 
-        [[nodiscard]] constexpr bool IsSupportedTargetProfile(
-            GiaExportTargetProfile Profile
-        )
+        [[nodiscard]] constexpr bool IsSupportedTargetProfile(GiaExportTargetProfile Profile)
         {
             switch (Profile)
             {
@@ -119,17 +115,13 @@ namespace MiliastraPlusPlus
         GiaExportConfiguration& operator=(const GiaExportConfiguration&) = default;
         GiaExportConfiguration& operator=(GiaExportConfiguration&&) = default;
 
-        [[nodiscard]] static std::expected<
-            GiaExportConfiguration,
-            DiagnosticCollection
-        > Create(
+        [[nodiscard]] static std::expected<GiaExportConfiguration, DiagnosticCollection> Create(
             GiaExportTargetProfile TargetProfile,
             GiaExportMode Mode,
             GiaGraphIdentifier GraphIdentifier,
             std::string GraphName,
             GiaUniqueIdentifier UniqueIdentifier,
-            std::optional<double> EvaluationInterval = std::nullopt
-        )
+            std::optional<double> EvaluationInterval = std::nullopt)
         {
             DiagnosticCollection Diagnostics;
 
@@ -238,14 +230,12 @@ namespace MiliastraPlusPlus
         bool operator==(const GiaExportConfiguration&) const = default;
 
     private:
-        GiaExportConfiguration(
-            GiaExportTargetProfile TargetProfile,
+        GiaExportConfiguration(GiaExportTargetProfile TargetProfile,
             GiaExportMode Mode,
             GiaGraphIdentifier GraphIdentifier,
             std::string GraphName,
             GiaUniqueIdentifier UniqueIdentifier,
-            double EvaluationInterval
-        )
+            double EvaluationInterval)
             : m_TargetProfile(TargetProfile)
             , m_Mode(Mode)
             , m_GraphIdentifier(GraphIdentifier)
