@@ -85,8 +85,7 @@ namespace MiliastraPlusPlus
             std::string SourceNamespace,
             std::string SourceRevision,
             DescriptorCatalogueSemanticSchemaVersion SemanticSchemaVersion,
-            DescriptorCatalogueContentIdentifier CatalogueContentIdentifier
-        )
+            DescriptorCatalogueContentIdentifier CatalogueContentIdentifier)
             : m_SourceNamespace(std::move(SourceNamespace))
             , m_SourceRevision(std::move(SourceRevision))
             , m_SemanticSchemaVersion(SemanticSchemaVersion)
@@ -201,8 +200,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] bool IsValid() const
         {
-            return m_ExternalIdentity.IsValid() &&
-                (!m_SourceProvenance.has_value() || m_SourceProvenance->IsValid());
+            return m_ExternalIdentity.IsValid() && (!m_SourceProvenance.has_value() || m_SourceProvenance->IsValid());
         }
 
         [[nodiscard]] const ExternalNodeIdentity& GetExternalIdentity() const
@@ -285,18 +283,12 @@ namespace MiliastraPlusPlus
 
             if (Left.PrimarySourceProvenance != Right.PrimarySourceProvenance)
             {
-                return IsSourceProvenanceLess(
-                    Left.PrimarySourceProvenance,
-                    Right.PrimarySourceProvenance
-                );
+                return IsSourceProvenanceLess(Left.PrimarySourceProvenance, Right.PrimarySourceProvenance);
             }
 
             if (Left.RelatedSourceProvenance != Right.RelatedSourceProvenance)
             {
-                return IsSourceProvenanceLess(
-                    Left.RelatedSourceProvenance,
-                    Right.RelatedSourceProvenance
-                );
+                return IsSourceProvenanceLess(Left.RelatedSourceProvenance, Right.RelatedSourceProvenance);
             }
 
             if (Left.Code != Right.Code)
@@ -309,8 +301,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] inline std::optional<SourceProvenance> GetValidSourceProvenance(const DescriptorIdentifierAllocationCandidate& Candidate)
         {
-            if (Candidate.GetSourceProvenance().has_value() &&
-                Candidate.GetSourceProvenance()->IsValid())
+            if (Candidate.GetSourceProvenance().has_value() && Candidate.GetSourceProvenance()->IsValid())
             {
                 return Candidate.GetSourceProvenance();
             }
@@ -322,8 +313,7 @@ namespace MiliastraPlusPlus
             DiagnosticCode Code,
             std::string Message,
             std::optional<SourceProvenance> PrimarySourceProvenance = std::nullopt,
-            std::optional<SourceProvenance> RelatedSourceProvenance = std::nullopt
-        )
+            std::optional<SourceProvenance> RelatedSourceProvenance = std::nullopt)
         {
             return Diagnostic{
                 .Severity = DiagnosticSeverity::Error,
@@ -340,11 +330,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] inline DiagnosticCollection MaterializePendingDiagnostics(std::vector<PendingDiagnostic> PendingDiagnostics)
         {
-            std::sort(
-                PendingDiagnostics.begin(),
-                PendingDiagnostics.end(),
-                IsPendingDiagnosticLess
-            );
+            std::sort(PendingDiagnostics.begin(), PendingDiagnostics.end(), IsPendingDiagnosticLess);
 
             DiagnosticCollection Diagnostics;
             Diagnostics.reserve(PendingDiagnostics.size());
@@ -363,8 +349,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] constexpr bool IsDescriptorIdentifierCountWithinDomain(std::size_t CandidateCount) noexcept
         {
-            return CandidateCount <= static_cast<std::size_t>(
-                std::numeric_limits<std::uint32_t>::max());
+            return CandidateCount <= static_cast<std::size_t>(std::numeric_limits<std::uint32_t>::max());
         }
     }
 
@@ -375,21 +360,12 @@ namespace MiliastraPlusPlus
     class DescriptorIdentifierAllocator final
     {
     public:
-        [[nodiscard]] static std::expected<
-            std::vector<DescriptorIdentifierAssignment>,
-            DiagnosticCollection
-        > Allocate(
-            const std::vector<DescriptorIdentifierAllocationCandidate>& AllocationCandidates
-        )
+        [[nodiscard]] static std::expected<std::vector<DescriptorIdentifierAssignment>, DiagnosticCollection> Allocate(
+            const std::vector<DescriptorIdentifierAllocationCandidate>& AllocationCandidates)
         {
-            std::vector<DescriptorIdentifierAllocationCandidate> SortedCandidates(
-                AllocationCandidates.begin(),
-                AllocationCandidates.end()
-            );
+            std::vector<DescriptorIdentifierAllocationCandidate> SortedCandidates(AllocationCandidates.begin(), AllocationCandidates.end());
 
-            std::sort(
-                SortedCandidates.begin(),
-                SortedCandidates.end(),
+            std::sort(SortedCandidates.begin(), SortedCandidates.end(),
                 [](const DescriptorIdentifierAllocationCandidate& Left, const DescriptorIdentifierAllocationCandidate& Right)
                 {
                     if (Left.GetExternalIdentity() != Right.GetExternalIdentity())
@@ -397,10 +373,7 @@ namespace MiliastraPlusPlus
                         return Left.GetExternalIdentity() < Right.GetExternalIdentity();
                     }
 
-                    return DescriptorCatalogueDetail::IsSourceProvenanceLess(
-                        Left.GetSourceProvenance(),
-                        Right.GetSourceProvenance()
-                    );
+                    return DescriptorCatalogueDetail::IsSourceProvenanceLess(Left.GetSourceProvenance(), Right.GetSourceProvenance());
                 }
             );
 
@@ -412,24 +385,21 @@ namespace MiliastraPlusPlus
                 {
                     PendingDiagnostics.push_back({
                         .ExternalKey = Candidate.GetExternalIdentity().GetKey(),
-                        .PrimarySourceProvenance =
-                            DescriptorCatalogueDetail::GetValidSourceProvenance(Candidate),
+                        .PrimarySourceProvenance = DescriptorCatalogueDetail::GetValidSourceProvenance(Candidate),
                         .RelatedSourceProvenance = std::nullopt,
                         .Code = DiagnosticCode::InvalidExternalNodeIdentity,
                         .Message = "External node identity key must not be empty."
                     });
                 }
 
-                if (Candidate.GetSourceProvenance().has_value() &&
-                    !Candidate.GetSourceProvenance()->IsValid())
+                if (Candidate.GetSourceProvenance().has_value() && !Candidate.GetSourceProvenance()->IsValid())
                 {
                     PendingDiagnostics.push_back({
                         .ExternalKey = Candidate.GetExternalIdentity().GetKey(),
                         .PrimarySourceProvenance = std::nullopt,
                         .RelatedSourceProvenance = std::nullopt,
                         .Code = DiagnosticCode::InvalidSourceProvenance,
-                        .Message =
-                            "Source provenance requires non-empty document and record identifiers."
+                        .Message = "Source provenance requires non-empty document and record identifiers."
                     });
                 }
             }
@@ -438,26 +408,19 @@ namespace MiliastraPlusPlus
             {
                 std::size_t GroupEnd = GroupStart + 1U;
                 while (GroupEnd < SortedCandidates.size() &&
-                    SortedCandidates[GroupStart].GetExternalIdentity() ==
-                    SortedCandidates[GroupEnd].GetExternalIdentity())
+                    SortedCandidates[GroupStart].GetExternalIdentity() == SortedCandidates[GroupEnd].GetExternalIdentity())
                 {
                     ++GroupEnd;
                 }
 
-                for (std::size_t DuplicateIndex = GroupStart + 1U;
-                    DuplicateIndex < GroupEnd;
-                    ++DuplicateIndex)
+                for (std::size_t DuplicateIndex = GroupStart + 1U; DuplicateIndex < GroupEnd; ++DuplicateIndex)
                 {
-                    const DescriptorIdentifierAllocationCandidate& PrimaryCandidate =
-                        SortedCandidates[GroupStart];
-                    const DescriptorIdentifierAllocationCandidate& DuplicateCandidate =
-                        SortedCandidates[DuplicateIndex];
+                    const DescriptorIdentifierAllocationCandidate& PrimaryCandidate = SortedCandidates[GroupStart];
+                    const DescriptorIdentifierAllocationCandidate& DuplicateCandidate = SortedCandidates[DuplicateIndex];
                     PendingDiagnostics.push_back({
                         .ExternalKey = DuplicateCandidate.GetExternalIdentity().GetKey(),
-                        .PrimarySourceProvenance =
-                            DescriptorCatalogueDetail::GetValidSourceProvenance(PrimaryCandidate),
-                        .RelatedSourceProvenance =
-                            DescriptorCatalogueDetail::GetValidSourceProvenance(DuplicateCandidate),
+                        .PrimarySourceProvenance = DescriptorCatalogueDetail::GetValidSourceProvenance(PrimaryCandidate),
+                        .RelatedSourceProvenance = DescriptorCatalogueDetail::GetValidSourceProvenance(DuplicateCandidate),
                         .Code = DiagnosticCode::DuplicateExternalNodeIdentity,
                         .Message = "External node identity key is duplicated: " +
                             DuplicateCandidate.GetExternalIdentity().GetKey()
@@ -467,9 +430,7 @@ namespace MiliastraPlusPlus
                 GroupStart = GroupEnd;
             }
 
-            if (PendingDiagnostics.empty() &&
-                !DescriptorCatalogueDetail::IsDescriptorIdentifierCountWithinDomain(
-                    SortedCandidates.size()))
+            if (PendingDiagnostics.empty() && !DescriptorCatalogueDetail::IsDescriptorIdentifierCountWithinDomain(SortedCandidates.size()))
             {
                 PendingDiagnostics.push_back({
                     .ExternalKey = std::string(),
@@ -482,11 +443,7 @@ namespace MiliastraPlusPlus
 
             if (!PendingDiagnostics.empty())
             {
-                return std::unexpected(
-                    DescriptorCatalogueDetail::MaterializePendingDiagnostics(
-                        std::move(PendingDiagnostics)
-                    )
-                );
+                return std::unexpected(DescriptorCatalogueDetail::MaterializePendingDiagnostics(std::move(PendingDiagnostics)));
             }
 
             std::vector<DescriptorIdentifierAssignment> Assignments;
@@ -495,10 +452,7 @@ namespace MiliastraPlusPlus
             std::uint32_t NextDescriptorIdentifier = 1U;
             for (std::size_t Index = 0U; Index < SortedCandidates.size(); ++Index)
             {
-                Assignments.emplace_back(
-                    SortedCandidates[Index].GetExternalIdentity(),
-                    NodeDescriptorId(NextDescriptorIdentifier)
-                );
+                Assignments.emplace_back(SortedCandidates[Index].GetExternalIdentity(), NodeDescriptorId(NextDescriptorIdentifier));
 
                 if (Index + 1U < SortedCandidates.size())
                 {
@@ -524,8 +478,7 @@ namespace MiliastraPlusPlus
             PinCategory Category,
             PinCardinality Cardinality = PinCardinality::Single,
             bool AllowsLiteral = false,
-            std::optional<LiteralValue> DefaultValue = std::nullopt
-        );
+            std::optional<LiteralValue> DefaultValue = std::nullopt);
 
         [[nodiscard]] bool IsValid() const;
 
@@ -562,8 +515,7 @@ namespace MiliastraPlusPlus
             std::vector<NodeAvailability> Availability,
             std::vector<NormalizedPinRecord> Pins,
             std::optional<ExecutionControlSchema> ControlSchema = std::nullopt,
-            std::optional<SourceProvenance> Provenance = std::nullopt
-        );
+            std::optional<SourceProvenance> Provenance = std::nullopt);
 
         [[nodiscard]] bool IsValid() const;
 
@@ -640,15 +592,11 @@ namespace MiliastraPlusPlus
     public:
         DescriptorCatalogueBuilder() = delete;
 
-        [[nodiscard]] static std::expected<
-            DescriptorCatalogue,
-            DiagnosticCollection
-        > Build(
+        [[nodiscard]] static std::expected<DescriptorCatalogue, DiagnosticCollection> Build(
             std::string SourceNamespace,
             std::string SourceRevision,
             DescriptorCatalogueSemanticSchemaVersion SemanticSchemaVersion,
-            std::vector<NormalizedNodeDescriptorRecord> Records
-        );
+            std::vector<NormalizedNodeDescriptorRecord> Records);
     };
 
     inline constexpr DescriptorCatalogueSemanticSchemaVersion
@@ -677,8 +625,7 @@ namespace MiliastraPlusPlus
             }
             for (const NodeAvailability Value : Availability)
             {
-                if (Value != NodeAvailability::Server &&
-                    Value != NodeAvailability::Client)
+                if (Value != NodeAvailability::Server && Value != NodeAvailability::Client)
                 {
                     CanonicalAvailability.push_back(Value);
                 }
@@ -708,8 +655,7 @@ namespace MiliastraPlusPlus
             }
             if (Left.Is<double>())
             {
-                return std::bit_cast<std::uint64_t>(*Left.TryGet<double>()) ==
-                    std::bit_cast<std::uint64_t>(*Right.TryGet<double>());
+                return std::bit_cast<std::uint64_t>(*Left.TryGet<double>()) == std::bit_cast<std::uint64_t>(*Right.TryGet<double>());
             }
             if (Left.Is<std::string>())
             {
@@ -744,8 +690,7 @@ namespace MiliastraPlusPlus
             }
             if (Left.Is<EnumLiteralValue>())
             {
-                return *Left.TryGet<EnumLiteralValue>() ==
-                    *Right.TryGet<EnumLiteralValue>();
+                return *Left.TryGet<EnumLiteralValue>() == *Right.TryGet<EnumLiteralValue>();
             }
 
             return false;
@@ -768,8 +713,7 @@ namespace MiliastraPlusPlus
                     }
                     else if constexpr (std::is_same_v<LeftType, SequenceControlSchema>)
                     {
-                        return LeftControl.ExecutionInput == RightControl.ExecutionInput &&
-                            LeftControl.ExecutionOutput == RightControl.ExecutionOutput;
+                        return LeftControl.ExecutionInput == RightControl.ExecutionInput && LeftControl.ExecutionOutput == RightControl.ExecutionOutput;
                     }
                     else if constexpr (std::is_same_v<LeftType, BranchControlSchema>)
                     {
@@ -780,8 +724,7 @@ namespace MiliastraPlusPlus
                     }
                     else if constexpr (std::is_same_v<LeftType, JoinControlSchema>)
                     {
-                        return LeftControl.ExecutionInput == RightControl.ExecutionInput &&
-                            LeftControl.ExecutionOutput == RightControl.ExecutionOutput;
+                        return LeftControl.ExecutionInput == RightControl.ExecutionInput && LeftControl.ExecutionOutput == RightControl.ExecutionOutput;
                     }
                     else if constexpr (std::is_same_v<LeftType, LoopControlSchema>)
                     {
@@ -859,13 +802,10 @@ namespace MiliastraPlusPlus
             case TypeDesc::Kind::Enum:
                 return true;
             case TypeDesc::Kind::List:
-                return Type.GetElementType() != nullptr &&
-                    ContainsEnumType(*Type.GetElementType());
+                return Type.GetElementType() != nullptr && ContainsEnumType(*Type.GetElementType());
             case TypeDesc::Kind::Dictionary:
-                return Type.GetKeyType() != nullptr &&
-                    ContainsEnumType(*Type.GetKeyType()) ||
-                    Type.GetValueType() != nullptr &&
-                    ContainsEnumType(*Type.GetValueType());
+                return Type.GetKeyType() != nullptr && ContainsEnumType(*Type.GetKeyType()) ||
+                    Type.GetValueType() != nullptr && ContainsEnumType(*Type.GetValueType());
             default:
                 return false;
             }
@@ -875,9 +815,7 @@ namespace MiliastraPlusPlus
         {
             for (const NormalizedPinRecord& Pin : Record.GetPins())
             {
-                if (ContainsEnumType(Pin.GetType()) ||
-                    (Pin.GetDefaultValue().has_value() &&
-                        Pin.GetDefaultValue()->Is<EnumLiteralValue>()))
+                if (ContainsEnumType(Pin.GetType()) || (Pin.GetDefaultValue().has_value() && Pin.GetDefaultValue()->Is<EnumLiteralValue>()))
                 {
                     return true;
                 }
@@ -888,8 +826,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] inline std::optional<SourceProvenance> GetValidSourceProvenance(const NormalizedNodeDescriptorRecord& Record)
         {
-            if (Record.GetSourceProvenance().has_value() &&
-                Record.GetSourceProvenance()->IsValid())
+            if (Record.GetSourceProvenance().has_value() && Record.GetSourceProvenance()->IsValid())
             {
                 return Record.GetSourceProvenance();
             }
@@ -903,8 +840,7 @@ namespace MiliastraPlusPlus
 
             for (const NormalizedNodeDescriptorRecord& Record : Records)
             {
-                const std::optional<SourceProvenance> ValidProvenance =
-                    GetValidSourceProvenance(Record);
+                const std::optional<SourceProvenance> ValidProvenance = GetValidSourceProvenance(Record);
 
                 if (!Record.GetExternalIdentity().IsValid())
                 {
@@ -917,16 +853,14 @@ namespace MiliastraPlusPlus
                     });
                 }
 
-                if (Record.GetSourceProvenance().has_value() &&
-                    !Record.GetSourceProvenance()->IsValid())
+                if (Record.GetSourceProvenance().has_value() && !Record.GetSourceProvenance()->IsValid())
                 {
                     PendingDiagnostics.push_back({
                         .ExternalKey = Record.GetExternalIdentity().GetKey(),
                         .PrimarySourceProvenance = std::nullopt,
                         .RelatedSourceProvenance = std::nullopt,
                         .Code = DiagnosticCode::InvalidSourceProvenance,
-                        .Message =
-                            "Source provenance requires non-empty document and record identifiers."
+                        .Message = "Source provenance requires non-empty document and record identifiers."
                     });
                 }
 
@@ -949,9 +883,7 @@ namespace MiliastraPlusPlus
                 SortedRecordIndexes.push_back(Index);
             }
 
-            std::sort(
-                SortedRecordIndexes.begin(),
-                SortedRecordIndexes.end(),
+            std::sort(SortedRecordIndexes.begin(), SortedRecordIndexes.end(),
                 [&Records](std::size_t LeftIndex, std::size_t RightIndex)
                 {
                     const NormalizedNodeDescriptorRecord& Left = Records[LeftIndex];
@@ -961,10 +893,7 @@ namespace MiliastraPlusPlus
                         return Left.GetExternalIdentity() < Right.GetExternalIdentity();
                     }
 
-                    return IsSourceProvenanceLess(
-                        Left.GetSourceProvenance(),
-                        Right.GetSourceProvenance()
-                    );
+                    return IsSourceProvenanceLess(Left.GetSourceProvenance(), Right.GetSourceProvenance());
                 }
             );
 
@@ -972,20 +901,15 @@ namespace MiliastraPlusPlus
             {
                 std::size_t GroupEnd = GroupStart + 1U;
                 while (GroupEnd < SortedRecordIndexes.size() &&
-                    Records[SortedRecordIndexes[GroupStart]].GetExternalIdentity() ==
-                    Records[SortedRecordIndexes[GroupEnd]].GetExternalIdentity())
+                    Records[SortedRecordIndexes[GroupStart]].GetExternalIdentity() == Records[SortedRecordIndexes[GroupEnd]].GetExternalIdentity())
                 {
                     ++GroupEnd;
                 }
 
-                for (std::size_t DuplicateIndex = GroupStart + 1U;
-                    DuplicateIndex < GroupEnd;
-                    ++DuplicateIndex)
+                for (std::size_t DuplicateIndex = GroupStart + 1U; DuplicateIndex < GroupEnd; ++DuplicateIndex)
                 {
-                    const NormalizedNodeDescriptorRecord& PrimaryRecord =
-                        Records[SortedRecordIndexes[GroupStart]];
-                    const NormalizedNodeDescriptorRecord& DuplicateRecord =
-                        Records[SortedRecordIndexes[DuplicateIndex]];
+                    const NormalizedNodeDescriptorRecord& PrimaryRecord = Records[SortedRecordIndexes[GroupStart]];
+                    const NormalizedNodeDescriptorRecord& DuplicateRecord = Records[SortedRecordIndexes[DuplicateIndex]];
                     PendingDiagnostics.push_back({
                         .ExternalKey = DuplicateRecord.GetExternalIdentity().GetKey(),
                         .PrimarySourceProvenance = GetValidSourceProvenance(PrimaryRecord),
@@ -1004,13 +928,8 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] inline std::vector<NormalizedNodeDescriptorRecord> GetCanonicalRecords(const std::vector<NormalizedNodeDescriptorRecord>& Records)
         {
-            std::vector<NormalizedNodeDescriptorRecord> CanonicalRecords(
-                Records.begin(),
-                Records.end()
-            );
-            std::sort(
-                CanonicalRecords.begin(),
-                CanonicalRecords.end(),
+            std::vector<NormalizedNodeDescriptorRecord> CanonicalRecords(Records.begin(), Records.end());
+            std::sort(CanonicalRecords.begin(), CanonicalRecords.end(),
                 [](const NormalizedNodeDescriptorRecord& Left, const NormalizedNodeDescriptorRecord& Right)
                 {
                     return Left.GetExternalIdentity() < Right.GetExternalIdentity();
@@ -1052,8 +971,7 @@ namespace MiliastraPlusPlus
                 AppendUnsigned64(static_cast<std::uint64_t>(Value.size()));
                 for (const char Character : Value)
                 {
-                    m_Bytes.push_back(static_cast<std::uint8_t>(
-                        static_cast<unsigned char>(Character)));
+                    m_Bytes.push_back(static_cast<std::uint8_t>(static_cast<unsigned char>(Character)));
                 }
             }
 
@@ -1139,8 +1057,7 @@ namespace MiliastraPlusPlus
                     if (Value < 0)
                     {
                         AppendByte(0x01U);
-                        const std::uint64_t Magnitude =
-                            static_cast<std::uint64_t>(-(Value + 1)) + 1U;
+                        const std::uint64_t Magnitude = static_cast<std::uint64_t>(-(Value + 1)) + 1U;
                         AppendUnsigned64(Magnitude);
                     }
                     else
@@ -1152,8 +1069,7 @@ namespace MiliastraPlusPlus
                 else if (Literal.Is<double>())
                 {
                     AppendByte(0x03U);
-                    AppendUnsigned64(std::bit_cast<std::uint64_t>(
-                        *Literal.TryGet<double>()));
+                    AppendUnsigned64(std::bit_cast<std::uint64_t>(*Literal.TryGet<double>()));
                 }
                 else if (Literal.Is<std::string>())
                 {
@@ -1191,15 +1107,13 @@ namespace MiliastraPlusPlus
                 else if (Literal.Is<EnumLiteralValue>())
                 {
                     AppendByte(0x0AU);
-                    const EnumLiteralValue& Value =
-                        *Literal.TryGet<EnumLiteralValue>();
+                    const EnumLiteralValue& Value = *Literal.TryGet<EnumLiteralValue>();
                     AppendString(Value.GetEnumTypeIdentity().GetValue());
                     const std::int64_t Number = Value.GetValue();
                     if (Number < 0)
                     {
                         AppendByte(0x01U);
-                        const std::uint64_t Magnitude =
-                            static_cast<std::uint64_t>(-(Number + 1)) + 1U;
+                        const std::uint64_t Magnitude = static_cast<std::uint64_t>(-(Number + 1)) + 1U;
                         AppendUnsigned64(Magnitude);
                     }
                     else
@@ -1299,22 +1213,18 @@ namespace MiliastraPlusPlus
             CanonicalContentEncoder Encoder;
             for (const char Character : Domain)
             {
-                Encoder.AppendByte(static_cast<std::uint8_t>(
-                    static_cast<unsigned char>(Character)));
+                Encoder.AppendByte(static_cast<std::uint8_t>(static_cast<unsigned char>(Character)));
             }
 
-            const std::vector<NormalizedNodeDescriptorRecord> CanonicalRecords =
-                GetCanonicalRecords(Records);
+            const std::vector<NormalizedNodeDescriptorRecord> CanonicalRecords = GetCanonicalRecords(Records);
             Encoder.AppendUnsigned64(static_cast<std::uint64_t>(CanonicalRecords.size()));
             for (const NormalizedNodeDescriptorRecord& Record : CanonicalRecords)
             {
                 Encoder.AppendString(Record.GetExternalIdentity().GetKey());
-                Encoder.AppendUnsigned64(static_cast<std::uint64_t>(
-                    Record.GetAvailability().size()));
+                Encoder.AppendUnsigned64(static_cast<std::uint64_t>(Record.GetAvailability().size()));
                 for (const NodeAvailability Availability : Record.GetAvailability())
                 {
-                    Encoder.AppendByte(
-                        Availability == NodeAvailability::Server ? 0x01U : 0x02U);
+                    Encoder.AppendByte(Availability == NodeAvailability::Server ? 0x01U : 0x02U);
                 }
 
                 Encoder.AppendUnsigned64(static_cast<std::uint64_t>(Record.GetPins().size()));
@@ -1322,10 +1232,8 @@ namespace MiliastraPlusPlus
                 {
                     Encoder.AppendString(Pin.GetName());
                     Encoder.AppendTypeDescription(Pin.GetType());
-                    Encoder.AppendByte(
-                        Pin.GetDirection() == PinDirection::Input ? 0x01U : 0x02U);
-                    Encoder.AppendByte(
-                        Pin.GetCategory() == PinCategory::Data ? 0x01U : 0x02U);
+                    Encoder.AppendByte(Pin.GetDirection() == PinDirection::Input ? 0x01U : 0x02U);
+                    Encoder.AppendByte(Pin.GetCategory() == PinCategory::Data ? 0x01U : 0x02U);
                     switch (Pin.GetCardinality())
                     {
                     case PinCardinality::Single:
@@ -1405,9 +1313,7 @@ namespace MiliastraPlusPlus
                 0x510E527FU, 0x9B05688CU, 0x1F83D9ABU, 0x5BE0CD19U
             };
 
-            for (std::size_t BlockOffset = 0U;
-                BlockOffset < PaddedBytes.size();
-                BlockOffset += 64U)
+            for (std::size_t BlockOffset = 0U; BlockOffset < PaddedBytes.size(); BlockOffset += 64U)
             {
                 std::array<std::uint32_t, 64U> Schedule{};
                 for (std::size_t Word = 0U; Word < 16U; ++Word)
@@ -1423,12 +1329,8 @@ namespace MiliastraPlusPlus
                 {
                     const std::uint32_t First = Schedule[Word - 15U];
                     const std::uint32_t Second = Schedule[Word - 2U];
-                    const std::uint32_t SmallSigmaZero =
-                        RotateRight(First, 7U) ^ RotateRight(First, 18U) ^
-                        (First >> 3U);
-                    const std::uint32_t SmallSigmaOne =
-                        RotateRight(Second, 17U) ^ RotateRight(Second, 19U) ^
-                        (Second >> 10U);
+                    const std::uint32_t SmallSigmaZero = RotateRight(First, 7U) ^ RotateRight(First, 18U) ^ (First >> 3U);
+                    const std::uint32_t SmallSigmaOne = RotateRight(Second, 17U) ^ RotateRight(Second, 19U) ^ (Second >> 10U);
                     Schedule[Word] = Schedule[Word - 16U] + SmallSigmaZero +
                         Schedule[Word - 7U] + SmallSigmaOne;
                 }
@@ -1444,13 +1346,10 @@ namespace MiliastraPlusPlus
 
                 for (std::size_t Word = 0U; Word < 64U; ++Word)
                 {
-                    const std::uint32_t BigSigmaOne =
-                        RotateRight(E, 6U) ^ RotateRight(E, 11U) ^ RotateRight(E, 25U);
+                    const std::uint32_t BigSigmaOne = RotateRight(E, 6U) ^ RotateRight(E, 11U) ^ RotateRight(E, 25U);
                     const std::uint32_t Choose = (E & F) ^ ((~E) & G);
-                    const std::uint32_t First = H + BigSigmaOne + Choose +
-                        RoundConstants[Word] + Schedule[Word];
-                    const std::uint32_t BigSigmaZero =
-                        RotateRight(A, 2U) ^ RotateRight(A, 13U) ^ RotateRight(A, 22U);
+                    const std::uint32_t First = H + BigSigmaOne + Choose + RoundConstants[Word] + Schedule[Word];
+                    const std::uint32_t BigSigmaZero = RotateRight(A, 2U) ^ RotateRight(A, 13U) ^ RotateRight(A, 22U);
                     const std::uint32_t Majority = (A & B) ^ (A & C) ^ (B & C);
                     const std::uint32_t Second = BigSigmaZero + Majority;
 
@@ -1506,8 +1405,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] inline bool IsCatalogueContentIdentifierConsistent(
             const std::vector<DescriptorCatalogueEntry>& Entries,
-            const DescriptorCatalogueContentIdentifier& ContentIdentifier
-        )
+            const DescriptorCatalogueContentIdentifier& ContentIdentifier)
         {
             std::vector<NormalizedNodeDescriptorRecord> Records;
             Records.reserve(Entries.size());
@@ -1534,8 +1432,7 @@ namespace MiliastraPlusPlus
         PinCategory Category,
         PinCardinality Cardinality,
         bool AllowsLiteral,
-        std::optional<LiteralValue> DefaultValue
-    )
+        std::optional<LiteralValue> DefaultValue)
         : m_Name(std::move(Name))
         , m_Type(std::move(Type))
         , m_Direction(Direction)
@@ -1597,11 +1494,7 @@ namespace MiliastraPlusPlus
             return false;
         }
 
-        return !m_DefaultValue.has_value() ||
-            DescriptorCatalogueDetail::AreNormalizedLiteralValuesEqual(
-                *m_DefaultValue,
-                *Other.m_DefaultValue
-            );
+        return !m_DefaultValue.has_value() || DescriptorCatalogueDetail::AreNormalizedLiteralValuesEqual(*m_DefaultValue, *Other.m_DefaultValue);
     }
 
     inline NormalizedNodeDescriptorRecord::NormalizedNodeDescriptorRecord() = default;
@@ -1612,12 +1505,10 @@ namespace MiliastraPlusPlus
         std::vector<NodeAvailability> Availability,
         std::vector<NormalizedPinRecord> Pins,
         std::optional<ExecutionControlSchema> ControlSchema,
-        std::optional<SourceProvenance> Provenance
-    )
+        std::optional<SourceProvenance> Provenance)
         : m_ExternalIdentity(std::move(ExternalIdentity))
         , m_DisplayName(std::move(DisplayName))
-        , m_Availability(
-            DescriptorCatalogueDetail::CanonicalizeAvailability(Availability))
+        , m_Availability(DescriptorCatalogueDetail::CanonicalizeAvailability(Availability))
         , m_Pins(std::move(Pins))
         , m_ControlSchema(std::move(ControlSchema))
         , m_SourceProvenance(std::move(Provenance))
@@ -1681,11 +1572,7 @@ namespace MiliastraPlusPlus
             }
         }
 
-        return !m_ControlSchema.has_value() ||
-            DescriptorCatalogueDetail::AreExecutionControlSchemasEqual(
-                *m_ControlSchema,
-                *Other.m_ControlSchema
-            );
+        return !m_ControlSchema.has_value() || DescriptorCatalogueDetail::AreExecutionControlSchemasEqual(*m_ControlSchema, *Other.m_ControlSchema);
     }
 
     inline DescriptorCatalogueEntry::DescriptorCatalogueEntry() = default;
@@ -1723,8 +1610,7 @@ namespace MiliastraPlusPlus
 
     inline bool DescriptorCatalogueEntry::operator==(const DescriptorCatalogueEntry& Other) const
     {
-        return m_Record == Other.m_Record &&
-            m_DescriptorIdentifier == Other.m_DescriptorIdentifier;
+        return m_Record == Other.m_Record && m_DescriptorIdentifier == Other.m_DescriptorIdentifier;
     }
 
     inline DescriptorCatalogue::DescriptorCatalogue() = default;
@@ -1738,8 +1624,7 @@ namespace MiliastraPlusPlus
     inline bool DescriptorCatalogue::IsValid() const
     {
         if (!m_Identity.IsValid() ||
-            !DescriptorCatalogueDetail::IsDescriptorIdentifierCountWithinDomain(
-                m_Entries.size()))
+            !DescriptorCatalogueDetail::IsDescriptorIdentifierCountWithinDomain(m_Entries.size()))
         {
             return false;
         }
@@ -1749,14 +1634,11 @@ namespace MiliastraPlusPlus
         {
             const DescriptorCatalogueEntry& Entry = m_Entries[Index];
             if (!Entry.IsValid() ||
-                Entry.GetDescriptorIdentifier() !=
-                    NodeDescriptorId(ExpectedDescriptorIdentifier))
+                Entry.GetDescriptorIdentifier() != NodeDescriptorId(ExpectedDescriptorIdentifier))
             {
                 return false;
             }
-            if (Index > 0U &&
-                !(m_Entries[Index - 1U].GetExternalIdentity() <
-                    Entry.GetExternalIdentity()))
+            if (Index > 0U && !(m_Entries[Index - 1U].GetExternalIdentity() < Entry.GetExternalIdentity()))
             {
                 return false;
             }
@@ -1767,10 +1649,7 @@ namespace MiliastraPlusPlus
             }
         }
 
-        return DescriptorCatalogueDetail::IsCatalogueContentIdentifierConsistent(
-            m_Entries,
-            m_Identity.GetCatalogueContentIdentifier()
-        );
+        return DescriptorCatalogueDetail::IsCatalogueContentIdentifierConsistent(m_Entries, m_Identity.GetCatalogueContentIdentifier());
     }
 
     inline const DescriptorCatalogueIdentity& DescriptorCatalogue::GetIdentity() const
@@ -1822,53 +1701,34 @@ namespace MiliastraPlusPlus
     [[nodiscard]] inline std::expected<void, DiagnosticCollection> ValidateNormalizedDescriptorRecord(const NormalizedNodeDescriptorRecord& Record)
     {
         const std::vector<NormalizedNodeDescriptorRecord> Records = {Record};
-        std::vector<DescriptorCatalogueDetail::PendingDiagnostic> PendingDiagnostics =
-            DescriptorCatalogueDetail::CollectNormalizedRecordDiagnostics(Records);
+        std::vector<DescriptorCatalogueDetail::PendingDiagnostic> PendingDiagnostics = DescriptorCatalogueDetail::CollectNormalizedRecordDiagnostics(Records);
         if (!PendingDiagnostics.empty())
         {
-            return std::unexpected(
-                DescriptorCatalogueDetail::MaterializePendingDiagnostics(
-                    std::move(PendingDiagnostics)
-                )
-            );
+            return std::unexpected(DescriptorCatalogueDetail::MaterializePendingDiagnostics(std::move(PendingDiagnostics)));
         }
 
         return {};
     }
 
-    [[nodiscard]] inline std::expected<
-        DescriptorCatalogueContentIdentifier,
-        DiagnosticCollection
-    > DeriveDescriptorCatalogueContentIdentifier(
-        const std::vector<NormalizedNodeDescriptorRecord>& Records
-    )
+    [[nodiscard]] inline std::expected<DescriptorCatalogueContentIdentifier, DiagnosticCollection> DeriveDescriptorCatalogueContentIdentifier(
+        const std::vector<NormalizedNodeDescriptorRecord>& Records)
     {
-        std::vector<DescriptorCatalogueDetail::PendingDiagnostic> PendingDiagnostics =
-            DescriptorCatalogueDetail::CollectNormalizedRecordDiagnostics(Records);
+        std::vector<DescriptorCatalogueDetail::PendingDiagnostic> PendingDiagnostics = DescriptorCatalogueDetail::CollectNormalizedRecordDiagnostics(Records);
         if (!PendingDiagnostics.empty())
         {
-            return std::unexpected(
-                DescriptorCatalogueDetail::MaterializePendingDiagnostics(
-                    std::move(PendingDiagnostics)
-                )
-            );
+            return std::unexpected(DescriptorCatalogueDetail::MaterializePendingDiagnostics(std::move(PendingDiagnostics)));
         }
 
         return DescriptorCatalogueDetail::DeriveValidatedContentIdentifier(Records);
     }
 
-    [[nodiscard]] inline std::expected<
-        DescriptorCatalogue,
-        DiagnosticCollection
-    > DescriptorCatalogueBuilder::Build(
+    [[nodiscard]] inline std::expected<DescriptorCatalogue, DiagnosticCollection> DescriptorCatalogueBuilder::Build(
         std::string SourceNamespace,
         std::string SourceRevision,
         DescriptorCatalogueSemanticSchemaVersion SemanticSchemaVersion,
-        std::vector<NormalizedNodeDescriptorRecord> Records
-    )
+        std::vector<NormalizedNodeDescriptorRecord> Records)
     {
-        std::vector<DescriptorCatalogueDetail::PendingDiagnostic> PendingDiagnostics =
-            DescriptorCatalogueDetail::CollectNormalizedRecordDiagnostics(Records);
+        std::vector<DescriptorCatalogueDetail::PendingDiagnostic> PendingDiagnostics = DescriptorCatalogueDetail::CollectNormalizedRecordDiagnostics(Records);
 
         if (SourceNamespace.empty())
         {
@@ -1900,8 +1760,7 @@ namespace MiliastraPlusPlus
                 .Message = "Descriptor catalogue semantic schema version must not be zero."
             });
         }
-        else if (SemanticSchemaVersion.GetValue() != 1U &&
-            SemanticSchemaVersion.GetValue() != 2U)
+        else if (SemanticSchemaVersion.GetValue() != 1U && SemanticSchemaVersion.GetValue() != 2U)
         {
             PendingDiagnostics.push_back({
                 .ExternalKey = std::string(),
@@ -1920,12 +1779,10 @@ namespace MiliastraPlusPlus
                 {
                     PendingDiagnostics.push_back({
                         .ExternalKey = Record.GetExternalIdentity().GetKey(),
-                        .PrimarySourceProvenance =
-                            DescriptorCatalogueDetail::GetValidSourceProvenance(Record),
+                        .PrimarySourceProvenance = DescriptorCatalogueDetail::GetValidSourceProvenance(Record),
                         .RelatedSourceProvenance = std::nullopt,
                         .Code = DiagnosticCode::InvalidNormalizedDescriptorRecord,
-                        .Message =
-                            "Enum semantic values require descriptor catalogue schema version 2."
+                        .Message = "Enum semantic values require descriptor catalogue schema version 2."
                     });
                 }
             }
@@ -1933,37 +1790,21 @@ namespace MiliastraPlusPlus
 
         if (!PendingDiagnostics.empty())
         {
-            return std::unexpected(
-                DescriptorCatalogueDetail::MaterializePendingDiagnostics(
-                    std::move(PendingDiagnostics)
-                )
-            );
+            return std::unexpected(DescriptorCatalogueDetail::MaterializePendingDiagnostics(std::move(PendingDiagnostics)));
         }
 
-        const std::vector<NormalizedNodeDescriptorRecord> CanonicalRecords =
-            DescriptorCatalogueDetail::GetCanonicalRecords(Records);
-        const DescriptorCatalogueContentIdentifier ContentIdentifier =
-            DescriptorCatalogueDetail::DeriveValidatedContentIdentifier(CanonicalRecords);
-        const DescriptorCatalogueIdentity Identity(
-            std::move(SourceNamespace),
-            std::move(SourceRevision),
-            SemanticSchemaVersion,
-            ContentIdentifier
-        );
+        const std::vector<NormalizedNodeDescriptorRecord> CanonicalRecords = DescriptorCatalogueDetail::GetCanonicalRecords(Records);
+        const DescriptorCatalogueContentIdentifier ContentIdentifier = DescriptorCatalogueDetail::DeriveValidatedContentIdentifier(CanonicalRecords);
+        const DescriptorCatalogueIdentity Identity(std::move(SourceNamespace), std::move(SourceRevision), SemanticSchemaVersion, ContentIdentifier);
 
         std::vector<DescriptorIdentifierAllocationCandidate> AllocationCandidates;
         AllocationCandidates.reserve(CanonicalRecords.size());
         for (const NormalizedNodeDescriptorRecord& Record : CanonicalRecords)
         {
-            AllocationCandidates.emplace_back(
-                Record.GetExternalIdentity(),
-                Record.GetSourceProvenance()
-            );
+            AllocationCandidates.emplace_back(Record.GetExternalIdentity(), Record.GetSourceProvenance());
         }
 
-        const auto AllocationResult = DescriptorIdentifierAllocator::Allocate(
-            AllocationCandidates
-        );
+        const auto AllocationResult = DescriptorIdentifierAllocator::Allocate(AllocationCandidates);
         if (!AllocationResult.has_value())
         {
             return std::unexpected(AllocationResult.error());
@@ -1973,10 +1814,7 @@ namespace MiliastraPlusPlus
         Entries.reserve(CanonicalRecords.size());
         for (std::size_t Index = 0U; Index < CanonicalRecords.size(); ++Index)
         {
-            Entries.emplace_back(
-                CanonicalRecords[Index],
-                (*AllocationResult)[Index].GetDescriptorIdentifier()
-            );
+            Entries.emplace_back(CanonicalRecords[Index], (*AllocationResult)[Index].GetDescriptorIdentifier());
         }
 
         return DescriptorCatalogue(std::move(Identity), std::move(Entries));
@@ -1986,8 +1824,7 @@ namespace MiliastraPlusPlus
     /// Numeric descriptor IDs are deliberately outside this operation.
     [[nodiscard]] inline std::expected<void, DiagnosticCollection> ValidateDescriptorCatalogueCompatibility(
         const DescriptorCatalogueBinding& GraphBinding,
-        const DescriptorCatalogueIdentity& AvailableCatalogueIdentity
-    )
+        const DescriptorCatalogueIdentity& AvailableCatalogueIdentity)
     {
         std::vector<DescriptorCatalogueDetail::PendingDiagnostic> PendingDiagnostics;
 
@@ -2015,11 +1852,7 @@ namespace MiliastraPlusPlus
 
         if (!PendingDiagnostics.empty())
         {
-            return std::unexpected(
-                DescriptorCatalogueDetail::MaterializePendingDiagnostics(
-                    std::move(PendingDiagnostics)
-                )
-            );
+            return std::unexpected(DescriptorCatalogueDetail::MaterializePendingDiagnostics(std::move(PendingDiagnostics)));
         }
 
         if (GraphBinding.GetIdentity() != AvailableCatalogueIdentity)

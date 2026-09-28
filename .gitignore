@@ -57,3 +57,7 @@ Thumbs.db
 
 # Generated CTest / testing files
 Miliastra++/Testing/
+
+# Nested third-party and protobuf files generated in the existing CMake tree
+Miliastra++/ThirdParty/
+Miliastra++/Generated/

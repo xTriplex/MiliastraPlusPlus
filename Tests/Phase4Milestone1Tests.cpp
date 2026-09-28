@@ -21,8 +21,7 @@ namespace
 {
     [[noreturn]] void Fail(const char* Expression, const std::source_location& Location)
     {
-        std::fprintf(stderr, "Check failed: %s (%s:%u)\n", Expression,
-            Location.file_name(), Location.line());
+        std::fprintf(stderr, "Check failed: %s (%s:%u)\n", Expression, Location.file_name(), Location.line());
         std::abort();
     }
 
@@ -46,8 +45,7 @@ namespace
 
     PinSchema FlowPin(const char* Name, PinDirection Direction, PinCardinality Cardinality = PinCardinality::Single)
     {
-        return PinSchema(Name, TypeDesc::Flow(), Direction, PinCategory::Execution,
-            Cardinality);
+        return PinSchema(Name, TypeDesc::Flow(), Direction, PinCategory::Execution, Cardinality);
     }
 
     NodeDescriptor EntryDescriptor()
@@ -69,8 +67,7 @@ namespace
     {
         return NodeDescriptor(BranchId, "TwoWay", {NodeAvailability::Server},
             {FlowPin("p0", PinDirection::Input),
-             PinSchema("p1", TypeDesc::Boolean(), PinDirection::Input,
-                PinCategory::Data, PinCardinality::Single, true),
+            PinSchema("p1", TypeDesc::Boolean(), PinDirection::Input, PinCategory::Data, PinCardinality::Single, true),
              FlowPin("not named true", PinDirection::Output),
              FlowPin("not named false", PinDirection::Output)},
             BranchControlSchema{PinIndex(0U), PinIndex(1U), PinIndex(2U), PinIndex(3U)});
@@ -173,39 +170,31 @@ namespace
         GraphIR Graph;
         Graph.SetExecutionModel(ExecutionModel::Structured);
         Graph.AddExecutionEntry({ExecutionEntryId(1U), NodeInstanceId(1U)});
-        Graph.AddExecutionRegion({ExecutionRegionId(1U), ExecutionEntryId(1U),
-            ExecutionRegionKind::Entry, std::nullopt, std::nullopt, std::nullopt});
+        Graph.AddExecutionRegion({ExecutionRegionId(1U), ExecutionEntryId(1U), ExecutionRegionKind::Entry, std::nullopt, std::nullopt, std::nullopt});
         Graph.AddNode({NodeInstanceId(1U), EntryId, ExecutionRegionId(1U)});
         Graph.AddNode({NodeInstanceId(2U), SequenceId, ExecutionRegionId(1U)});
-        Graph.AddControlEdge({NodeInstanceId(1U), PinIndex(0U),
-            NodeInstanceId(2U), PinIndex(0U)});
+        Graph.AddControlEdge({NodeInstanceId(1U), PinIndex(0U), NodeInstanceId(2U), PinIndex(0U)});
         return Graph;
     }
 
     GraphIR MakeBranchGraph()
     {
         GraphIR Graph = MakeStraightLineGraph();
-        Graph.AddExecutionRegion({ExecutionRegionId(2U), ExecutionEntryId(1U),
-            ExecutionRegionKind::BranchArm, ExecutionRegionId(1U), NodeInstanceId(3U), PinIndex(2U)});
-        Graph.AddExecutionRegion({ExecutionRegionId(3U), ExecutionEntryId(1U),
-            ExecutionRegionKind::BranchArm, ExecutionRegionId(1U), NodeInstanceId(3U), PinIndex(3U)});
+        Graph.AddExecutionRegion({ExecutionRegionId(2U), ExecutionEntryId(1U), ExecutionRegionKind::BranchArm, ExecutionRegionId(1U), NodeInstanceId(3U), PinIndex(2U)});
+        Graph.AddExecutionRegion({ExecutionRegionId(3U), ExecutionEntryId(1U), ExecutionRegionKind::BranchArm, ExecutionRegionId(1U), NodeInstanceId(3U), PinIndex(3U)});
         Graph.AddNode({NodeInstanceId(3U), BranchId, ExecutionRegionId(1U)});
         Graph.AddNode({NodeInstanceId(4U), SequenceId, ExecutionRegionId(2U)});
         Graph.AddNode({NodeInstanceId(5U), SequenceId, ExecutionRegionId(3U)});
-        Graph.AddControlEdge({NodeInstanceId(2U), PinIndex(1U),
-            NodeInstanceId(3U), PinIndex(0U)});
-        Graph.AddControlEdge({NodeInstanceId(3U), PinIndex(2U),
-            NodeInstanceId(4U), PinIndex(0U)});
-        Graph.AddControlEdge({NodeInstanceId(3U), PinIndex(3U),
-            NodeInstanceId(5U), PinIndex(0U)});
+        Graph.AddControlEdge({NodeInstanceId(2U), PinIndex(1U), NodeInstanceId(3U), PinIndex(0U)});
+        Graph.AddControlEdge({NodeInstanceId(3U), PinIndex(2U), NodeInstanceId(4U), PinIndex(0U)});
+        Graph.AddControlEdge({NodeInstanceId(3U), PinIndex(3U), NodeInstanceId(5U), PinIndex(0U)});
         return Graph;
     }
 
     GraphIR MakeLoopGraph()
     {
         GraphIR Graph = MakeStraightLineGraph();
-        Graph.AddExecutionRegion({ExecutionRegionId(2U), ExecutionEntryId(1U),
-            ExecutionRegionKind::LoopBody, ExecutionRegionId(1U), NodeInstanceId(3U), PinIndex(1U)});
+        Graph.AddExecutionRegion({ExecutionRegionId(2U), ExecutionEntryId(1U), ExecutionRegionKind::LoopBody, ExecutionRegionId(1U), NodeInstanceId(3U), PinIndex(1U)});
         Graph.AddNode({NodeInstanceId(3U), LoopId, ExecutionRegionId(1U)});
         Graph.AddNode({NodeInstanceId(4U), SequenceId, ExecutionRegionId(2U)});
         Graph.AddControlEdge({NodeInstanceId(2U), PinIndex(1U), NodeInstanceId(3U), PinIndex(0U)});
@@ -249,44 +238,21 @@ namespace
         MPP_CHECK(InfiniteLoopDescriptor().IsValid());
         MPP_CHECK(ReturnDescriptor().IsValid());
 
-        MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1100U), "bad pins", {}, {
-            PinSchema("", TypeDesc::Boolean(), PinDirection::Input, PinCategory::Data)
-        }).IsValid());
+        MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1100U), "bad pins", {}, {PinSchema("", TypeDesc::Boolean(), PinDirection::Input, PinCategory::Data)}).IsValid());
         MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1101U), "duplicate names", {}, {
             PinSchema("same", TypeDesc::Boolean(), PinDirection::Input, PinCategory::Data),
             PinSchema("same", TypeDesc::Boolean(), PinDirection::Output, PinCategory::Data)
         }).IsValid());
-        MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1102U), "bad direction", {}, {
-            PinSchema("p", TypeDesc::Boolean(), static_cast<PinDirection>(77), PinCategory::Data)
-        }).IsValid());
-        MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1103U), "bad category", {}, {
-            PinSchema("p", TypeDesc::Boolean(), PinDirection::Input, static_cast<PinCategory>(77))
-        }).IsValid());
-        MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1104U), "bad cardinality", {}, {
-            PinSchema("p", TypeDesc::Boolean(), PinDirection::Input, PinCategory::Data,
-                static_cast<PinCardinality>(77))
-        }).IsValid());
-        MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1105U), "bad availability",
-            {static_cast<NodeAvailability>(77)}, {}).IsValid());
-        MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1106U), "duplicate availability",
-            {NodeAvailability::Server, NodeAvailability::Server}, {}).IsValid());
-        MPP_CHECK(NodeDescriptor(NodeDescriptorId(1107U), "legacy Flow", {}, {
-            FlowPin("not data", PinDirection::Input)
-        }).IsValid()); // Legacy Flow descriptors remain valid without a role schema.
-        MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1108U), "wrong Flow type", {}, {
-            PinSchema("flow", TypeDesc::Integer(), PinDirection::Input, PinCategory::Execution)
-        }).IsValid());
-        MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1118U), "Flow marked as Data", {}, {
-            PinSchema("flow", TypeDesc::Flow(), PinDirection::Input, PinCategory::Data)
-        }).IsValid());
-        MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1119U), "Generic marked as Execution", {}, {
-            PinSchema("flow", TypeDesc::Generic(GenericParameterId(1U)),
-                PinDirection::Input, PinCategory::Execution)
-        }).IsValid());
-        MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1109U), "literal Flow", {}, {
-            PinSchema("flow", TypeDesc::Flow(), PinDirection::Input, PinCategory::Execution,
-                PinCardinality::Single, true)
-        }).IsValid());
+        MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1102U), "bad direction", {}, {PinSchema("p", TypeDesc::Boolean(), static_cast<PinDirection>(77), PinCategory::Data)}).IsValid());
+        MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1103U), "bad category", {}, {PinSchema("p", TypeDesc::Boolean(), PinDirection::Input, static_cast<PinCategory>(77))}).IsValid());
+        MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1104U), "bad cardinality", {}, {PinSchema("p", TypeDesc::Boolean(), PinDirection::Input, PinCategory::Data, static_cast<PinCardinality>(77))}).IsValid());
+        MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1105U), "bad availability", {static_cast<NodeAvailability>(77)}, {}).IsValid());
+        MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1106U), "duplicate availability", {NodeAvailability::Server, NodeAvailability::Server}, {}).IsValid());
+        MPP_CHECK(NodeDescriptor(NodeDescriptorId(1107U), "legacy Flow", {}, {FlowPin("not data", PinDirection::Input)}).IsValid()); // Legacy Flow descriptors remain valid without a role schema.
+        MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1108U), "wrong Flow type", {}, {PinSchema("flow", TypeDesc::Integer(), PinDirection::Input, PinCategory::Execution)}).IsValid());
+        MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1118U), "Flow marked as Data", {}, {PinSchema("flow", TypeDesc::Flow(), PinDirection::Input, PinCategory::Data)}).IsValid());
+        MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1119U), "Generic marked as Execution", {}, {PinSchema("flow", TypeDesc::Generic(GenericParameterId(1U)), PinDirection::Input, PinCategory::Execution)}).IsValid());
+        MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1109U), "literal Flow", {}, {PinSchema("flow", TypeDesc::Flow(), PinDirection::Input, PinCategory::Execution, PinCardinality::Single, true)}).IsValid());
         MPP_CHECK(!NodeDescriptor(NodeDescriptorId(1120U), "Flow default", {}, {
             PinSchema("flow", TypeDesc::Flow(), PinDirection::Input, PinCategory::Execution,
                 PinCardinality::Single, false,
@@ -355,18 +321,14 @@ namespace
         MultipleEntries.SetExecutionModel(ExecutionModel::Structured);
         MultipleEntries.AddExecutionEntry({ExecutionEntryId(1U), NodeInstanceId(1U)});
         MultipleEntries.AddExecutionEntry({ExecutionEntryId(2U), NodeInstanceId(3U)});
-        MultipleEntries.AddExecutionRegion({ExecutionRegionId(1U), ExecutionEntryId(1U),
-            ExecutionRegionKind::Entry, std::nullopt, std::nullopt, std::nullopt});
-        MultipleEntries.AddExecutionRegion({ExecutionRegionId(2U), ExecutionEntryId(2U),
-            ExecutionRegionKind::Entry, std::nullopt, std::nullopt, std::nullopt});
+        MultipleEntries.AddExecutionRegion({ExecutionRegionId(1U), ExecutionEntryId(1U), ExecutionRegionKind::Entry, std::nullopt, std::nullopt, std::nullopt});
+        MultipleEntries.AddExecutionRegion({ExecutionRegionId(2U), ExecutionEntryId(2U), ExecutionRegionKind::Entry, std::nullopt, std::nullopt, std::nullopt});
         MultipleEntries.AddNode({NodeInstanceId(1U), EntryId, ExecutionRegionId(1U)});
         MultipleEntries.AddNode({NodeInstanceId(2U), SequenceId, ExecutionRegionId(1U)});
         MultipleEntries.AddNode({NodeInstanceId(3U), EntryId, ExecutionRegionId(2U)});
         MultipleEntries.AddNode({NodeInstanceId(4U), SequenceId, ExecutionRegionId(2U)});
-        MultipleEntries.AddControlEdge({NodeInstanceId(1U), PinIndex(0U),
-            NodeInstanceId(2U), PinIndex(0U)});
-        MultipleEntries.AddControlEdge({NodeInstanceId(3U), PinIndex(0U),
-            NodeInstanceId(4U), PinIndex(0U)});
+        MultipleEntries.AddControlEdge({NodeInstanceId(1U), PinIndex(0U), NodeInstanceId(2U), PinIndex(0U)});
+        MultipleEntries.AddControlEdge({NodeInstanceId(3U), PinIndex(0U), NodeInstanceId(4U), PinIndex(0U)});
         MPP_CHECK(GraphIRValidator::Validate(MultipleEntries, Registry).empty());
         const auto MultipleRoundTrip = Deserialize(Serialize(MultipleEntries));
         MPP_CHECK(MultipleRoundTrip.has_value());
@@ -401,108 +363,80 @@ namespace
         // Raw v3 malformed ownership is not inferred or repaired by validation.
         GraphIR MissingMembership = StraightLine;
         MissingMembership.AddNode({NodeInstanceId(3U), SequenceId, std::nullopt});
-        MPP_CHECK(HasCode(GraphIRValidator::Validate(MissingMembership, Registry),
-            DiagnosticCode::InvalidExecutionOwnership));
+        MPP_CHECK(HasCode(GraphIRValidator::Validate(MissingMembership, Registry), DiagnosticCode::InvalidExecutionOwnership));
         const auto ParsedMissingMembership = Deserialize(Serialize(MissingMembership));
         MPP_CHECK(ParsedMissingMembership.has_value());
-        MPP_CHECK(HasCode(GraphIRValidator::Validate(*ParsedMissingMembership, Registry),
-            DiagnosticCode::InvalidExecutionOwnership));
+        MPP_CHECK(HasCode(GraphIRValidator::Validate(*ParsedMissingMembership, Registry), DiagnosticCode::InvalidExecutionOwnership));
         GraphIR DuplicateEntryId = StraightLine;
         DuplicateEntryId.AddExecutionEntry({ExecutionEntryId(1U), NodeInstanceId(1U)});
-        MPP_CHECK(HasCode(GraphIRValidator::Validate(DuplicateEntryId, Registry),
-            DiagnosticCode::DuplicateExecutionEntryIdentifier));
+        MPP_CHECK(HasCode(GraphIRValidator::Validate(DuplicateEntryId, Registry), DiagnosticCode::DuplicateExecutionEntryIdentifier));
         GraphIR DuplicateRegionId = StraightLine;
-        DuplicateRegionId.AddExecutionRegion({ExecutionRegionId(1U), ExecutionEntryId(1U),
-            ExecutionRegionKind::Entry, std::nullopt, std::nullopt, std::nullopt});
-        MPP_CHECK(HasCode(GraphIRValidator::Validate(DuplicateRegionId, Registry),
-            DiagnosticCode::DuplicateExecutionRegionIdentifier));
+        DuplicateRegionId.AddExecutionRegion({ExecutionRegionId(1U), ExecutionEntryId(1U), ExecutionRegionKind::Entry, std::nullopt, std::nullopt, std::nullopt});
+        MPP_CHECK(HasCode(GraphIRValidator::Validate(DuplicateRegionId, Registry), DiagnosticCode::DuplicateExecutionRegionIdentifier));
 
         GraphIR BadParent;
         BadParent.SetExecutionModel(ExecutionModel::Structured);
         BadParent.AddExecutionEntry({ExecutionEntryId(1U), NodeInstanceId(1U)});
-        BadParent.AddExecutionRegion({ExecutionRegionId(1U), ExecutionEntryId(1U),
-            ExecutionRegionKind::Entry, std::nullopt, std::nullopt, std::nullopt});
-        BadParent.AddExecutionRegion({ExecutionRegionId(2U), ExecutionEntryId(1U),
-            ExecutionRegionKind::BranchArm, ExecutionRegionId(99U), NodeInstanceId(2U), PinIndex(2U)});
+        BadParent.AddExecutionRegion({ExecutionRegionId(1U), ExecutionEntryId(1U), ExecutionRegionKind::Entry, std::nullopt, std::nullopt, std::nullopt});
+        BadParent.AddExecutionRegion({ExecutionRegionId(2U), ExecutionEntryId(1U), ExecutionRegionKind::BranchArm, ExecutionRegionId(99U), NodeInstanceId(2U), PinIndex(2U)});
         BadParent.AddNode({NodeInstanceId(1U), EntryId, ExecutionRegionId(1U)});
         BadParent.AddNode({NodeInstanceId(2U), BranchId, ExecutionRegionId(1U)});
-        BadParent.AddExecutionRegion({ExecutionRegionId(3U), ExecutionEntryId(1U),
-            ExecutionRegionKind::BranchArm, ExecutionRegionId(1U), NodeInstanceId(2U), PinIndex(3U)});
-        MPP_CHECK(HasCode(GraphIRValidator::Validate(BadParent, Registry),
-            DiagnosticCode::InvalidExecutionRegion));
+        BadParent.AddExecutionRegion({ExecutionRegionId(3U), ExecutionEntryId(1U), ExecutionRegionKind::BranchArm, ExecutionRegionId(1U), NodeInstanceId(2U), PinIndex(3U)});
+        MPP_CHECK(HasCode(GraphIRValidator::Validate(BadParent, Registry), DiagnosticCode::InvalidExecutionRegion));
         const auto ParsedBadParent = Deserialize(Serialize(BadParent));
         MPP_CHECK(ParsedBadParent.has_value());
-        MPP_CHECK(HasCode(GraphIRValidator::Validate(*ParsedBadParent, Registry),
-            DiagnosticCode::InvalidExecutionRegion));
+        MPP_CHECK(HasCode(GraphIRValidator::Validate(*ParsedBadParent, Registry), DiagnosticCode::InvalidExecutionRegion));
 
         GraphIR MissingOwner;
         MissingOwner.SetExecutionModel(ExecutionModel::Structured);
         MissingOwner.AddExecutionEntry({ExecutionEntryId(1U), NodeInstanceId(1U)});
-        MissingOwner.AddExecutionRegion({ExecutionRegionId(1U), ExecutionEntryId(1U),
-            ExecutionRegionKind::Entry, std::nullopt, std::nullopt, std::nullopt});
-        MissingOwner.AddExecutionRegion({ExecutionRegionId(2U), ExecutionEntryId(1U),
-            ExecutionRegionKind::BranchArm, ExecutionRegionId(1U), NodeInstanceId(99U), PinIndex(2U)});
-        MissingOwner.AddExecutionRegion({ExecutionRegionId(3U), ExecutionEntryId(1U),
-            ExecutionRegionKind::BranchArm, ExecutionRegionId(1U), NodeInstanceId(2U), PinIndex(3U)});
+        MissingOwner.AddExecutionRegion({ExecutionRegionId(1U), ExecutionEntryId(1U), ExecutionRegionKind::Entry, std::nullopt, std::nullopt, std::nullopt});
+        MissingOwner.AddExecutionRegion({ExecutionRegionId(2U), ExecutionEntryId(1U), ExecutionRegionKind::BranchArm, ExecutionRegionId(1U), NodeInstanceId(99U), PinIndex(2U)});
+        MissingOwner.AddExecutionRegion({ExecutionRegionId(3U), ExecutionEntryId(1U), ExecutionRegionKind::BranchArm, ExecutionRegionId(1U), NodeInstanceId(2U), PinIndex(3U)});
         MissingOwner.AddNode({NodeInstanceId(1U), EntryId, ExecutionRegionId(1U)});
         MissingOwner.AddNode({NodeInstanceId(2U), BranchId, ExecutionRegionId(1U)});
-        MPP_CHECK(HasCode(GraphIRValidator::Validate(MissingOwner, Registry),
-            DiagnosticCode::InvalidExecutionRegion));
+        MPP_CHECK(HasCode(GraphIRValidator::Validate(MissingOwner, Registry), DiagnosticCode::InvalidExecutionRegion));
         const auto ParsedMissingOwner = Deserialize(Serialize(MissingOwner));
         MPP_CHECK(ParsedMissingOwner.has_value());
-        MPP_CHECK(HasCode(GraphIRValidator::Validate(*ParsedMissingOwner, Registry),
-            DiagnosticCode::InvalidExecutionRegion));
+        MPP_CHECK(HasCode(GraphIRValidator::Validate(*ParsedMissingOwner, Registry), DiagnosticCode::InvalidExecutionRegion));
 
         GraphIR WrongOwnerPin;
         WrongOwnerPin.SetExecutionModel(ExecutionModel::Structured);
         WrongOwnerPin.AddExecutionEntry({ExecutionEntryId(1U), NodeInstanceId(1U)});
-        WrongOwnerPin.AddExecutionRegion({ExecutionRegionId(1U), ExecutionEntryId(1U),
-            ExecutionRegionKind::Entry, std::nullopt, std::nullopt, std::nullopt});
-        WrongOwnerPin.AddExecutionRegion({ExecutionRegionId(2U), ExecutionEntryId(1U),
-            ExecutionRegionKind::BranchArm, ExecutionRegionId(1U), NodeInstanceId(2U), PinIndex(17U)});
-        WrongOwnerPin.AddExecutionRegion({ExecutionRegionId(3U), ExecutionEntryId(1U),
-            ExecutionRegionKind::BranchArm, ExecutionRegionId(1U), NodeInstanceId(2U), PinIndex(3U)});
+        WrongOwnerPin.AddExecutionRegion({ExecutionRegionId(1U), ExecutionEntryId(1U), ExecutionRegionKind::Entry, std::nullopt, std::nullopt, std::nullopt});
+        WrongOwnerPin.AddExecutionRegion({ExecutionRegionId(2U), ExecutionEntryId(1U), ExecutionRegionKind::BranchArm, ExecutionRegionId(1U), NodeInstanceId(2U), PinIndex(17U)});
+        WrongOwnerPin.AddExecutionRegion({ExecutionRegionId(3U), ExecutionEntryId(1U), ExecutionRegionKind::BranchArm, ExecutionRegionId(1U), NodeInstanceId(2U), PinIndex(3U)});
         WrongOwnerPin.AddNode({NodeInstanceId(1U), EntryId, ExecutionRegionId(1U)});
         WrongOwnerPin.AddNode({NodeInstanceId(2U), BranchId, ExecutionRegionId(1U)});
-        MPP_CHECK(HasCode(GraphIRValidator::Validate(WrongOwnerPin, Registry),
-            DiagnosticCode::InvalidExecutionRegion));
+        MPP_CHECK(HasCode(GraphIRValidator::Validate(WrongOwnerPin, Registry), DiagnosticCode::InvalidExecutionRegion));
         const auto ParsedWrongOwnerPin = Deserialize(Serialize(WrongOwnerPin));
         MPP_CHECK(ParsedWrongOwnerPin.has_value());
-        MPP_CHECK(HasCode(GraphIRValidator::Validate(*ParsedWrongOwnerPin, Registry),
-            DiagnosticCode::InvalidExecutionRegion));
+        MPP_CHECK(HasCode(GraphIRValidator::Validate(*ParsedWrongOwnerPin, Registry), DiagnosticCode::InvalidExecutionRegion));
 
         GraphIR NoEntries;
         NoEntries.SetExecutionModel(ExecutionModel::Structured);
-        MPP_CHECK(HasCode(GraphIRValidator::Validate(NoEntries, Registry),
-            DiagnosticCode::InvalidExecutionModel));
+        MPP_CHECK(HasCode(GraphIRValidator::Validate(NoEntries, Registry), DiagnosticCode::InvalidExecutionModel));
         GraphIR MixedMode;
         MixedMode.AddExecutionEntry({ExecutionEntryId(1U), NodeInstanceId(1U)});
-        MPP_CHECK(HasCode(GraphIRValidator::Validate(MixedMode, Registry),
-            DiagnosticCode::InvalidExecutionModel));
+        MPP_CHECK(HasCode(GraphIRValidator::Validate(MixedMode, Registry), DiagnosticCode::InvalidExecutionModel));
         nlohmann::json V3MixedMode = Serialize(MixedMode);
         MPP_CHECK(Deserialize(V3MixedMode).has_value());
-        MPP_CHECK(HasCode(GraphIRValidator::Validate(*Deserialize(V3MixedMode), Registry),
-            DiagnosticCode::InvalidExecutionModel));
+        MPP_CHECK(HasCode(GraphIRValidator::Validate(*Deserialize(V3MixedMode), Registry), DiagnosticCode::InvalidExecutionModel));
         GraphIR InvalidMode;
         InvalidMode.SetExecutionModel(static_cast<ExecutionModel>(88));
-        MPP_CHECK(HasCode(GraphIRValidator::Validate(InvalidMode, Registry),
-            DiagnosticCode::InvalidExecutionModel));
+        MPP_CHECK(HasCode(GraphIRValidator::Validate(InvalidMode, Registry), DiagnosticCode::InvalidExecutionModel));
 
         GraphIR UnschematizedFlow;
         UnschematizedFlow.SetExecutionModel(ExecutionModel::Structured);
         UnschematizedFlow.AddExecutionEntry({ExecutionEntryId(1U), NodeInstanceId(1U)});
-        UnschematizedFlow.AddExecutionRegion({ExecutionRegionId(1U), ExecutionEntryId(1U),
-            ExecutionRegionKind::Entry, std::nullopt, std::nullopt, std::nullopt});
+        UnschematizedFlow.AddExecutionRegion({ExecutionRegionId(1U), ExecutionEntryId(1U), ExecutionRegionKind::Entry, std::nullopt, std::nullopt, std::nullopt});
         UnschematizedFlow.AddNode({NodeInstanceId(1U), EntryId, ExecutionRegionId(1U)});
         UnschematizedFlow.AddNode({NodeInstanceId(2U), LegacyFlowSourceId, ExecutionRegionId(1U)});
-        MPP_CHECK(HasCode(GraphIRValidator::Validate(UnschematizedFlow, Registry),
-            DiagnosticCode::InvalidExecutionOwnership));
+        MPP_CHECK(HasCode(GraphIRValidator::Validate(UnschematizedFlow, Registry), DiagnosticCode::InvalidExecutionOwnership));
 
         GraphIR CrossEntry = MultipleEntries;
-        CrossEntry.AddControlEdge({NodeInstanceId(1U), PinIndex(0U),
-            NodeInstanceId(4U), PinIndex(0U)});
-        MPP_CHECK(HasCode(GraphIRValidator::Validate(CrossEntry, Registry),
-            DiagnosticCode::InvalidExecutionOwnership));
+        CrossEntry.AddControlEdge({NodeInstanceId(1U), PinIndex(0U), NodeInstanceId(4U), PinIndex(0U)});
+        MPP_CHECK(HasCode(GraphIRValidator::Validate(CrossEntry, Registry), DiagnosticCode::InvalidExecutionOwnership));
 
         // Legacy v1 and v2 remain Unstructured, keep Flow edges, and upgrade only on serialization.
         nlohmann::json V1 = {
@@ -532,8 +466,7 @@ namespace
         GraphIR TypedLegacy;
         TypedLegacy.AddNode({NodeInstanceId(1U), DataId});
         TypedLegacy.AddNode({NodeInstanceId(2U), DataId});
-        TypedLegacy.BindInput(NodeInstanceId(2U), PinIndex(1U),
-            OutputReference{NodeInstanceId(1U), PinIndex(0U)}, TypeDesc::Boolean());
+        TypedLegacy.BindInput(NodeInstanceId(2U), PinIndex(1U), OutputReference{NodeInstanceId(1U), PinIndex(0U)}, TypeDesc::Boolean());
         nlohmann::json V2 = Serialize(TypedLegacy);
         V2["irVersion"] = 2U;
         V2.erase("executionModel");
@@ -550,8 +483,7 @@ namespace
         MPP_CHECK(V2Upgraded["inputBindings"][0U]["outputTypeConstraint"]["kind"] == "Boolean");
 
         // Every v3 strong-ID field rejects 2^64, which is outside ValueIdentifier's uint64_t range.
-        const nlohmann::json OversizedIdentifier =
-            nlohmann::json::parse("18446744073709551616");
+        const nlohmann::json OversizedIdentifier = nlohmann::json::parse("18446744073709551616");
         MPP_CHECK(OversizedIdentifier.is_number_float());
 
         nlohmann::json OversizedEntryId = Serialize(StraightLine);
@@ -583,8 +515,7 @@ namespace
         CheckDeserializationRejects(OversizedNodeRegion);
 
         GraphIR VariableIdGraph;
-        VariableIdGraph.AddVariable({GraphVariableId(1U), "persisted", TypeDesc::Boolean(),
-            std::nullopt});
+        VariableIdGraph.AddVariable({GraphVariableId(1U), "persisted", TypeDesc::Boolean(), std::nullopt});
         nlohmann::json OversizedVariableId = Serialize(VariableIdGraph);
         OversizedVariableId["variables"][0U]["id"] = OversizedIdentifier;
         CheckDeserializationRejects(OversizedVariableId);
@@ -597,22 +528,16 @@ namespace
         GraphIR MaximumIdentifiers;
         MaximumIdentifiers.SetExecutionModel(ExecutionModel::Structured);
         MaximumIdentifiers.AddExecutionEntry({MaximumEntryId, MaximumNodeId});
-        MaximumIdentifiers.AddExecutionRegion({MaximumRegionId, MaximumEntryId,
-            ExecutionRegionKind::Entry, std::nullopt, std::nullopt, std::nullopt});
+        MaximumIdentifiers.AddExecutionRegion({MaximumRegionId, MaximumEntryId, ExecutionRegionKind::Entry, std::nullopt, std::nullopt, std::nullopt});
         MaximumIdentifiers.AddNode({MaximumNodeId, EntryId, MaximumRegionId});
-        MaximumIdentifiers.AddNode({NodeInstanceId(MaximumIdentifier - 1U), SequenceId,
-            MaximumRegionId});
-        MaximumIdentifiers.AddControlEdge({MaximumNodeId, PinIndex(0U),
-            NodeInstanceId(MaximumIdentifier - 1U), PinIndex(0U)});
+        MaximumIdentifiers.AddNode({NodeInstanceId(MaximumIdentifier - 1U), SequenceId, MaximumRegionId});
+        MaximumIdentifiers.AddControlEdge({MaximumNodeId, PinIndex(0U), NodeInstanceId(MaximumIdentifier - 1U), PinIndex(0U)});
         MPP_CHECK(GraphIRValidator::Validate(MaximumIdentifiers, Registry).empty());
         const auto MaximumIdentifiersRoundTrip = Deserialize(Serialize(MaximumIdentifiers));
         MPP_CHECK(MaximumIdentifiersRoundTrip.has_value());
-        MPP_CHECK(MaximumIdentifiersRoundTrip->GetNodes()[0U].Identifier.GetValue() ==
-            MaximumIdentifier);
-        MPP_CHECK(MaximumIdentifiersRoundTrip->GetExecutionEntries()[0U].Identifier.GetValue() ==
-            MaximumIdentifier);
-        MPP_CHECK(MaximumIdentifiersRoundTrip->GetExecutionRegions()[0U].Identifier.GetValue() ==
-            MaximumIdentifier);
+        MPP_CHECK(MaximumIdentifiersRoundTrip->GetNodes()[0U].Identifier.GetValue() == MaximumIdentifier);
+        MPP_CHECK(MaximumIdentifiersRoundTrip->GetExecutionEntries()[0U].Identifier.GetValue() == MaximumIdentifier);
+        MPP_CHECK(MaximumIdentifiersRoundTrip->GetExecutionRegions()[0U].Identifier.GetValue() == MaximumIdentifier);
         MPP_CHECK(GraphIRValidator::Validate(*MaximumIdentifiersRoundTrip, Registry).empty());
 
         // The same bounded path protects pin indices, which use the project's uint32_t PinIndex.
@@ -655,8 +580,7 @@ namespace
         StructuredWithoutEntry["executionEntries"] = nlohmann::json::array();
         const auto ParsedWithoutEntry = Deserialize(StructuredWithoutEntry);
         MPP_CHECK(ParsedWithoutEntry.has_value());
-        MPP_CHECK(HasCode(GraphIRValidator::Validate(*ParsedWithoutEntry, Registry),
-            DiagnosticCode::InvalidExecutionModel));
+        MPP_CHECK(HasCode(GraphIRValidator::Validate(*ParsedWithoutEntry, Registry), DiagnosticCode::InvalidExecutionModel));
 
         nlohmann::json V2WithNewFields = V1;
         V2WithNewFields["irVersion"] = 2U;

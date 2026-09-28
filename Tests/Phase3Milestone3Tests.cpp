@@ -16,14 +16,7 @@ namespace
 {
     [[noreturn]] void ReportFailure(const char* Expression, const std::source_location& Location)
     {
-        std::fprintf(
-            stderr,
-            "Check failed: %s (%s:%u, %s)\n",
-            Expression,
-            Location.file_name(),
-            Location.line(),
-            Location.function_name()
-        );
+        std::fprintf(stderr, "Check failed: %s (%s:%u, %s)\n", Expression, Location.file_name(), Location.line(), Location.function_name());
         std::abort();
     }
 
@@ -90,27 +83,19 @@ namespace
                 PinSchema("FloatOutput", TypeDesc::Float(), PinDirection::Output, PinCategory::Data),
                 PinSchema("IntInput", TypeDesc::Integer(), PinDirection::Input, PinCategory::Data),
                 PinSchema("FloatInput", TypeDesc::Float(), PinDirection::Input, PinCategory::Data),
-                PinSchema("IntListInput", TypeDesc::List(TypeDesc::Integer()),
-                    PinDirection::Input, PinCategory::Data),
+                PinSchema("IntListInput", TypeDesc::List(TypeDesc::Integer()), PinDirection::Input, PinCategory::Data),
                 PinSchema("IntStringDictionaryInput",
                     TypeDesc::Dictionary(TypeDesc::Integer(), TypeDesc::String()),
                     PinDirection::Input, PinCategory::Data),
                 PinSchema("FloatStringDictionaryInput",
                     TypeDesc::Dictionary(TypeDesc::Float(), TypeDesc::String()),
                     PinDirection::Input, PinCategory::Data),
-                PinSchema("Struct42Input", TypeDesc::StructObject(StructTypeId(42U)),
-                    PinDirection::Input, PinCategory::Data),
-                PinSchema("Struct43Input", TypeDesc::StructObject(StructTypeId(43U)),
-                    PinDirection::Input, PinCategory::Data),
-                PinSchema("NestedIntListInput",
-                    TypeDesc::List(TypeDesc::List(TypeDesc::Integer())),
-                    PinDirection::Input, PinCategory::Data),
-                PinSchema("Struct42Output", TypeDesc::StructObject(StructTypeId(42U)),
-                    PinDirection::Output, PinCategory::Data),
-                PinSchema("Struct43Output", TypeDesc::StructObject(StructTypeId(43U)),
-                    PinDirection::Output, PinCategory::Data),
-                PinSchema("FloatListInput", TypeDesc::List(TypeDesc::Float()),
-                    PinDirection::Input, PinCategory::Data)
+                PinSchema("Struct42Input", TypeDesc::StructObject(StructTypeId(42U)), PinDirection::Input, PinCategory::Data),
+                PinSchema("Struct43Input", TypeDesc::StructObject(StructTypeId(43U)), PinDirection::Input, PinCategory::Data),
+                PinSchema("NestedIntListInput", TypeDesc::List(TypeDesc::List(TypeDesc::Integer())), PinDirection::Input, PinCategory::Data),
+                PinSchema("Struct42Output", TypeDesc::StructObject(StructTypeId(42U)), PinDirection::Output, PinCategory::Data),
+                PinSchema("Struct43Output", TypeDesc::StructObject(StructTypeId(43U)), PinDirection::Output, PinCategory::Data),
+                PinSchema("FloatListInput", TypeDesc::List(TypeDesc::Float()), PinDirection::Input, PinCategory::Data)
             }
         );
     }
@@ -123,25 +108,14 @@ namespace
             "GenericNode",
             {NodeAvailability::Server},
             {
-                PinSchema("GenericInput", Generic, PinDirection::Input, PinCategory::Data,
-                    PinCardinality::Single, true),
+                PinSchema("GenericInput", Generic, PinDirection::Input, PinCategory::Data, PinCardinality::Single, true),
                 PinSchema("GenericOutput", Generic, PinDirection::Output, PinCategory::Data),
-                PinSchema("GenericListOutput", TypeDesc::List(Generic),
-                    PinDirection::Output, PinCategory::Data),
-                PinSchema("GenericListInput", TypeDesc::List(Generic),
-                    PinDirection::Input, PinCategory::Data),
-                PinSchema("GenericDictionaryOutput",
-                    TypeDesc::Dictionary(Generic, TypeDesc::String()),
-                    PinDirection::Output, PinCategory::Data),
-                PinSchema("GenericDictionaryInput",
-                    TypeDesc::Dictionary(Generic, TypeDesc::String()),
-                    PinDirection::Input, PinCategory::Data),
-                PinSchema("GenericNestedListOutput",
-                    TypeDesc::List(TypeDesc::List(Generic)),
-                    PinDirection::Output, PinCategory::Data),
-                PinSchema("GenericNestedListInput",
-                    TypeDesc::List(TypeDesc::List(Generic)),
-                    PinDirection::Input, PinCategory::Data)
+                PinSchema("GenericListOutput", TypeDesc::List(Generic), PinDirection::Output, PinCategory::Data),
+                PinSchema("GenericListInput", TypeDesc::List(Generic), PinDirection::Input, PinCategory::Data),
+                PinSchema("GenericDictionaryOutput", TypeDesc::Dictionary(Generic, TypeDesc::String()), PinDirection::Output, PinCategory::Data),
+                PinSchema("GenericDictionaryInput", TypeDesc::Dictionary(Generic, TypeDesc::String()), PinDirection::Input, PinCategory::Data),
+                PinSchema("GenericNestedListOutput", TypeDesc::List(TypeDesc::List(Generic)), PinDirection::Output, PinCategory::Data),
+                PinSchema("GenericNestedListInput", TypeDesc::List(TypeDesc::List(Generic)), PinDirection::Input, PinCategory::Data)
             }
         );
     }
@@ -153,14 +127,10 @@ namespace
             "MultiGenericNode",
             {NodeAvailability::Server},
             {
-                PinSchema("AOutput", TypeDesc::Generic(GenericParameterId(1U)),
-                    PinDirection::Output, PinCategory::Data),
-                PinSchema("BOutput", TypeDesc::Generic(GenericParameterId(2U)),
-                    PinDirection::Output, PinCategory::Data),
-                PinSchema("AInput", TypeDesc::Generic(GenericParameterId(1U)),
-                    PinDirection::Input, PinCategory::Data),
-                PinSchema("BInput", TypeDesc::Generic(GenericParameterId(2U)),
-                    PinDirection::Input, PinCategory::Data)
+                PinSchema("AOutput", TypeDesc::Generic(GenericParameterId(1U)), PinDirection::Output, PinCategory::Data),
+                PinSchema("BOutput", TypeDesc::Generic(GenericParameterId(2U)), PinDirection::Output, PinCategory::Data),
+                PinSchema("AInput", TypeDesc::Generic(GenericParameterId(1U)), PinDirection::Input, PinCategory::Data),
+                PinSchema("BInput", TypeDesc::Generic(GenericParameterId(2U)), PinDirection::Input, PinCategory::Data)
             }
         );
     }
@@ -173,10 +143,8 @@ namespace
             "GenericDataNode",
             {NodeAvailability::Server},
             {
-                PinSchema("GenericOutput", Generic, PinDirection::Output,
-                    PinCategory::Data),
-                PinSchema("GenericInput", Generic, PinDirection::Input,
-                    PinCategory::Data)
+                PinSchema("GenericOutput", Generic, PinDirection::Output, PinCategory::Data),
+                PinSchema("GenericInput", Generic, PinDirection::Input, PinCategory::Data)
             }
         );
     }
@@ -202,24 +170,14 @@ namespace
         PinIndex DestinationPin,
         NodeInstanceId SourceNode,
         PinIndex SourcePin,
-        std::optional<TypeDesc> OutputTypeConstraint = std::nullopt
-    )
+        std::optional<TypeDesc> OutputTypeConstraint = std::nullopt)
     {
-        Graph.BindInput(
-            DestinationNode,
-            DestinationPin,
-            OutputReference{SourceNode, SourcePin},
-            std::move(OutputTypeConstraint)
-        );
+        Graph.BindInput(DestinationNode, DestinationPin, OutputReference{SourceNode, SourcePin}, std::move(OutputTypeConstraint));
     }
 
     void AddVariableBinding(GraphIR& Graph, NodeInstanceId DestinationNode, PinIndex DestinationPin, GraphVariableId Variable)
     {
-        Graph.BindInput(
-            DestinationNode,
-            DestinationPin,
-            GraphVariableReference{Variable}
-        );
+        Graph.BindInput(DestinationNode, DestinationPin, GraphVariableReference{Variable});
     }
 
     bool SameDiagnostics(const DiagnosticCollection& Left, const DiagnosticCollection& Right)
@@ -230,9 +188,7 @@ namespace
         }
         for (std::size_t Index = 0U; Index < Left.size(); ++Index)
         {
-            if (Left[Index].Severity != Right[Index].Severity ||
-                Left[Index].Code != Right[Index].Code ||
-                Left[Index].Message != Right[Index].Message)
+            if (Left[Index].Severity != Right[Index].Severity || Left[Index].Code != Right[Index].Code || Left[Index].Message != Right[Index].Message)
             {
                 return false;
             }
@@ -248,17 +204,13 @@ namespace
         AddNode(Graph, NodeInstanceId(3U), ConcreteDescriptorId);
         if (ReverseBindings)
         {
-            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(3U),
-                NodeInstanceId(1U), PinIndex(1U));
-            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(2U),
-                NodeInstanceId(1U), PinIndex(1U));
+            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(3U), NodeInstanceId(1U), PinIndex(1U));
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(2U), NodeInstanceId(1U), PinIndex(1U));
         }
         else
         {
-            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(2U),
-                NodeInstanceId(1U), PinIndex(1U));
-            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(3U),
-                NodeInstanceId(1U), PinIndex(1U));
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(2U), NodeInstanceId(1U), PinIndex(1U));
+            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(3U), NodeInstanceId(1U), PinIndex(1U));
         }
         return Graph;
     }
@@ -278,25 +230,17 @@ namespace
         {
             if (Reverse)
             {
-                AddOutputBinding(Graph, NodeInstanceId(7U), PinIndex(3U),
-                    NodeInstanceId(2U), PinIndex(1U));
-                AddOutputBinding(Graph, NodeInstanceId(6U), PinIndex(2U),
-                    NodeInstanceId(2U), PinIndex(1U));
-                AddOutputBinding(Graph, NodeInstanceId(5U), PinIndex(3U),
-                    NodeInstanceId(1U), PinIndex(1U));
-                AddOutputBinding(Graph, NodeInstanceId(4U), PinIndex(2U),
-                    NodeInstanceId(1U), PinIndex(1U));
+                AddOutputBinding(Graph, NodeInstanceId(7U), PinIndex(3U), NodeInstanceId(2U), PinIndex(1U));
+                AddOutputBinding(Graph, NodeInstanceId(6U), PinIndex(2U), NodeInstanceId(2U), PinIndex(1U));
+                AddOutputBinding(Graph, NodeInstanceId(5U), PinIndex(3U), NodeInstanceId(1U), PinIndex(1U));
+                AddOutputBinding(Graph, NodeInstanceId(4U), PinIndex(2U), NodeInstanceId(1U), PinIndex(1U));
             }
             else
             {
-                AddOutputBinding(Graph, NodeInstanceId(4U), PinIndex(2U),
-                    NodeInstanceId(1U), PinIndex(1U));
-                AddOutputBinding(Graph, NodeInstanceId(5U), PinIndex(3U),
-                    NodeInstanceId(1U), PinIndex(1U));
-                AddOutputBinding(Graph, NodeInstanceId(6U), PinIndex(2U),
-                    NodeInstanceId(2U), PinIndex(1U));
-                AddOutputBinding(Graph, NodeInstanceId(7U), PinIndex(3U),
-                    NodeInstanceId(2U), PinIndex(1U));
+                AddOutputBinding(Graph, NodeInstanceId(4U), PinIndex(2U), NodeInstanceId(1U), PinIndex(1U));
+                AddOutputBinding(Graph, NodeInstanceId(5U), PinIndex(3U), NodeInstanceId(1U), PinIndex(1U));
+                AddOutputBinding(Graph, NodeInstanceId(6U), PinIndex(2U), NodeInstanceId(2U), PinIndex(1U));
+                AddOutputBinding(Graph, NodeInstanceId(7U), PinIndex(3U), NodeInstanceId(2U), PinIndex(1U));
             }
         };
         AddConstraints(ReverseBindings);
@@ -311,13 +255,11 @@ namespace
         AddNode(Graph, NodeInstanceId(3U), ConcreteDescriptorId);
         const auto AddIntegerUse = [&Graph]
         {
-            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(2U),
-                NodeInstanceId(1U), PinIndex(1U), TypeDesc::Integer());
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(2U), NodeInstanceId(1U), PinIndex(1U), TypeDesc::Integer());
         };
         const auto AddFloatUse = [&Graph]
         {
-            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(3U),
-                NodeInstanceId(1U), PinIndex(1U), TypeDesc::Float());
+            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(3U), NodeInstanceId(1U), PinIndex(1U), TypeDesc::Float());
         };
         if (ReverseBindings)
         {
@@ -341,25 +283,11 @@ namespace
 
         const auto AddMalformedReference = [&Graph]
         {
-            AddOutputBinding(
-                Graph,
-                NodeInstanceId(2U),
-                PinIndex(2U),
-                NodeInstanceId(99U),
-                PinIndex(1U),
-                TypeDesc::Float()
-            );
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(2U), NodeInstanceId(99U), PinIndex(1U), TypeDesc::Float());
         };
         const auto AddIndependentGenericConflict = [&Graph]
         {
-            AddOutputBinding(
-                Graph,
-                NodeInstanceId(3U),
-                PinIndex(3U),
-                NodeInstanceId(1U),
-                PinIndex(1U),
-                TypeDesc::Integer()
-            );
+            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(3U), NodeInstanceId(1U), PinIndex(1U), TypeDesc::Integer());
         };
 
         if (ReverseBindings)
@@ -385,10 +313,8 @@ namespace
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
             AddNode(Graph, NodeInstanceId(3U), ConcreteDescriptorId);
-            AddOutputBinding(Graph, NodeInstanceId(1U), PinIndex(0U),
-                NodeInstanceId(2U), PinIndex(0U));
-            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(2U),
-                NodeInstanceId(1U), PinIndex(1U));
+            AddOutputBinding(Graph, NodeInstanceId(1U), PinIndex(0U), NodeInstanceId(2U), PinIndex(0U));
+            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(2U), NodeInstanceId(1U), PinIndex(1U));
             MPP_CHECK(GraphIRValidator::Validate(Graph, Descriptors).empty());
         }
 
@@ -397,22 +323,18 @@ namespace
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
             AddNode(Graph, NodeInstanceId(3U), ConcreteDescriptorId);
-            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(2U),
-                NodeInstanceId(1U), PinIndex(1U));
-            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(2U),
-                NodeInstanceId(1U), PinIndex(1U));
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(2U), NodeInstanceId(1U), PinIndex(1U));
+            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(2U), NodeInstanceId(1U), PinIndex(1U));
             MPP_CHECK(GraphIRValidator::Validate(Graph, Descriptors).empty());
         }
 
         {
-            const DiagnosticCollection Diagnostics =
-                GraphIRValidator::Validate(MakeConflictGraph(false), Descriptors);
+            const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(MakeConflictGraph(false), Descriptors);
             MPP_CHECK(HasCode(Diagnostics, DiagnosticCode::GenericConstraintConflict));
             MPP_CHECK(CountCode(Diagnostics, DiagnosticCode::GenericConstraintConflict) == 1U);
             MPP_CHECK(HasMessageContaining(Diagnostics, "Integer vs Float"));
 
-            const DiagnosticCollection ReversedDiagnostics =
-                GraphIRValidator::Validate(MakeConflictGraph(true), Descriptors);
+            const DiagnosticCollection ReversedDiagnostics = GraphIRValidator::Validate(MakeConflictGraph(true), Descriptors);
             MPP_CHECK(SameDiagnostics(Diagnostics, ReversedDiagnostics));
         }
 
@@ -421,10 +343,8 @@ namespace
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
             AddNode(Graph, NodeInstanceId(3U), ConcreteDescriptorId);
-            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(4U),
-                NodeInstanceId(1U), PinIndex(2U));
-            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(12U),
-                NodeInstanceId(1U), PinIndex(2U));
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(4U), NodeInstanceId(1U), PinIndex(2U));
+            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(12U), NodeInstanceId(1U), PinIndex(2U));
             const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(Graph, Descriptors);
             MPP_CHECK(CountCode(Diagnostics, DiagnosticCode::GenericConstraintConflict) == 1U);
         }
@@ -433,8 +353,7 @@ namespace
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
-            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(4U),
-                NodeInstanceId(1U), PinIndex(2U));
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(4U), NodeInstanceId(1U), PinIndex(2U));
             MPP_CHECK(GraphIRValidator::Validate(Graph, Descriptors).empty());
         }
 
@@ -442,8 +361,7 @@ namespace
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
-            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(9U),
-                NodeInstanceId(1U), PinIndex(6U));
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(9U), NodeInstanceId(1U), PinIndex(6U));
             MPP_CHECK(GraphIRValidator::Validate(Graph, Descriptors).empty());
         }
 
@@ -451,8 +369,7 @@ namespace
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
-            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(5U),
-                NodeInstanceId(1U), PinIndex(4U));
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(5U), NodeInstanceId(1U), PinIndex(4U));
             MPP_CHECK(GraphIRValidator::Validate(Graph, Descriptors).empty());
         }
 
@@ -461,10 +378,8 @@ namespace
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
             AddNode(Graph, NodeInstanceId(3U), ConcreteDescriptorId);
-            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(5U),
-                NodeInstanceId(1U), PinIndex(4U));
-            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(6U),
-                NodeInstanceId(1U), PinIndex(4U));
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(5U), NodeInstanceId(1U), PinIndex(4U));
+            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(6U), NodeInstanceId(1U), PinIndex(4U));
             const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(Graph, Descriptors);
             MPP_CHECK(HasCode(Diagnostics, DiagnosticCode::GenericConstraintConflict));
         }
@@ -474,16 +389,10 @@ namespace
             AddNode(Graph, NodeInstanceId(2U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(3U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(4U), ConcreteDescriptorId);
-            Graph.AddVariable(GraphVariable{
-                GraphVariableId(1U),
-                "ListOrInteger",
-                TypeDesc::Generic(GenericParameterId(1U)),
-                std::nullopt
-            });
+            Graph.AddVariable(GraphVariable{GraphVariableId(1U), "ListOrInteger", TypeDesc::Generic(GenericParameterId(1U)), std::nullopt});
             AddVariableBinding(Graph, NodeInstanceId(2U), PinIndex(3U), GraphVariableId(1U));
             AddVariableBinding(Graph, NodeInstanceId(3U), PinIndex(0U), GraphVariableId(1U));
-            AddOutputBinding(Graph, NodeInstanceId(4U), PinIndex(2U),
-                NodeInstanceId(3U), PinIndex(1U));
+            AddOutputBinding(Graph, NodeInstanceId(4U), PinIndex(2U), NodeInstanceId(3U), PinIndex(1U));
 
             const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(Graph, Descriptors);
             MPP_CHECK(HasCode(Diagnostics, DiagnosticCode::GenericConstraintConflict));
@@ -496,16 +405,10 @@ namespace
             AddNode(Graph, NodeInstanceId(2U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(3U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(4U), ConcreteDescriptorId);
-            Graph.AddVariable(GraphVariable{
-                GraphVariableId(1U),
-                "CompatibleList",
-                TypeDesc::Generic(GenericParameterId(1U)),
-                std::nullopt
-            });
+            Graph.AddVariable(GraphVariable{GraphVariableId(1U), "CompatibleList", TypeDesc::Generic(GenericParameterId(1U)), std::nullopt});
             AddVariableBinding(Graph, NodeInstanceId(2U), PinIndex(3U), GraphVariableId(1U));
             AddVariableBinding(Graph, NodeInstanceId(3U), PinIndex(0U), GraphVariableId(1U));
-            AddOutputBinding(Graph, NodeInstanceId(4U), PinIndex(4U),
-                NodeInstanceId(3U), PinIndex(1U));
+            AddOutputBinding(Graph, NodeInstanceId(4U), PinIndex(4U), NodeInstanceId(3U), PinIndex(1U));
 
             MPP_CHECK(GraphIRValidator::Validate(Graph, Descriptors).empty());
         }
@@ -513,12 +416,7 @@ namespace
         {
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
-            Graph.AddVariable(GraphVariable{
-                GraphVariableId(1U),
-                "GenericValue",
-                TypeDesc::Generic(GenericParameterId(1U)),
-                std::nullopt
-            });
+            Graph.AddVariable(GraphVariable{GraphVariableId(1U), "GenericValue", TypeDesc::Generic(GenericParameterId(1U)), std::nullopt});
             AddVariableBinding(Graph, NodeInstanceId(2U), PinIndex(2U), GraphVariableId(1U));
             MPP_CHECK(GraphIRValidator::Validate(Graph, Descriptors).empty());
         }
@@ -528,8 +426,7 @@ namespace
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(3U), ConcreteDescriptorId);
-            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(2U),
-                NodeInstanceId(1U), PinIndex(1U));
+            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(2U), NodeInstanceId(1U), PinIndex(1U));
             const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(Graph, Descriptors);
             MPP_CHECK(CountCode(Diagnostics, DiagnosticCode::UnresolvedGenericType) == 1U);
             MPP_CHECK(HasMessageContaining(Diagnostics, "node 2, parameter 1"));
@@ -539,18 +436,8 @@ namespace
         {
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), ConcreteDescriptorId);
-            Graph.AddVariable(GraphVariable{
-                GraphVariableId(1U),
-                "Constrained",
-                TypeDesc::Generic(GenericParameterId(1U)),
-                std::nullopt
-            });
-            Graph.AddVariable(GraphVariable{
-                GraphVariableId(2U),
-                "Independent",
-                TypeDesc::Generic(GenericParameterId(1U)),
-                std::nullopt
-            });
+            Graph.AddVariable(GraphVariable{GraphVariableId(1U), "Constrained", TypeDesc::Generic(GenericParameterId(1U)), std::nullopt});
+            Graph.AddVariable(GraphVariable{GraphVariableId(2U), "Independent", TypeDesc::Generic(GenericParameterId(1U)), std::nullopt});
             AddVariableBinding(Graph, NodeInstanceId(1U), PinIndex(2U), GraphVariableId(1U));
             const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(Graph, Descriptors);
             MPP_CHECK(CountCode(Diagnostics, DiagnosticCode::UnresolvedGenericType) == 1U);
@@ -562,14 +449,8 @@ namespace
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
-            Graph.AddVariable(GraphVariable{
-                GraphVariableId(1U),
-                "SameNumericParameter",
-                TypeDesc::Generic(GenericParameterId(1U)),
-                std::nullopt
-            });
-            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(2U),
-                NodeInstanceId(1U), PinIndex(1U));
+            Graph.AddVariable(GraphVariable{GraphVariableId(1U), "SameNumericParameter", TypeDesc::Generic(GenericParameterId(1U)), std::nullopt});
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(2U), NodeInstanceId(1U), PinIndex(1U));
             const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(Graph, Descriptors);
             MPP_CHECK(CountCode(Diagnostics, DiagnosticCode::UnresolvedGenericType) == 1U);
             MPP_CHECK(HasMessageContaining(Diagnostics, "graph variable 1, parameter 1"));
@@ -580,8 +461,7 @@ namespace
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
-            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(7U),
-                NodeInstanceId(1U), PinIndex(1U));
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(7U), NodeInstanceId(1U), PinIndex(1U));
             MPP_CHECK(GraphIRValidator::Validate(Graph, Descriptors).empty());
         }
 
@@ -589,14 +469,11 @@ namespace
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), ConcreteDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
-            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(7U),
-                NodeInstanceId(1U), PinIndex(10U));
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(7U), NodeInstanceId(1U), PinIndex(10U));
             const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(Graph, Descriptors);
             MPP_CHECK(Diagnostics.empty());
-            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(8U),
-                NodeInstanceId(1U), PinIndex(10U));
-            const DiagnosticCollection MismatchDiagnostics =
-                GraphIRValidator::Validate(Graph, Descriptors);
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(8U), NodeInstanceId(1U), PinIndex(10U));
+            const DiagnosticCollection MismatchDiagnostics = GraphIRValidator::Validate(Graph, Descriptors);
             MPP_CHECK(HasCode(MismatchDiagnostics, DiagnosticCode::IncompatibleGraphIRTypes));
         }
 
@@ -608,31 +485,11 @@ namespace
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
-            Graph.BindInput(
-                NodeInstanceId(99U),
-                PinIndex(0U),
-                OutputReference{NodeInstanceId(2U), PinIndex(0U)}
-            );
-            Graph.BindInput(
-                NodeInstanceId(1U),
-                PinIndex(99U),
-                OutputReference{NodeInstanceId(2U), PinIndex(0U)}
-            );
-            Graph.BindInput(
-                NodeInstanceId(1U),
-                PinIndex(0U),
-                OutputReference{NodeInstanceId(99U), PinIndex(0U)}
-            );
-            Graph.BindInput(
-                NodeInstanceId(1U),
-                PinIndex(0U),
-                OutputReference{NodeInstanceId(2U), PinIndex(2U)}
-            );
-            Graph.BindInput(
-                NodeInstanceId(2U),
-                PinIndex(2U),
-                GraphVariableReference{GraphVariableId(99U)}
-            );
+            Graph.BindInput(NodeInstanceId(99U), PinIndex(0U), OutputReference{NodeInstanceId(2U), PinIndex(0U)});
+            Graph.BindInput(NodeInstanceId(1U), PinIndex(99U), OutputReference{NodeInstanceId(2U), PinIndex(0U)});
+            Graph.BindInput(NodeInstanceId(1U), PinIndex(0U), OutputReference{NodeInstanceId(99U), PinIndex(0U)});
+            Graph.BindInput(NodeInstanceId(1U), PinIndex(0U), OutputReference{NodeInstanceId(2U), PinIndex(2U)});
+            Graph.BindInput(NodeInstanceId(2U), PinIndex(2U), GraphVariableReference{GraphVariableId(99U)});
             const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(Graph, Descriptors);
             MPP_CHECK(HasCode(Diagnostics, DiagnosticCode::InvalidInputBinding));
             MPP_CHECK(HasCode(Diagnostics, DiagnosticCode::InvalidGraphIRPinReference));
@@ -646,14 +503,10 @@ namespace
             AddNode(Graph, NodeInstanceId(3U), ConcreteDescriptorId);
             AddNode(Graph, NodeInstanceId(4U), ConcreteDescriptorId);
             AddNode(Graph, NodeInstanceId(5U), ConcreteDescriptorId);
-            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(2U),
-                NodeInstanceId(1U), PinIndex(1U));
-            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(2U),
-                NodeInstanceId(2U), PinIndex(0U));
-            AddOutputBinding(Graph, NodeInstanceId(4U), PinIndex(3U),
-                NodeInstanceId(1U), PinIndex(0U));
-            AddOutputBinding(Graph, NodeInstanceId(5U), PinIndex(3U),
-                NodeInstanceId(2U), PinIndex(1U));
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(2U), NodeInstanceId(1U), PinIndex(1U));
+            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(2U), NodeInstanceId(2U), PinIndex(0U));
+            AddOutputBinding(Graph, NodeInstanceId(4U), PinIndex(3U), NodeInstanceId(1U), PinIndex(0U));
+            AddOutputBinding(Graph, NodeInstanceId(5U), PinIndex(3U), NodeInstanceId(2U), PinIndex(1U));
             MPP_CHECK(GraphIRValidator::Validate(Graph, Descriptors).empty());
         }
 
@@ -662,10 +515,8 @@ namespace
             AddNode(Graph, NodeInstanceId(1U), MultiGenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
             AddNode(Graph, NodeInstanceId(3U), ConcreteDescriptorId);
-            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(2U),
-                NodeInstanceId(1U), PinIndex(0U));
-            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(3U),
-                NodeInstanceId(1U), PinIndex(1U));
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(2U), NodeInstanceId(1U), PinIndex(0U));
+            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(3U), NodeInstanceId(1U), PinIndex(1U));
             MPP_CHECK(GraphIRValidator::Validate(Graph, Descriptors).empty());
         }
 
@@ -674,18 +525,15 @@ namespace
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(3U), ConcreteDescriptorId);
-            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(3U),
-                NodeInstanceId(1U), PinIndex(1U));
-            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(2U),
-                NodeInstanceId(2U), PinIndex(1U));
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(3U), NodeInstanceId(1U), PinIndex(1U));
+            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(2U), NodeInstanceId(2U), PinIndex(1U));
             MPP_CHECK(GraphIRValidator::Validate(Graph, Descriptors).empty());
         }
 
         {
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
-            AddOutputBinding(Graph, NodeInstanceId(1U), PinIndex(0U),
-                NodeInstanceId(1U), PinIndex(1U));
+            AddOutputBinding(Graph, NodeInstanceId(1U), PinIndex(0U), NodeInstanceId(1U), PinIndex(1U));
             const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(Graph, Descriptors);
             MPP_CHECK(CountCode(Diagnostics, DiagnosticCode::UnresolvedGenericType) == 1U);
             MPP_CHECK(!HasCode(Diagnostics, DiagnosticCode::GenericConstraintConflict));
@@ -695,8 +543,7 @@ namespace
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), MultiGenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), MultiGenericDescriptorId);
-            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(3U),
-                NodeInstanceId(1U), PinIndex(0U));
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(3U), NodeInstanceId(1U), PinIndex(0U));
             const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(Graph, Descriptors);
             MPP_CHECK(HasCode(Diagnostics, DiagnosticCode::UnresolvedGenericType));
         }
@@ -705,8 +552,7 @@ namespace
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
-            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(2U),
-                NodeInstanceId(1U), PinIndex(2U));
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(2U), NodeInstanceId(1U), PinIndex(2U));
             const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(Graph, Descriptors);
             MPP_CHECK(HasCode(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes));
             MPP_CHECK(HasCode(Diagnostics, DiagnosticCode::GenericConstraintConflict));
@@ -716,8 +562,7 @@ namespace
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
-            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(4U),
-                NodeInstanceId(1U), PinIndex(4U));
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(4U), NodeInstanceId(1U), PinIndex(4U));
             const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(Graph, Descriptors);
             MPP_CHECK(HasCode(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes));
             MPP_CHECK(HasCode(Diagnostics, DiagnosticCode::GenericConstraintConflict));
@@ -727,10 +572,7 @@ namespace
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), GenericDataDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), GenericDataDescriptorId);
-            Graph.AddControlEdge(ControlEdge{
-                NodeInstanceId(1U), PinIndex(0U),
-                NodeInstanceId(2U), PinIndex(1U)
-            });
+            Graph.AddControlEdge(ControlEdge{NodeInstanceId(1U), PinIndex(0U), NodeInstanceId(2U), PinIndex(1U)});
             const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(Graph, Descriptors);
             MPP_CHECK(HasCode(Diagnostics, DiagnosticCode::UnresolvedGenericType));
         }
@@ -743,8 +585,7 @@ namespace
             GraphIR ConcreteGraph;
             AddNode(ConcreteGraph, NodeInstanceId(1U), ConcreteDescriptorId);
             AddNode(ConcreteGraph, NodeInstanceId(2U), ConcreteDescriptorId);
-            AddOutputBinding(ConcreteGraph, NodeInstanceId(2U), PinIndex(2U),
-                NodeInstanceId(1U), PinIndex(0U));
+            AddOutputBinding(ConcreteGraph, NodeInstanceId(2U), PinIndex(2U), NodeInstanceId(1U), PinIndex(0U));
             MPP_CHECK(GraphIRValidator::Validate(ConcreteGraph, Descriptors).empty());
 
             GraphBuilder Builder(Descriptors);
@@ -754,20 +595,12 @@ namespace
             MPP_CHECK(Target.has_value());
             const auto Output = Builder.GetOutput<int>(*Source, PinIndex(0U));
             MPP_CHECK(Output.has_value());
-            MPP_CHECK(Builder.BindInput(
-                *Target,
-                PinIndex(2U),
-                ValueOrExpr<int>(*Output)
-            ).has_value());
+            MPP_CHECK(Builder.BindInput(*Target, PinIndex(2U), ValueOrExpr<int>(*Output)).has_value());
             const auto Variable = Builder.DeclareVariable<int>("Score");
             MPP_CHECK(Variable.has_value());
             const auto VariableTarget = Builder.AddNode(ConcreteDescriptorId);
             MPP_CHECK(VariableTarget.has_value());
-            MPP_CHECK(Builder.BindInput(
-                *VariableTarget,
-                PinIndex(2U),
-                Variable->AsInput()
-            ).has_value());
+            MPP_CHECK(Builder.BindInput(*VariableTarget, PinIndex(2U), Variable->AsInput()).has_value());
             MPP_CHECK(std::move(Builder).Finalize().has_value());
         }
 
@@ -775,11 +608,7 @@ namespace
             GraphBuilder Builder(Descriptors);
             const auto GenericNode = Builder.AddNode(GenericDescriptorId);
             MPP_CHECK(GenericNode.has_value());
-            const auto LiteralBinding = Builder.BindInput(
-                *GenericNode,
-                PinIndex(0U),
-                ValueOrExpr<int>(LiteralValue(LiteralValue::Data{std::int64_t{7}}))
-            );
+            const auto LiteralBinding = Builder.BindInput(*GenericNode, PinIndex(0U), ValueOrExpr<int>(LiteralValue(LiteralValue::Data{std::int64_t{7}})));
             MPP_CHECK(!LiteralBinding.has_value());
             MPP_CHECK(HasCode(LiteralBinding.error(), DiagnosticCode::IncompatibleGraphIRTypes));
         }
@@ -809,14 +638,8 @@ namespace
         }
 
         {
-            const DiagnosticCollection ForwardDiagnostics = GraphIRValidator::Validate(
-                MakeMultipleConflictGraph(false),
-                Descriptors
-            );
-            const DiagnosticCollection ReversedDiagnostics = GraphIRValidator::Validate(
-                MakeMultipleConflictGraph(true),
-                Descriptors
-            );
+            const DiagnosticCollection ForwardDiagnostics = GraphIRValidator::Validate(MakeMultipleConflictGraph(false), Descriptors);
+            const DiagnosticCollection ReversedDiagnostics = GraphIRValidator::Validate(MakeMultipleConflictGraph(true), Descriptors);
             MPP_CHECK(CountCode(ForwardDiagnostics, DiagnosticCode::GenericConstraintConflict) == 2U);
             MPP_CHECK(CountCode(ForwardDiagnostics, DiagnosticCode::UnresolvedGenericType) == 1U);
             MPP_CHECK(SameDiagnostics(ForwardDiagnostics, ReversedDiagnostics));
@@ -837,33 +660,17 @@ namespace
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), GenericDescriptorId);
-            AddOutputBinding(
-                Graph,
-                NodeInstanceId(2U),
-                PinIndex(0U),
-                NodeInstanceId(1U),
-                PinIndex(1U),
-                TypeDesc::Integer()
-            );
-            MPP_CHECK(Graph.GetInputBindings().front().OutputTypeConstraint ==
-                TypeDesc::Integer());
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(0U), NodeInstanceId(1U), PinIndex(1U), TypeDesc::Integer());
+            MPP_CHECK(Graph.GetInputBindings().front().OutputTypeConstraint == TypeDesc::Integer());
             MPP_CHECK(GraphIRValidator::Validate(Graph, Descriptors).empty());
-            MPP_CHECK(Descriptors.Find(GenericDescriptorId)->GetPins()[1U].GetType() ==
-                TypeDesc::Generic(GenericParameterId(1U)));
+            MPP_CHECK(Descriptors.Find(GenericDescriptorId)->GetPins()[1U].GetType() == TypeDesc::Generic(GenericParameterId(1U)));
         }
 
         {
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
-            AddOutputBinding(
-                Graph,
-                NodeInstanceId(2U),
-                PinIndex(2U),
-                NodeInstanceId(1U),
-                PinIndex(1U),
-                TypeDesc::Integer()
-            );
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(2U), NodeInstanceId(1U), PinIndex(1U), TypeDesc::Integer());
             MPP_CHECK(GraphIRValidator::Validate(Graph, Descriptors).empty());
         }
 
@@ -871,14 +678,7 @@ namespace
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
-            AddOutputBinding(
-                Graph,
-                NodeInstanceId(2U),
-                PinIndex(3U),
-                NodeInstanceId(1U),
-                PinIndex(1U),
-                TypeDesc::Integer()
-            );
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(3U), NodeInstanceId(1U), PinIndex(1U), TypeDesc::Integer());
             const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(Graph, Descriptors);
             MPP_CHECK(HasCode(Diagnostics, DiagnosticCode::GenericConstraintConflict));
         }
@@ -887,30 +687,14 @@ namespace
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
-            AddOutputBinding(
-                Graph,
-                NodeInstanceId(2U),
-                PinIndex(3U),
-                NodeInstanceId(1U),
-                PinIndex(1U),
-                TypeDesc::Float()
-            );
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(3U), NodeInstanceId(1U), PinIndex(1U), TypeDesc::Float());
             MPP_CHECK(GraphIRValidator::Validate(Graph, Descriptors).empty());
         }
 
         {
-            const DiagnosticCollection ForwardDiagnostics = GraphIRValidator::Validate(
-                MakeOutputIntentConflictGraph(false),
-                Descriptors
-            );
-            const DiagnosticCollection ReversedDiagnostics = GraphIRValidator::Validate(
-                MakeOutputIntentConflictGraph(true),
-                Descriptors
-            );
-            MPP_CHECK(CountCode(
-                ForwardDiagnostics,
-                DiagnosticCode::GenericConstraintConflict
-            ) == 1U);
+            const DiagnosticCollection ForwardDiagnostics = GraphIRValidator::Validate(MakeOutputIntentConflictGraph(false), Descriptors);
+            const DiagnosticCollection ReversedDiagnostics = GraphIRValidator::Validate(MakeOutputIntentConflictGraph(true), Descriptors);
+            MPP_CHECK(CountCode(ForwardDiagnostics, DiagnosticCode::GenericConstraintConflict) == 1U);
             MPP_CHECK(SameDiagnostics(ForwardDiagnostics, ReversedDiagnostics));
         }
 
@@ -919,21 +703,8 @@ namespace
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(3U), ConcreteDescriptorId);
-            AddOutputBinding(
-                Graph,
-                NodeInstanceId(2U),
-                PinIndex(0U),
-                NodeInstanceId(1U),
-                PinIndex(1U),
-                TypeDesc::Integer()
-            );
-            AddOutputBinding(
-                Graph,
-                NodeInstanceId(3U),
-                PinIndex(3U),
-                NodeInstanceId(2U),
-                PinIndex(1U)
-            );
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(0U), NodeInstanceId(1U), PinIndex(1U), TypeDesc::Integer());
+            AddOutputBinding(Graph, NodeInstanceId(3U), PinIndex(3U), NodeInstanceId(2U), PinIndex(1U));
             const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(Graph, Descriptors);
             MPP_CHECK(HasCode(Diagnostics, DiagnosticCode::GenericConstraintConflict));
         }
@@ -942,14 +713,7 @@ namespace
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
-            AddOutputBinding(
-                Graph,
-                NodeInstanceId(2U),
-                PinIndex(4U),
-                NodeInstanceId(1U),
-                PinIndex(2U),
-                TypeDesc::List(TypeDesc::Integer())
-            );
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(4U), NodeInstanceId(1U), PinIndex(2U), TypeDesc::List(TypeDesc::Integer()));
             MPP_CHECK(GraphIRValidator::Validate(Graph, Descriptors).empty());
         }
 
@@ -957,14 +721,7 @@ namespace
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
-            AddOutputBinding(
-                Graph,
-                NodeInstanceId(2U),
-                PinIndex(9U),
-                NodeInstanceId(1U),
-                PinIndex(6U),
-                TypeDesc::List(TypeDesc::List(TypeDesc::Integer()))
-            );
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(9U), NodeInstanceId(1U), PinIndex(6U), TypeDesc::List(TypeDesc::List(TypeDesc::Integer())));
             MPP_CHECK(GraphIRValidator::Validate(Graph, Descriptors).empty());
         }
 
@@ -972,14 +729,7 @@ namespace
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
-            AddOutputBinding(
-                Graph,
-                NodeInstanceId(2U),
-                PinIndex(5U),
-                NodeInstanceId(1U),
-                PinIndex(4U),
-                TypeDesc::Dictionary(TypeDesc::Integer(), TypeDesc::String())
-            );
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(5U), NodeInstanceId(1U), PinIndex(4U), TypeDesc::Dictionary(TypeDesc::Integer(), TypeDesc::String()));
             MPP_CHECK(GraphIRValidator::Validate(Graph, Descriptors).empty());
         }
 
@@ -987,14 +737,7 @@ namespace
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
-            AddOutputBinding(
-                Graph,
-                NodeInstanceId(2U),
-                PinIndex(6U),
-                NodeInstanceId(1U),
-                PinIndex(4U),
-                TypeDesc::Dictionary(TypeDesc::Integer(), TypeDesc::String())
-            );
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(6U), NodeInstanceId(1U), PinIndex(4U), TypeDesc::Dictionary(TypeDesc::Integer(), TypeDesc::String()));
             const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(Graph, Descriptors);
             MPP_CHECK(HasCode(Diagnostics, DiagnosticCode::GenericConstraintConflict));
         }
@@ -1005,106 +748,44 @@ namespace
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
             AddNode(Graph, NodeInstanceId(3U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(4U), ConcreteDescriptorId);
-            AddOutputBinding(
-                Graph,
-                NodeInstanceId(2U),
-                PinIndex(2U),
-                NodeInstanceId(1U),
-                PinIndex(1U),
-                TypeDesc::Integer()
-            );
-            AddOutputBinding(
-                Graph,
-                NodeInstanceId(4U),
-                PinIndex(3U),
-                NodeInstanceId(3U),
-                PinIndex(1U),
-                TypeDesc::Float()
-            );
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(2U), NodeInstanceId(1U), PinIndex(1U), TypeDesc::Integer());
+            AddOutputBinding(Graph, NodeInstanceId(4U), PinIndex(3U), NodeInstanceId(3U), PinIndex(1U), TypeDesc::Float());
             MPP_CHECK(GraphIRValidator::Validate(Graph, Descriptors).empty());
         }
 
         {
             GraphIR LiteralConstraint;
             AddNode(LiteralConstraint, NodeInstanceId(1U), ConcreteDescriptorId);
-            LiteralConstraint.BindInput(
-                NodeInstanceId(1U),
-                PinIndex(2U),
-                LiteralValue(LiteralValue::Data{std::int64_t{1}}),
-                TypeDesc::Integer()
-            );
-            MPP_CHECK(HasCode(
-                GraphIRValidator::Validate(LiteralConstraint, Descriptors),
-                DiagnosticCode::InvalidInputBinding
-            ));
+            LiteralConstraint.BindInput(NodeInstanceId(1U), PinIndex(2U), LiteralValue(LiteralValue::Data{std::int64_t{1}}), TypeDesc::Integer());
+            MPP_CHECK(HasCode(GraphIRValidator::Validate(LiteralConstraint, Descriptors), DiagnosticCode::InvalidInputBinding));
 
             GraphIR VariableConstraint;
             AddNode(VariableConstraint, NodeInstanceId(1U), ConcreteDescriptorId);
-            VariableConstraint.AddVariable(GraphVariable{
-                GraphVariableId(1U), "Value", TypeDesc::Integer(), std::nullopt
-            });
-            VariableConstraint.BindInput(
-                NodeInstanceId(1U),
-                PinIndex(2U),
-                GraphVariableReference{GraphVariableId(1U)},
-                TypeDesc::Integer()
-            );
-            MPP_CHECK(HasCode(
-                GraphIRValidator::Validate(VariableConstraint, Descriptors),
-                DiagnosticCode::InvalidInputBinding
-            ));
+            VariableConstraint.AddVariable(GraphVariable{GraphVariableId(1U), "Value", TypeDesc::Integer(), std::nullopt});
+            VariableConstraint.BindInput(NodeInstanceId(1U), PinIndex(2U), GraphVariableReference{GraphVariableId(1U)}, TypeDesc::Integer());
+            MPP_CHECK(HasCode(GraphIRValidator::Validate(VariableConstraint, Descriptors), DiagnosticCode::InvalidInputBinding));
         }
 
         {
             GraphIR InvalidConstraint;
             AddNode(InvalidConstraint, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(InvalidConstraint, NodeInstanceId(2U), ConcreteDescriptorId);
-            AddOutputBinding(
-                InvalidConstraint,
-                NodeInstanceId(2U),
-                PinIndex(2U),
-                NodeInstanceId(1U),
-                PinIndex(1U),
-                TypeDesc{}
-            );
-            MPP_CHECK(HasCode(
-                GraphIRValidator::Validate(InvalidConstraint, Descriptors),
-                DiagnosticCode::IncompatibleGraphIRTypes
-            ));
+            AddOutputBinding(InvalidConstraint, NodeInstanceId(2U), PinIndex(2U), NodeInstanceId(1U), PinIndex(1U), TypeDesc{});
+            MPP_CHECK(HasCode(GraphIRValidator::Validate(InvalidConstraint, Descriptors), DiagnosticCode::IncompatibleGraphIRTypes));
 
             GraphIR GenericConstraint;
             AddNode(GenericConstraint, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(GenericConstraint, NodeInstanceId(2U), ConcreteDescriptorId);
-            AddOutputBinding(
-                GenericConstraint,
-                NodeInstanceId(2U),
-                PinIndex(2U),
-                NodeInstanceId(1U),
-                PinIndex(1U),
-                TypeDesc::List(TypeDesc::Generic(GenericParameterId(7U)))
-            );
-            MPP_CHECK(HasCode(
-                GraphIRValidator::Validate(GenericConstraint, Descriptors),
-                DiagnosticCode::IncompatibleGraphIRTypes
-            ));
+            AddOutputBinding(GenericConstraint, NodeInstanceId(2U), PinIndex(2U), NodeInstanceId(1U), PinIndex(1U), TypeDesc::List(TypeDesc::Generic(GenericParameterId(7U))));
+            MPP_CHECK(HasCode(GraphIRValidator::Validate(GenericConstraint, Descriptors), DiagnosticCode::IncompatibleGraphIRTypes));
         }
 
         {
             GraphIR ConcreteMismatch;
             AddNode(ConcreteMismatch, NodeInstanceId(1U), ConcreteDescriptorId);
             AddNode(ConcreteMismatch, NodeInstanceId(2U), ConcreteDescriptorId);
-            AddOutputBinding(
-                ConcreteMismatch,
-                NodeInstanceId(2U),
-                PinIndex(2U),
-                NodeInstanceId(1U),
-                PinIndex(0U),
-                TypeDesc::Float()
-            );
-            MPP_CHECK(HasCode(
-                GraphIRValidator::Validate(ConcreteMismatch, Descriptors),
-                DiagnosticCode::IncompatibleGraphIRTypes
-            ));
+            AddOutputBinding(ConcreteMismatch, NodeInstanceId(2U), PinIndex(2U), NodeInstanceId(1U), PinIndex(0U), TypeDesc::Float());
+            MPP_CHECK(HasCode(GraphIRValidator::Validate(ConcreteMismatch, Descriptors), DiagnosticCode::IncompatibleGraphIRTypes));
         }
 
         {
@@ -1123,14 +804,7 @@ namespace
             GraphIR Graph;
             AddNode(Graph, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(Graph, NodeInstanceId(2U), ConcreteDescriptorId);
-            AddOutputBinding(
-                Graph,
-                NodeInstanceId(2U),
-                PinIndex(2U),
-                NodeInstanceId(1U),
-                PinIndex(99U),
-                TypeDesc::Integer()
-            );
+            AddOutputBinding(Graph, NodeInstanceId(2U), PinIndex(2U), NodeInstanceId(1U), PinIndex(99U), TypeDesc::Integer());
 
             const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(Graph, Descriptors);
             MPP_CHECK(Diagnostics.size() == 2U);
@@ -1142,10 +816,7 @@ namespace
         }
 
         {
-            const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(
-                MakeMixedStructuralAndGenericConflictGraph(false),
-                Descriptors
-            );
+            const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(MakeMixedStructuralAndGenericConflictGraph(false), Descriptors);
             MPP_CHECK(Diagnostics.size() == 2U);
             MPP_CHECK(Diagnostics[0U].Code == DiagnosticCode::InvalidGraphIRPinReference);
             MPP_CHECK(Diagnostics[1U].Code == DiagnosticCode::GenericConstraintConflict);
@@ -1153,29 +824,16 @@ namespace
             MPP_CHECK(CountCode(Diagnostics, DiagnosticCode::GenericConstraintConflict) == 1U);
             MPP_CHECK(CountCode(Diagnostics, DiagnosticCode::UnresolvedGenericType) == 0U);
 
-            const DiagnosticCollection ReversedDiagnostics = GraphIRValidator::Validate(
-                MakeMixedStructuralAndGenericConflictGraph(true),
-                Descriptors
-            );
+            const DiagnosticCollection ReversedDiagnostics = GraphIRValidator::Validate(MakeMixedStructuralAndGenericConflictGraph(true), Descriptors);
             MPP_CHECK(SameDiagnostics(Diagnostics, ReversedDiagnostics));
         }
 
         {
             GraphIR MissingSource;
             AddNode(MissingSource, NodeInstanceId(2U), ConcreteDescriptorId);
-            AddOutputBinding(
-                MissingSource,
-                NodeInstanceId(2U),
-                PinIndex(2U),
-                NodeInstanceId(99U),
-                PinIndex(1U),
-                TypeDesc::Integer()
-            );
+            AddOutputBinding(MissingSource, NodeInstanceId(2U), PinIndex(2U), NodeInstanceId(99U), PinIndex(1U), TypeDesc::Integer());
 
-            const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(
-                MissingSource,
-                Descriptors
-            );
+            const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(MissingSource, Descriptors);
             MPP_CHECK(Diagnostics.size() == 1U);
             MPP_CHECK(Diagnostics[0U].Code == DiagnosticCode::InvalidGraphIRPinReference);
             MPP_CHECK(CountCode(Diagnostics, DiagnosticCode::GenericConstraintConflict) == 0U);
@@ -1185,14 +843,8 @@ namespace
         {
             constexpr NodeDescriptorId EntityDictionarySourceId(2005U);
             constexpr NodeDescriptorId EntityDictionaryTargetId(2006U);
-            const TypeDesc GenericEntityDictionary = TypeDesc::Dictionary(
-                TypeDesc::Generic(GenericParameterId(1U)),
-                TypeDesc::Entity()
-            );
-            const TypeDesc IntegerEntityDictionary = TypeDesc::Dictionary(
-                TypeDesc::Integer(),
-                TypeDesc::Entity()
-            );
+            const TypeDesc GenericEntityDictionary = TypeDesc::Dictionary(TypeDesc::Generic(GenericParameterId(1U)), TypeDesc::Entity());
+            const TypeDesc IntegerEntityDictionary = TypeDesc::Dictionary(TypeDesc::Integer(), TypeDesc::Entity());
             NodeDescriptorRegistry EntityDictionaryDescriptors;
             MPP_CHECK(EntityDictionaryDescriptors.Register(NodeDescriptor(
                 EntityDictionarySourceId,
@@ -1212,46 +864,22 @@ namespace
             GraphIR EntityDictionaryGraph;
             AddNode(EntityDictionaryGraph, NodeInstanceId(1U), EntityDictionarySourceId);
             AddNode(EntityDictionaryGraph, NodeInstanceId(2U), EntityDictionaryTargetId);
-            EntityDictionaryGraph.BindInput(
-                NodeInstanceId(2U),
-                PinIndex(0U),
-                OutputReference{NodeInstanceId(1U), PinIndex(0U)},
-                IntegerEntityDictionary
-            );
-            MPP_CHECK(GraphIRValidator::Validate(
-                EntityDictionaryGraph,
-                EntityDictionaryDescriptors
-            ).empty());
+            EntityDictionaryGraph.BindInput(NodeInstanceId(2U), PinIndex(0U), OutputReference{NodeInstanceId(1U), PinIndex(0U)}, IntegerEntityDictionary);
+            MPP_CHECK(GraphIRValidator::Validate(EntityDictionaryGraph, EntityDictionaryDescriptors).empty());
 
-            const auto RoundTrip = GraphIRJson::Deserialize(
-                GraphIRJson::Serialize(EntityDictionaryGraph)
-            );
+            const auto RoundTrip = GraphIRJson::Deserialize(GraphIRJson::Serialize(EntityDictionaryGraph));
             MPP_CHECK(RoundTrip.has_value());
-            MPP_CHECK(RoundTrip->GetInputBindings().front().OutputTypeConstraint ==
-                IntegerEntityDictionary);
-            MPP_CHECK(GraphIRValidator::Validate(
-                *RoundTrip,
-                EntityDictionaryDescriptors
-            ).empty());
+            MPP_CHECK(RoundTrip->GetInputBindings().front().OutputTypeConstraint == IntegerEntityDictionary);
+            MPP_CHECK(GraphIRValidator::Validate(*RoundTrip, EntityDictionaryDescriptors).empty());
         }
 
         {
             GraphIR FlowTypeConstraint;
             AddNode(FlowTypeConstraint, NodeInstanceId(1U), GenericDescriptorId);
             AddNode(FlowTypeConstraint, NodeInstanceId(2U), GenericDescriptorId);
-            AddOutputBinding(
-                FlowTypeConstraint,
-                NodeInstanceId(2U),
-                PinIndex(0U),
-                NodeInstanceId(1U),
-                PinIndex(1U),
-                TypeDesc::Flow()
-            );
+            AddOutputBinding(FlowTypeConstraint, NodeInstanceId(2U), PinIndex(0U), NodeInstanceId(1U), PinIndex(1U), TypeDesc::Flow());
 
-            const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(
-                FlowTypeConstraint,
-                Descriptors
-            );
+            const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(FlowTypeConstraint, Descriptors);
             MPP_CHECK(HasCode(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes));
             MPP_CHECK(CountCode(Diagnostics, DiagnosticCode::GenericConstraintConflict) == 0U);
             MPP_CHECK(CountCode(Diagnostics, DiagnosticCode::UnresolvedGenericType) > 0U);
@@ -1260,20 +888,10 @@ namespace
         {
             GraphIR FlowGraphVariable;
             AddNode(FlowGraphVariable, NodeInstanceId(1U), GenericDescriptorId);
-            FlowGraphVariable.AddVariable(GraphVariable{
-                GraphVariableId(1U), "Control", TypeDesc::Flow(), std::nullopt
-            });
-            AddVariableBinding(
-                FlowGraphVariable,
-                NodeInstanceId(1U),
-                PinIndex(0U),
-                GraphVariableId(1U)
-            );
+            FlowGraphVariable.AddVariable(GraphVariable{GraphVariableId(1U), "Control", TypeDesc::Flow(), std::nullopt});
+            AddVariableBinding(FlowGraphVariable, NodeInstanceId(1U), PinIndex(0U), GraphVariableId(1U));
 
-            const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(
-                FlowGraphVariable,
-                Descriptors
-            );
+            const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(FlowGraphVariable, Descriptors);
             MPP_CHECK(HasCode(Diagnostics, DiagnosticCode::InvalidGraphVariable));
             MPP_CHECK(CountCode(Diagnostics, DiagnosticCode::GenericConstraintConflict) == 0U);
             MPP_CHECK(CountCode(Diagnostics, DiagnosticCode::UnresolvedGenericType) > 0U);

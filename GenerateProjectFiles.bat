@@ -146,7 +146,7 @@ exit /b 1
 )
 
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$path = 'Miliastra++.sln'; $s = Get-Content -LiteralPath $path -Raw; $q = [char]34; Get-ChildItem -LiteralPath 'Miliastra++' -Filter '*.vcxproj' | ForEach-Object { $file = $_.Name; $s = $s.Replace(', ' + $q + $file + $q, ', ' + $q + 'Miliastra++\' + $file + $q) }; [System.IO.File]::WriteAllText($path, $s, [System.Text.UTF8Encoding]::new($false))"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$path = 'Miliastra++.sln'; $separator = [char]92; $binaryRoot = (Resolve-Path -LiteralPath 'Miliastra++').Path.TrimEnd($separator) + $separator; $s = Get-Content -LiteralPath $path -Raw; $q = [char]34; Get-ChildItem -LiteralPath 'Miliastra++' -Recurse -Filter '*.vcxproj' -File | ForEach-Object { $relative = $_.FullName.Substring($binaryRoot.Length).Replace([char]47, $separator); $s = $s.Replace($q + $relative + $q, $q + 'Miliastra++' + $separator + $relative + $q) }; [System.IO.File]::WriteAllText($path, $s, [System.Text.UTF8Encoding]::new($false))"
 
 if %ERRORLEVEL% neq 0 (
 echo.

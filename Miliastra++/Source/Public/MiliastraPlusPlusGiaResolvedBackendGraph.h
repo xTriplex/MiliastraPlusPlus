@@ -79,8 +79,7 @@ namespace MiliastraPlusPlus
     {
         DescriptorCatalogueIdentity CatalogueIdentity;
         GiaBackendMappingSchemaVersion MappingSchemaVersion;
-        GiaExportTargetProfile TargetProfile =
-            GiaExportTargetProfile::ClientBooleanFilter;
+        GiaExportTargetProfile TargetProfile = GiaExportTargetProfile::ClientBooleanFilter;
         GiaExportMode Mode = GiaExportMode::Beyond;
         GiaGraphIdentifier GraphIdentifier;
         std::string GraphName;
@@ -88,14 +87,10 @@ namespace MiliastraPlusPlus
         float EvaluationInterval = 0.0F;
         std::int32_t GraphType = 0;
         std::int32_t GraphWhich = 0;
-        GiaResolvedGraphUnitClass RootClass =
-            GiaResolvedGraphUnitClass::Node;
-        GiaResolvedGraphUnitType RootType =
-            GiaResolvedGraphUnitType::ClientGraph;
-        GiaResolvedNodeGraphClass InnerClass =
-            GiaResolvedNodeGraphClass::UserDefined;
-        GiaResolvedNodeGraphKind InnerKind =
-            GiaResolvedNodeGraphKind::NodeGraph;
+        GiaResolvedGraphUnitClass RootClass = GiaResolvedGraphUnitClass::Node;
+        GiaResolvedGraphUnitType RootType = GiaResolvedGraphUnitType::ClientGraph;
+        GiaResolvedNodeGraphClass InnerClass = GiaResolvedNodeGraphClass::UserDefined;
+        GiaResolvedNodeGraphKind InnerKind = GiaResolvedNodeGraphKind::NodeGraph;
         std::int32_t EntrySlotIndex = 0;
         std::optional<std::uint32_t> RootModeFlag;
 
@@ -130,19 +125,9 @@ namespace MiliastraPlusPlus
 
     namespace GiaResolvedBackendGraphDetail
     {
-        using PinOrderKeyType = std::tuple<
-            int,
-            std::int32_t,
-            std::int32_t,
-            std::uint32_t>;
-        using EndpointOrderKeyType = std::tuple<
-            std::int32_t,
-            int,
-            std::int32_t,
-            std::int32_t>;
-        using DataConnectionOrderKeyType = std::tuple<
-            EndpointOrderKeyType,
-            EndpointOrderKeyType>;
+        using PinOrderKeyType = std::tuple<int, std::int32_t, std::int32_t, std::uint32_t>;
+        using EndpointOrderKeyType = std::tuple<std::int32_t, int, std::int32_t, std::int32_t>;
+        using DataConnectionOrderKeyType = std::tuple<EndpointOrderKeyType, EndpointOrderKeyType>;
         using ControlConnectionOrderKeyType = DataConnectionOrderKeyType;
 
         [[nodiscard]] inline bool IsSupportedPinKind(GiaPinKind Kind) noexcept
@@ -163,9 +148,7 @@ namespace MiliastraPlusPlus
         [[nodiscard]] inline bool IsSupportedSemanticType(const TypeDesc& Type)
         {
             return Type.GetKind() == TypeDesc::Kind::Boolean ||
-                (Type.GetKind() == TypeDesc::Kind::Enum &&
-                    Type.GetEnumTypeIdentity() ==
-                        EnumTypeIdentity("filter_return_type"));
+                (Type.GetKind() == TypeDesc::Kind::Enum && Type.GetEnumTypeIdentity() == EnumTypeIdentity("filter_return_type"));
         }
 
         [[nodiscard]] inline bool IsLiteralCompatible(const LiteralValue& Literal, const TypeDesc& Type)
@@ -182,9 +165,7 @@ namespace MiliastraPlusPlus
 
             if (Type.GetKind() == TypeDesc::Kind::Enum)
             {
-                return Literal.Is<EnumLiteralValue>() &&
-                    Literal.TryGet<EnumLiteralValue>()->GetEnumTypeIdentity() ==
-                    Type.GetEnumTypeIdentity();
+                return Literal.Is<EnumLiteralValue>() && Literal.TryGet<EnumLiteralValue>()->GetEnumTypeIdentity() == Type.GetEnumTypeIdentity();
             }
 
             return false;
@@ -197,22 +178,19 @@ namespace MiliastraPlusPlus
             GiaBackendInputValueSourceKind SourceKind,
             const std::optional<LiteralValue>& Literal)
         {
-            if (!IsSupportedSemanticType(SemanticType) ||
-                !BackendTypeCode.IsValid())
+            if (!IsSupportedSemanticType(SemanticType) || !BackendTypeCode.IsValid())
             {
                 return false;
             }
 
             if (SemanticType.GetKind() == TypeDesc::Kind::Boolean)
             {
-                if (BackendTypeCode.GetValue() != 5 ||
-                    LiteralEncoding != GiaLiteralEncodingKind::Boolean)
+                if (BackendTypeCode.GetValue() != 5 || LiteralEncoding != GiaLiteralEncodingKind::Boolean)
                 {
                     return false;
                 }
             }
-            else if (BackendTypeCode.GetValue() != 13 ||
-                LiteralEncoding != GiaLiteralEncodingKind::Enum)
+            else if (BackendTypeCode.GetValue() != 13 || LiteralEncoding != GiaLiteralEncodingKind::Enum)
             {
                 return false;
             }
@@ -222,8 +200,7 @@ namespace MiliastraPlusPlus
                 return !Literal.has_value();
             }
 
-            return (SourceKind == GiaBackendInputValueSourceKind::DescriptorDefault ||
-                    SourceKind == GiaBackendInputValueSourceKind::ExplicitLiteral) &&
+            return (SourceKind == GiaBackendInputValueSourceKind::DescriptorDefault || SourceKind == GiaBackendInputValueSourceKind::ExplicitLiteral) &&
                 Literal.has_value() &&
                 IsLiteralCompatible(*Literal, SemanticType);
         }
@@ -240,21 +217,14 @@ namespace MiliastraPlusPlus
     struct GiaResolvedInputValue
     {
         TypeDesc SemanticType;
-        GiaBackendInputValueSourceKind SourceKind =
-            GiaBackendInputValueSourceKind::DescriptorDefault;
+        GiaBackendInputValueSourceKind SourceKind = GiaBackendInputValueSourceKind::DescriptorDefault;
         std::optional<LiteralValue> Literal;
         GiaBackendTypeCode BackendTypeCode;
         GiaLiteralEncodingKind LiteralEncoding = GiaLiteralEncodingKind::None;
 
         [[nodiscard]] bool IsValid() const
         {
-            return GiaResolvedBackendGraphDetail::IsInputTupleValid(
-                SemanticType,
-                BackendTypeCode,
-                LiteralEncoding,
-                SourceKind,
-                Literal
-            );
+            return GiaResolvedBackendGraphDetail::IsInputTupleValid(SemanticType, BackendTypeCode, LiteralEncoding, SourceKind, Literal);
         }
 
         bool operator==(const GiaResolvedInputValue&) const = default;
@@ -279,25 +249,20 @@ namespace MiliastraPlusPlus
                 !PrimaryIndex.IsValid() ||
                 !SecondaryIndex.IsValid() ||
                 !BackendTypeCode.IsValid() ||
-                !GiaResolvedBackendGraphDetail::IsValidLiteralEncoding(
-                    LiteralEncoding
-                ) ||
+                !GiaResolvedBackendGraphDetail::IsValidLiteralEncoding(LiteralEncoding) ||
                 (EmissionPolicy != GiaPinEmissionPolicy::Emit &&
                     EmissionPolicy != GiaPinEmissionPolicy::Omit))
             {
                 return false;
             }
 
-            if ((Kind == GiaPinKind::InputFlow ||
-                    Kind == GiaPinKind::OutputFlow) &&
-                LiteralEncoding != GiaLiteralEncodingKind::None)
+            if ((Kind == GiaPinKind::InputFlow || Kind == GiaPinKind::OutputFlow) && LiteralEncoding != GiaLiteralEncodingKind::None)
             {
                 return false;
             }
 
             if (EmissionPolicy == GiaPinEmissionPolicy::Omit &&
-                (IsConnectable || InputValue.has_value() ||
-                    LiteralEncoding != GiaLiteralEncodingKind::None))
+                (IsConnectable || InputValue.has_value() || LiteralEncoding != GiaLiteralEncodingKind::None))
             {
                 return false;
             }
@@ -326,10 +291,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] bool IsValid() const
         {
-            return Node.IsValid() &&
-                GiaResolvedBackendGraphDetail::IsSupportedPinKind(Kind) &&
-                PrimaryIndex.IsValid() &&
-                SecondaryIndex.IsValid();
+            return Node.IsValid() && GiaResolvedBackendGraphDetail::IsSupportedPinKind(Kind) && PrimaryIndex.IsValid() && SecondaryIndex.IsValid();
         }
 
         bool operator==(const GiaResolvedPinEndpoint&) const = default;
@@ -343,8 +305,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] bool IsValid() const
         {
-            return Source.IsValid() && Destination.IsValid() &&
-                ValueType.IsValid();
+            return Source.IsValid() && Destination.IsValid() && ValueType.IsValid();
         }
 
         bool operator==(const GiaResolvedDataConnection&) const = default;
@@ -403,11 +364,7 @@ namespace MiliastraPlusPlus
 
                 if (Index > 0U)
                 {
-                    if (!(GiaResolvedBackendGraphDetail::PinOrderKey(
-                            Pins[Index - 1U]
-                        ) < GiaResolvedBackendGraphDetail::PinOrderKey(
-                            Pins[Index]
-                        )))
+                    if (!(GiaResolvedBackendGraphDetail::PinOrderKey(Pins[Index - 1U]) < GiaResolvedBackendGraphDetail::PinOrderKey(Pins[Index])))
                     {
                         return false;
                     }
@@ -506,8 +463,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] inline bool IsStrictlyBefore(const GiaResolvedControlConnection& Left, const GiaResolvedControlConnection& Right)
         {
-            return ControlConnectionOrderKey(Left) <
-                ControlConnectionOrderKey(Right);
+            return ControlConnectionOrderKey(Left) < ControlConnectionOrderKey(Right);
         }
     }
 
@@ -562,55 +518,35 @@ namespace MiliastraPlusPlus
             {
                 const GiaResolvedNode& Node = m_Nodes[Index];
                 if (!Node.IsValid() ||
-                    Node.GraphNode.GetValue() >
-                        static_cast<std::uint64_t>(
-                            std::numeric_limits<std::int32_t>::max()
-                        ) ||
-                    Node.GraphNode.GetValue() !=
-                        static_cast<std::uint64_t>(Node.NodeIndex.GetValue()))
+                    Node.GraphNode.GetValue() > static_cast<std::uint64_t>(std::numeric_limits<std::int32_t>::max()) ||
+                    Node.GraphNode.GetValue() != static_cast<std::uint64_t>(Node.NodeIndex.GetValue()))
                 {
                     return false;
                 }
 
-                if (Index > 0U &&
-                    (m_Nodes[Index - 1U].GraphNode >= Node.GraphNode ||
-                        m_Nodes[Index - 1U].NodeIndex >= Node.NodeIndex))
+                if (Index > 0U && (m_Nodes[Index - 1U].GraphNode >= Node.GraphNode || m_Nodes[Index - 1U].NodeIndex >= Node.NodeIndex))
                 {
                     return false;
                 }
             }
 
-            for (std::size_t Index = 0U;
-                Index < m_DataConnections.size();
-                ++Index)
+            for (std::size_t Index = 0U; Index < m_DataConnections.size(); ++Index)
             {
-                const GiaResolvedDataConnection& Connection =
-                    m_DataConnections[Index];
+                const GiaResolvedDataConnection& Connection = m_DataConnections[Index];
                 if (!Connection.IsValid() ||
-                    (Index > 0U &&
-                        !GiaResolvedBackendGraphDetail::IsStrictlyBefore(
-                            m_DataConnections[Index - 1U],
-                            Connection
-                        )) ||
-                        !ValidateDataConnection(Connection))
+                    (Index > 0U && !GiaResolvedBackendGraphDetail::IsStrictlyBefore(m_DataConnections[Index - 1U], Connection)) ||
+                    !ValidateDataConnection(Connection))
                 {
                     return false;
                 }
             }
 
-            for (std::size_t Index = 0U;
-                Index < m_ControlConnections.size();
-                ++Index)
+            for (std::size_t Index = 0U; Index < m_ControlConnections.size(); ++Index)
             {
-                const GiaResolvedControlConnection& Connection =
-                    m_ControlConnections[Index];
+                const GiaResolvedControlConnection& Connection = m_ControlConnections[Index];
                 if (!Connection.IsValid() ||
-                    (Index > 0U &&
-                        !GiaResolvedBackendGraphDetail::IsStrictlyBefore(
-                            m_ControlConnections[Index - 1U],
-                            Connection
-                        )) ||
-                        !ValidateControlConnection(Connection))
+                    (Index > 0U && !GiaResolvedBackendGraphDetail::IsStrictlyBefore(m_ControlConnections[Index - 1U], Connection)) ||
+                    !ValidateControlConnection(Connection))
                 {
                     return false;
                 }
@@ -620,17 +556,13 @@ namespace MiliastraPlusPlus
             {
                 for (const GiaResolvedPin& Pin : Node.Pins)
                 {
-                    const GiaResolvedPinEndpoint Endpoint =
-                        GiaResolvedBackendGraphDetail::MakeEndpoint(Node, Pin);
+                    const GiaResolvedPinEndpoint Endpoint = GiaResolvedBackendGraphDetail::MakeEndpoint(Node, Pin);
                     const std::size_t DataCount = CountDataDestination(Endpoint);
-                    const std::size_t ControlCount =
-                        CountControlDestination(Endpoint);
+                    const std::size_t ControlCount = CountControlDestination(Endpoint);
 
                     if (Pin.EmissionPolicy == GiaPinEmissionPolicy::Omit)
                     {
-                        if (Pin.InputValue.has_value() ||
-                            DataCount != 0U ||
-                            ControlCount != 0U)
+                        if (Pin.InputValue.has_value() || DataCount != 0U || ControlCount != 0U)
                         {
                             return false;
                         }
@@ -644,8 +576,7 @@ namespace MiliastraPlusPlus
                             return false;
                         }
 
-                        if (Pin.InputValue->SourceKind ==
-                            GiaBackendInputValueSourceKind::DataConnection)
+                        if (Pin.InputValue->SourceKind == GiaBackendInputValueSourceKind::DataConnection)
                         {
                             if (DataCount != 1U || ControlCount != 0U)
                             {
@@ -664,8 +595,7 @@ namespace MiliastraPlusPlus
                             return false;
                         }
                     }
-                    else if (Pin.InputValue.has_value() ||
-                        DataCount != 0U || ControlCount != 0U)
+                    else if (Pin.InputValue.has_value() || DataCount != 0U || ControlCount != 0U)
                     {
                         return false;
                     }
@@ -695,15 +625,13 @@ namespace MiliastraPlusPlus
             GiaResolvedGraphHeader Header,
             std::vector<GiaResolvedNode> Nodes,
             std::vector<GiaResolvedDataConnection> DataConnections,
-            std::vector<GiaResolvedControlConnection> ControlConnections
-        );
+            std::vector<GiaResolvedControlConnection> ControlConnections);
 
         GiaResolvedBackendGraph(
             GiaResolvedGraphHeader Header,
             std::vector<GiaResolvedNode> Nodes,
             std::vector<GiaResolvedDataConnection> DataConnections,
-            std::vector<GiaResolvedControlConnection> ControlConnections
-        )
+            std::vector<GiaResolvedControlConnection> ControlConnections)
             : m_Header(std::move(Header))
             , m_Nodes(std::move(Nodes))
             , m_DataConnections(std::move(DataConnections))
@@ -727,8 +655,7 @@ namespace MiliastraPlusPlus
         {
             for (const GiaResolvedPin& Pin : Node.Pins)
             {
-                if (GiaResolvedBackendGraphDetail::MakeEndpoint(Node, Pin) ==
-                    Endpoint)
+                if (GiaResolvedBackendGraphDetail::MakeEndpoint(Node, Pin) == Endpoint)
                 {
                     return &Pin;
                 }
@@ -738,9 +665,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] std::size_t CountDataDestination(const GiaResolvedPinEndpoint& Endpoint) const
         {
-            return static_cast<std::size_t>(std::count_if(
-                m_DataConnections.begin(),
-                m_DataConnections.end(),
+            return static_cast<std::size_t>(std::count_if(m_DataConnections.begin(), m_DataConnections.end(),
                 [&Endpoint](const GiaResolvedDataConnection& Connection)
                 {
                     return Connection.Destination == Endpoint;
@@ -750,9 +675,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] std::size_t CountControlDestination(const GiaResolvedPinEndpoint& Endpoint) const
         {
-            return static_cast<std::size_t>(std::count_if(
-                m_ControlConnections.begin(),
-                m_ControlConnections.end(),
+            return static_cast<std::size_t>(std::count_if(m_ControlConnections.begin(), m_ControlConnections.end(),
                 [&Endpoint](const GiaResolvedControlConnection& Connection)
                 {
                     return Connection.Destination == Endpoint;
@@ -763,16 +686,14 @@ namespace MiliastraPlusPlus
         [[nodiscard]] bool ValidateDataConnection(const GiaResolvedDataConnection& Connection) const
         {
             const GiaResolvedNode* Source = FindNode(Connection.Source.Node);
-            const GiaResolvedNode* Destination =
-                FindNode(Connection.Destination.Node);
+            const GiaResolvedNode* Destination = FindNode(Connection.Destination.Node);
             if (Source == nullptr || Destination == nullptr)
             {
                 return false;
             }
 
             const GiaResolvedPin* SourcePin = FindPin(*Source, Connection.Source);
-            const GiaResolvedPin* DestinationPin =
-                FindPin(*Destination, Connection.Destination);
+            const GiaResolvedPin* DestinationPin = FindPin(*Destination, Connection.Destination);
             if (SourcePin == nullptr || DestinationPin == nullptr ||
                 SourcePin->Kind != GiaPinKind::OutputParameter ||
                 DestinationPin->Kind != GiaPinKind::InputParameter ||
@@ -780,8 +701,7 @@ namespace MiliastraPlusPlus
                 DestinationPin->EmissionPolicy != GiaPinEmissionPolicy::Emit ||
                 !DestinationPin->IsConnectable ||
                 !DestinationPin->InputValue.has_value() ||
-                DestinationPin->InputValue->SourceKind !=
-                    GiaBackendInputValueSourceKind::DataConnection ||
+                DestinationPin->InputValue->SourceKind != GiaBackendInputValueSourceKind::DataConnection ||
                 DestinationPin->InputValue->Literal.has_value() ||
                 DestinationPin->InputValue->SemanticType != Connection.ValueType)
             {
@@ -794,16 +714,14 @@ namespace MiliastraPlusPlus
         [[nodiscard]] bool ValidateControlConnection(const GiaResolvedControlConnection& Connection) const
         {
             const GiaResolvedNode* Source = FindNode(Connection.Source.Node);
-            const GiaResolvedNode* Destination =
-                FindNode(Connection.Destination.Node);
+            const GiaResolvedNode* Destination = FindNode(Connection.Destination.Node);
             if (Source == nullptr || Destination == nullptr)
             {
                 return false;
             }
 
             const GiaResolvedPin* SourcePin = FindPin(*Source, Connection.Source);
-            const GiaResolvedPin* DestinationPin =
-                FindPin(*Destination, Connection.Destination);
+            const GiaResolvedPin* DestinationPin = FindPin(*Destination, Connection.Destination);
             return SourcePin != nullptr && DestinationPin != nullptr &&
                 SourcePin->Kind == GiaPinKind::OutputFlow &&
                 DestinationPin->Kind == GiaPinKind::InputFlow &&
@@ -825,12 +743,7 @@ namespace MiliastraPlusPlus
             std::vector<GiaResolvedDataConnection> DataConnections,
             std::vector<GiaResolvedControlConnection> ControlConnections)
         {
-            return GiaResolvedBackendGraph(
-                std::move(Header),
-                std::move(Nodes),
-                std::move(DataConnections),
-                std::move(ControlConnections)
-            );
+            return GiaResolvedBackendGraph(std::move(Header), std::move(Nodes), std::move(DataConnections), std::move(ControlConnections));
         }
     }
 }

@@ -113,16 +113,11 @@ namespace
         const auto Snapshot = DescriptorCatalogueSnapshot::Create(*Catalogue);
         MPP_CHECK(Snapshot.has_value());
 
-        const auto Context = DescriptorCatalogueRegistryContext::Materialize(
-            *Snapshot
-        );
+        const auto Context = DescriptorCatalogueRegistryContext::Materialize(*Snapshot);
         MPP_CHECK(Context.has_value());
         MPP_CHECK(Context->IsValid());
 
-        return RegistryFixture(
-            Context->GetCatalogueIdentity(),
-            std::move(*Context)
-        );
+        return RegistryFixture(Context->GetCatalogueIdentity(), std::move(*Context));
     }
 
     GiaExportConfiguration MakeConfiguration()
@@ -155,19 +150,10 @@ namespace
     GiaBackendNodeMapping MakeNodeMapping(
         std::string Identity,
         std::int32_t GenericIdentifier = 200000,
-        std::optional<GiaNodeConcreteId> ConcreteIdentifier =
-            GiaNodeConcreteId(0),
-        std::vector<GiaBackendPinMapping> PinMappings = {
-            MakeBooleanPin(0, 0)
-        }
-    )
+        std::optional<GiaNodeConcreteId> ConcreteIdentifier = GiaNodeConcreteId(0),
+        std::vector<GiaBackendPinMapping> PinMappings = {MakeBooleanPin(0, 0)})
     {
-        return GiaBackendNodeMapping(
-            ExternalNodeIdentity(std::move(Identity)),
-            GiaNodeGenericId(GenericIdentifier),
-            std::move(ConcreteIdentifier),
-            std::move(PinMappings)
-        );
+        return GiaBackendNodeMapping(ExternalNodeIdentity(std::move(Identity)), GiaNodeGenericId(GenericIdentifier), std::move(ConcreteIdentifier), std::move(PinMappings));
     }
 
     GiaBackendNodeMapping MakeTwoPinNode(std::string Identity = "node_graph_end_boolean")
@@ -186,52 +172,28 @@ namespace
                 true
             )
         );
-        return MakeNodeMapping(
-            std::move(Identity),
-            200000,
-            GiaNodeConcreteId(0),
-            std::move(PinMappings)
-        );
+        return MakeNodeMapping(std::move(Identity), 200000, GiaNodeConcreteId(0), std::move(PinMappings));
     }
 
     GiaBackendMappingIdentity MakeMappingIdentity(
         const RegistryFixture& Fixture,
         GiaExportTargetProfile Profile = GiaExportTargetProfile::ClientBooleanFilter,
         GiaExportMode Mode = GiaExportMode::Beyond,
-        std::uint32_t SchemaVersion = 1U
-    )
+        std::uint32_t SchemaVersion = 1U)
     {
-        return GiaBackendMappingIdentity(
-            Fixture.Identity,
-            GiaBackendMappingSchemaVersion(SchemaVersion),
-            Profile,
-            Mode
-        );
+        return GiaBackendMappingIdentity(Fixture.Identity, GiaBackendMappingSchemaVersion(SchemaVersion), Profile, Mode);
     }
 
-    GiaBackendMappingPackage MakePackage(
-        const RegistryFixture& Fixture,
-        std::vector<GiaBackendNodeMapping> NodeMappings = {
-            MakeTwoPinNode()
-        }
-    )
+    GiaBackendMappingPackage MakePackage(const RegistryFixture& Fixture, std::vector<GiaBackendNodeMapping> NodeMappings = {MakeTwoPinNode()})
     {
-        const auto Result = GiaBackendMappingPackage::Create(
-            MakeMappingIdentity(Fixture),
-            std::move(NodeMappings)
-        );
+        const auto Result = GiaBackendMappingPackage::Create(MakeMappingIdentity(Fixture), std::move(NodeMappings));
         MPP_CHECK(Result.has_value());
         return *Result;
     }
 
     std::expected<GiaExportContext, DiagnosticCollection> MakeContext(const RegistryFixture& Fixture, GiaBackendMappingPackage Package)
     {
-        return GiaExportContext::Create(
-            Fixture.Binding,
-            Fixture.Context,
-            MakeConfiguration(),
-            std::move(Package)
-        );
+        return GiaExportContext::Create(Fixture.Binding, Fixture.Context, MakeConfiguration(), std::move(Package));
     }
 
     void TestGiaExportConfigurationAcceptsClientBooleanFilterBeyond()
@@ -332,9 +294,7 @@ namespace
         const GiaBackendMappingPackage Package = MakePackage(Fixture);
         MPP_CHECK(Package.IsValid());
         MPP_CHECK(Package.GetNodeMappingCount() == 1U);
-        const GiaBackendNodeMapping* Node = Package.FindByExternalIdentity(
-            ExternalNodeIdentity("node_graph_end_boolean")
-        );
+        const GiaBackendNodeMapping* Node = Package.FindByExternalIdentity(ExternalNodeIdentity("node_graph_end_boolean"));
         MPP_CHECK(Node != nullptr);
         MPP_CHECK(Node->GetGenericNodeIdentifier().GetValue() == 200000);
         MPP_CHECK(Node->GetConcreteNodeIdentifier().has_value());
@@ -384,9 +344,7 @@ namespace
     {
         const RegistryFixture Fixture = MakeRegistryFixture("mapping.concrete.zero");
         const GiaBackendMappingPackage Package = MakePackage(Fixture);
-        const GiaBackendNodeMapping* Node = Package.FindByExternalIdentity(
-            ExternalNodeIdentity("node_graph_end_boolean")
-        );
+        const GiaBackendNodeMapping* Node = Package.FindByExternalIdentity(ExternalNodeIdentity("node_graph_end_boolean"));
         MPP_CHECK(Node != nullptr);
         MPP_CHECK(Node->GetConcreteNodeIdentifier().has_value());
         MPP_CHECK(Node->GetConcreteNodeIdentifier()->IsValid());
@@ -559,16 +517,8 @@ namespace
             {MakeNodeMapping(Key)}
         );
         MPP_CHECK(Package.FindByExternalIdentity(ExternalNodeIdentity(Key)) != nullptr);
-        MPP_CHECK(
-            Package.FindByExternalIdentity(
-                ExternalNodeIdentity("family=example;concrete=1;variant=bytes")
-            ) == nullptr
-        );
-        MPP_CHECK(
-            Package.FindByExternalIdentity(
-                ExternalNodeIdentity("0")
-            ) == nullptr
-        );
+        MPP_CHECK(Package.FindByExternalIdentity(ExternalNodeIdentity("family=example;concrete=1;variant=bytes")) == nullptr);
+        MPP_CHECK(Package.FindByExternalIdentity(ExternalNodeIdentity("0")) == nullptr);
     }
 
     void TestGiaBackendMappingPackageDoesNotMutateInputRecords()
@@ -585,10 +535,7 @@ namespace
         };
         MPP_CHECK(Input[0U].GetExternalIdentity().GetKey() == "z");
         MPP_CHECK(Input[0U].GetPinMappings()[0U].GetSemanticPinIndex().GetValue() == 1U);
-        const auto Result = GiaBackendMappingPackage::Create(
-            MakeMappingIdentity(Fixture),
-            Input
-        );
+        const auto Result = GiaBackendMappingPackage::Create(MakeMappingIdentity(Fixture), Input);
         MPP_CHECK(Result.has_value());
         MPP_CHECK(Input[0U].GetExternalIdentity().GetKey() == "z");
         MPP_CHECK(Input[0U].GetPinMappings()[0U].GetSemanticPinIndex().GetValue() == 1U);
@@ -609,12 +556,7 @@ namespace
     {
         const RegistryFixture Fixture = MakeRegistryFixture("context.binding.a");
         const RegistryFixture OtherFixture = MakeRegistryFixture("context.binding.b");
-        const auto Result = GiaExportContext::Create(
-            OtherFixture.Binding,
-            Fixture.Context,
-            MakeConfiguration(),
-            MakePackage(Fixture)
-        );
+        const auto Result = GiaExportContext::Create(OtherFixture.Binding, Fixture.Context, MakeConfiguration(), MakePackage(Fixture));
         MPP_CHECK(!Result.has_value());
         MPP_CHECK(HasCode(Result.error(), DiagnosticCode::DescriptorCatalogueMismatch));
     }
@@ -623,12 +565,7 @@ namespace
     {
         const RegistryFixture Fixture = MakeRegistryFixture("context.mapping.a");
         const RegistryFixture OtherFixture = MakeRegistryFixture("context.mapping.b");
-        const auto Result = GiaExportContext::Create(
-            Fixture.Binding,
-            Fixture.Context,
-            MakeConfiguration(),
-            MakePackage(OtherFixture)
-        );
+        const auto Result = GiaExportContext::Create(Fixture.Binding, Fixture.Context, MakeConfiguration(), MakePackage(OtherFixture));
         MPP_CHECK(!Result.has_value());
         MPP_CHECK(HasCode(Result.error(), DiagnosticCode::IncompatibleGiaBackendMappingPackage));
     }
@@ -637,22 +574,14 @@ namespace
     {
         const RegistryFixture Fixture = MakeRegistryFixture("context.target");
         const auto InvalidTargetPackage = GiaBackendMappingPackage::Create(
-            MakeMappingIdentity(
-                Fixture,
-                static_cast<GiaExportTargetProfile>(99),
-                GiaExportMode::Beyond
-            ),
+            MakeMappingIdentity(Fixture, static_cast<GiaExportTargetProfile>(99), GiaExportMode::Beyond),
             {MakeTwoPinNode()}
         );
         MPP_CHECK(!InvalidTargetPackage.has_value());
         MPP_CHECK(HasCode(InvalidTargetPackage.error(), DiagnosticCode::UnsupportedGiaExportTarget));
 
         const auto InvalidModePackage = GiaBackendMappingPackage::Create(
-            MakeMappingIdentity(
-                Fixture,
-                GiaExportTargetProfile::ClientBooleanFilter,
-                static_cast<GiaExportMode>(99)
-            ),
+            MakeMappingIdentity(Fixture, GiaExportTargetProfile::ClientBooleanFilter, static_cast<GiaExportMode>(99)),
             {MakeTwoPinNode()}
         );
         MPP_CHECK(!InvalidModePackage.has_value());
@@ -692,12 +621,7 @@ namespace
         MPP_CHECK(!First.error().empty() && !Second.error().empty());
         MPP_CHECK(DiagnosticsEqual(First.error(), Second.error()));
 
-        const auto Context = GiaExportContext::Create(
-            Fixture.Binding,
-            Fixture.Context,
-            MakeConfiguration(),
-            MakePackage(Fixture)
-        );
+        const auto Context = GiaExportContext::Create(Fixture.Binding, Fixture.Context, MakeConfiguration(), MakePackage(Fixture));
         MPP_CHECK(Context.has_value());
         MPP_CHECK(Context->IsValid());
     }
@@ -711,10 +635,7 @@ namespace
             {MakeNodeMapping(Key, 0)}
         );
         MPP_CHECK(!Result.has_value());
-        const Diagnostic* DiagnosticValue = FindDiagnostic(
-            Result.error(),
-            DiagnosticCode::InvalidGiaBackendNodeMapping
-        );
+        const Diagnostic* DiagnosticValue = FindDiagnostic(Result.error(), DiagnosticCode::InvalidGiaBackendNodeMapping);
         MPP_CHECK(DiagnosticValue != nullptr);
         MPP_CHECK(DiagnosticValue->ExternalIdentityKey.has_value());
         MPP_CHECK(DiagnosticValue->ExternalIdentityKey.value() == Key);

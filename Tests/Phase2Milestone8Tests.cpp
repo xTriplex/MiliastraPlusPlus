@@ -35,12 +35,9 @@ namespace
             "FixtureSource",
             {NodeAvailability::Server},
             {
-                PinSchema("Execute In", TypeDesc::Flow(), PinDirection::Input,
-                    PinCategory::Execution),
-                PinSchema("Execute Out", TypeDesc::Flow(), PinDirection::Output,
-                    PinCategory::Execution),
-                PinSchema("Value", TypeDesc::Integer(), PinDirection::Output,
-                    PinCategory::Data)
+                PinSchema("Execute In", TypeDesc::Flow(), PinDirection::Input, PinCategory::Execution),
+                PinSchema("Execute Out", TypeDesc::Flow(), PinDirection::Output, PinCategory::Execution),
+                PinSchema("Value", TypeDesc::Integer(), PinDirection::Output, PinCategory::Data)
             }
         );
     }
@@ -52,15 +49,10 @@ namespace
             "FixtureDestination",
             {NodeAvailability::Server},
             {
-                PinSchema("Execute In", TypeDesc::Flow(), PinDirection::Input,
-                    PinCategory::Execution),
-                PinSchema("Execute Out", TypeDesc::Flow(), PinDirection::Output,
-                    PinCategory::Execution),
-                PinSchema("Value", TypeDesc::Integer(), PinDirection::Input,
-                    PinCategory::Data),
-                PinSchema("Optional Value", TypeDesc::Integer(), PinDirection::Input,
-                    PinCategory::Data, PinCardinality::Optional, true,
-                    LiteralValue(LiteralValue::Data(std::int64_t(0))))
+                PinSchema("Execute In", TypeDesc::Flow(), PinDirection::Input, PinCategory::Execution),
+                PinSchema("Execute Out", TypeDesc::Flow(), PinDirection::Output, PinCategory::Execution),
+                PinSchema("Value", TypeDesc::Integer(), PinDirection::Input, PinCategory::Data),
+                PinSchema("Optional Value", TypeDesc::Integer(), PinDirection::Input, PinCategory::Data, PinCardinality::Optional, true, LiteralValue(LiteralValue::Data(std::int64_t(0))))
             }
         );
     }
@@ -78,17 +70,8 @@ namespace
         GraphIR Graph;
         Graph.AddNode(NodeInstance{SourceNodeId, SourceDescriptorId});
         Graph.AddNode(NodeInstance{DestinationNodeId, DestinationDescriptorId});
-        Graph.BindInput(
-            DestinationNodeId,
-            DestinationDataInput,
-            OutputReference{SourceNodeId, SourceDataOutput}
-        );
-        Graph.AddControlEdge(ControlEdge{
-            SourceNodeId,
-            SourceFlowOutput,
-            DestinationNodeId,
-            DestinationFlowInput
-        });
+        Graph.BindInput(DestinationNodeId, DestinationDataInput, OutputReference{SourceNodeId, SourceDataOutput});
+        Graph.AddControlEdge(ControlEdge{SourceNodeId, SourceFlowOutput, DestinationNodeId, DestinationFlowInput});
         return Graph;
     }
 
@@ -118,52 +101,31 @@ namespace
         Check(RepresentativeGraph.GetNodeCount() == 2U);
         Check(RepresentativeGraph.GetInputBindingCount() == 1U);
         Check(RepresentativeGraph.GetControlEdgeCount() == 1U);
-        Check(std::get<OutputReference>(
-            RepresentativeGraph.GetInputBindings()[0].Binding).SourceNode == SourceNodeId);
-        Check(std::get<OutputReference>(
-            RepresentativeGraph.GetInputBindings()[0].Binding).SourceOutputPin == SourceDataOutput);
+        Check(std::get<OutputReference>(RepresentativeGraph.GetInputBindings()[0].Binding).SourceNode == SourceNodeId);
+        Check(std::get<OutputReference>(RepresentativeGraph.GetInputBindings()[0].Binding).SourceOutputPin == SourceDataOutput);
         Check(RepresentativeGraph.GetControlEdges()[0].SourceOutputPin == SourceFlowOutput);
         Check(RepresentativeGraph.GetControlEdges()[0].DestinationInputPin == DestinationFlowInput);
         Check(GraphIRValidator::Validate(RepresentativeGraph, Descriptors).empty());
 
         GraphIR InvalidDescriptorGraph = RepresentativeGraph;
-        InvalidDescriptorGraph.AddNode(NodeInstance{
-            NodeInstanceId(1003U), NodeDescriptorId(999U)
-        });
-        const DiagnosticCollection InvalidDescriptorDiagnostics =
-            GraphIRValidator::Validate(InvalidDescriptorGraph, Descriptors);
+        InvalidDescriptorGraph.AddNode(NodeInstance{NodeInstanceId(1003U), NodeDescriptorId(999U)});
+        const DiagnosticCollection InvalidDescriptorDiagnostics = GraphIRValidator::Validate(InvalidDescriptorGraph, Descriptors);
         Check(HasCode(InvalidDescriptorDiagnostics, DiagnosticCode::MissingDescriptor));
 
         GraphIR IncompatibleBindingGraph = RepresentativeGraph;
-        IncompatibleBindingGraph.BindInput(
-            DestinationNodeId,
-            DestinationDataInput,
-            OutputReference{SourceNodeId, SourceFlowOutput}
-        );
-        const DiagnosticCollection IncompatibleBindingDiagnostics =
-            GraphIRValidator::Validate(IncompatibleBindingGraph, Descriptors);
+        IncompatibleBindingGraph.BindInput(DestinationNodeId, DestinationDataInput, OutputReference{SourceNodeId, SourceFlowOutput});
+        const DiagnosticCollection IncompatibleBindingDiagnostics = GraphIRValidator::Validate(IncompatibleBindingGraph, Descriptors);
         Check(HasCode(IncompatibleBindingDiagnostics, DiagnosticCode::DuplicateInputBinding));
         Check(HasCode(IncompatibleBindingDiagnostics, DiagnosticCode::IncompatibleGraphIRTypes));
 
         GraphIR InvalidPinGraph = RepresentativeGraph;
-        InvalidPinGraph.BindInput(
-            DestinationNodeId,
-            DestinationDataInput,
-            OutputReference{SourceNodeId, PinIndex(99U)}
-        );
-        const DiagnosticCollection InvalidPinDiagnostics =
-            GraphIRValidator::Validate(InvalidPinGraph, Descriptors);
+        InvalidPinGraph.BindInput(DestinationNodeId, DestinationDataInput, OutputReference{SourceNodeId, PinIndex(99U)});
+        const DiagnosticCollection InvalidPinDiagnostics = GraphIRValidator::Validate(InvalidPinGraph, Descriptors);
         Check(HasCode(InvalidPinDiagnostics, DiagnosticCode::InvalidGraphIRPinReference));
 
         GraphIR InvalidControlEdgeGraph = RepresentativeGraph;
-        InvalidControlEdgeGraph.AddControlEdge(ControlEdge{
-            SourceNodeId,
-            SourceDataOutput,
-            DestinationNodeId,
-            DestinationFlowInput
-        });
-        const DiagnosticCollection InvalidControlEdgeDiagnostics =
-            GraphIRValidator::Validate(InvalidControlEdgeGraph, Descriptors);
+        InvalidControlEdgeGraph.AddControlEdge(ControlEdge{SourceNodeId, SourceDataOutput, DestinationNodeId, DestinationFlowInput});
+        const DiagnosticCollection InvalidControlEdgeDiagnostics = GraphIRValidator::Validate(InvalidControlEdgeGraph, Descriptors);
         Check(HasCode(InvalidControlEdgeDiagnostics, DiagnosticCode::InvalidControlEdge));
 
     }

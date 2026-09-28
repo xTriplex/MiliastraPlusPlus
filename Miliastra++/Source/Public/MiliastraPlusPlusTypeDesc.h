@@ -193,8 +193,7 @@ namespace MiliastraPlusPlus
             case Kind::List:
                 return m_ElementType != nullptr && m_ElementType->IsValid();
             case Kind::Dictionary:
-                return m_KeyType != nullptr && m_KeyType->IsValid() &&
-                    m_ValueType != nullptr && m_ValueType->IsValid();
+                return m_KeyType != nullptr && m_KeyType->IsValid() && m_ValueType != nullptr && m_ValueType->IsValid();
             case Kind::StructObject:
                 return m_StructType.IsValid();
             case Kind::Enum:
@@ -263,8 +262,7 @@ namespace MiliastraPlusPlus
 
             if (m_Kind == Kind::Dictionary)
             {
-                return m_KeyType->IsCompatibleWith(*OtherType.m_KeyType) &&
-                    m_ValueType->IsCompatibleWith(*OtherType.m_ValueType);
+                return m_KeyType->IsCompatibleWith(*OtherType.m_KeyType) && m_ValueType->IsCompatibleWith(*OtherType.m_ValueType);
             }
 
             if (m_Kind == Kind::StructObject)
@@ -285,9 +283,7 @@ namespace MiliastraPlusPlus
         {
             if (!IsValid() || !OtherType.IsValid())
             {
-                return std::unexpected(MakeTypeDiagnostic(
-                    "Invalid types cannot be unified."
-                ));
+                return std::unexpected(MakeTypeDiagnostic("Invalid types cannot be unified."));
             }
 
             if (*this == OtherType)
@@ -298,9 +294,7 @@ namespace MiliastraPlusPlus
             if (m_Kind == Kind::Generic)
             {
                 return OtherType.m_Kind == Kind::Generic
-                    ? std::unexpected(MakeTypeDiagnostic(
-                        "Different generic parameters cannot be unified without a binding context."
-                    ))
+                    ? std::unexpected(MakeTypeDiagnostic("Different generic parameters cannot be unified without a binding context."))
                     : std::expected<TypeDesc, Diagnostic>(OtherType);
             }
 
@@ -311,9 +305,7 @@ namespace MiliastraPlusPlus
 
             if (m_Kind != OtherType.m_Kind)
             {
-                return std::unexpected(MakeTypeDiagnostic(
-                    "Types with different kinds cannot be unified."
-                ));
+                return std::unexpected(MakeTypeDiagnostic("Types with different kinds cannot be unified."));
             }
 
             if (m_Kind == Kind::List)
@@ -341,15 +333,12 @@ namespace MiliastraPlusPlus
                 return Dictionary(*KeyResult, *ValueResult);
             }
 
-            if (m_Kind == Kind::Enum &&
-                m_EnumTypeIdentity == OtherType.m_EnumTypeIdentity)
+            if (m_Kind == Kind::Enum && m_EnumTypeIdentity == OtherType.m_EnumTypeIdentity)
             {
                 return *this;
             }
 
-            return std::unexpected(MakeTypeDiagnostic(
-                "Types are incompatible and cannot be unified."
-            ));
+            return std::unexpected(MakeTypeDiagnostic("Types are incompatible and cannot be unified."));
         }
 
         auto operator<=>(const TypeDesc& OtherType) const
@@ -372,8 +361,7 @@ namespace MiliastraPlusPlus
             }
             if (m_Kind == Kind::Dictionary)
             {
-                if (const auto KeyComparison = *m_KeyType <=> *OtherType.m_KeyType;
-                    KeyComparison != 0)
+                if (const auto KeyComparison = *m_KeyType <=> *OtherType.m_KeyType; KeyComparison != 0)
                 {
                     return KeyComparison;
                 }

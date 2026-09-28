@@ -1722,9 +1722,7 @@ namespace
 
     bool HasDiagnosticCode(const DiagnosticCollection& Diagnostics, DiagnosticCode Code)
     {
-        return std::any_of(
-            Diagnostics.begin(),
-            Diagnostics.end(),
+        return std::any_of(Diagnostics.begin(), Diagnostics.end(),
             [Code](const Diagnostic& Current)
             {
                 return Current.Code == Code;
@@ -1744,10 +1742,8 @@ namespace
             if (Left[Index].Severity != Right[Index].Severity ||
                 Left[Index].Code != Right[Index].Code ||
                 Left[Index].Message != Right[Index].Message ||
-                Left[Index].PrimarySourceProvenance !=
-                    Right[Index].PrimarySourceProvenance ||
-                Left[Index].RelatedSourceProvenance !=
-                    Right[Index].RelatedSourceProvenance)
+                Left[Index].PrimarySourceProvenance != Right[Index].PrimarySourceProvenance ||
+                Left[Index].RelatedSourceProvenance != Right[Index].RelatedSourceProvenance)
             {
                 return false;
             }
@@ -1757,41 +1753,30 @@ namespace
     }
 
     template<typename Mutation>
-    void CheckSourceRejected(Mutation MutationFunction, DiagnosticCode Expected = DiagnosticCode:: UnsupportedGenshinClientBooleanFilterReflectedDescriptorFamilySourceForm)
+    void CheckSourceRejected(Mutation MutationFunction, DiagnosticCode Expected = DiagnosticCode::UnsupportedGenshinClientBooleanFilterReflectedDescriptorFamilySourceForm)
     {
-        const auto Result =
-            GenshinClientBooleanFilterReflectedDescriptorFamilySourceAdapter::Adapt(
-                MakeMutatedNodeMetadata(MutationFunction),
-                GetAuthenticNodeModesJson()
-            );
+        const auto Result = GenshinClientBooleanFilterReflectedDescriptorFamilySourceAdapter::Adapt(MakeMutatedNodeMetadata(MutationFunction), GetAuthenticNodeModesJson());
         MPP_CHECK(!Result.has_value());
         MPP_CHECK(HasDiagnosticCode(Result.error(), Expected));
     }
 
     std::vector<DescriptorSpecializationFamily> AdaptAuthenticFixture()
     {
-        const auto Result =
-            GenshinClientBooleanFilterReflectedDescriptorFamilySourceAdapter::Adapt(
-                GetAuthenticNodeMetadataJson(),
-                GetAuthenticNodeModesJson()
-            );
+        const auto Result = GenshinClientBooleanFilterReflectedDescriptorFamilySourceAdapter::Adapt(GetAuthenticNodeMetadataJson(), GetAuthenticNodeModesJson());
         MPP_CHECK(Result.has_value());
         return *Result;
     }
 
     DescriptorSpecializationResult SpecializeAuthenticFixture()
     {
-        const auto Result = DescriptorFamilySpecializer::Specialize(
-            AdaptAuthenticFixture()
-        );
+        const auto Result = DescriptorFamilySpecializer::Specialize(AdaptAuthenticFixture());
         MPP_CHECK(Result.has_value());
         return *Result;
     }
 
     const NormalizedNodeDescriptorRecord* FindConcreteRecord(const DescriptorSpecializationResult& Result, std::string_view Key)
     {
-        for (const NormalizedNodeDescriptorRecord& Record :
-            Result.GetConcreteRecords())
+        for (const NormalizedNodeDescriptorRecord& Record : Result.GetConcreteRecords())
         {
             if (Record.GetExternalIdentity().GetKey() == Key)
             {
@@ -1808,15 +1793,10 @@ namespace
         std::string SpecializationKey,
         std::vector<DescriptorSpecializationPin> Pins,
         std::vector<DescriptorSpecializationPinBinding> Bindings,
-        std::optional<SourceProvenance> Provenance = std::nullopt
-    )
+        std::optional<SourceProvenance> Provenance = std::nullopt)
     {
         std::vector<DescriptorSpecializationVariant> Variants;
-        Variants.emplace_back(
-            ExternalNodeIdentity(std::move(ConcreteKey)),
-            std::move(SpecializationKey),
-            std::move(Bindings)
-        );
+        Variants.emplace_back(ExternalNodeIdentity(std::move(ConcreteKey)), std::move(SpecializationKey), std::move(Bindings));
         return DescriptorSpecializationFamily(
             ExternalNodeIdentity(std::move(FamilyKey)),
             "Model Family",
@@ -1831,24 +1811,8 @@ namespace
     std::vector<DescriptorSpecializationPin> MakeTwoReflectedPins()
     {
         std::vector<DescriptorSpecializationPin> Pins;
-        Pins.emplace_back(
-            "First",
-            std::nullopt,
-            true,
-            PinDirection::Input,
-            PinCategory::Data,
-            PinCardinality::Single,
-            false
-        );
-        Pins.emplace_back(
-            "Second",
-            std::nullopt,
-            true,
-            PinDirection::Output,
-            PinCategory::Data,
-            PinCardinality::Single,
-            false
-        );
+        Pins.emplace_back("First", std::nullopt, true, PinDirection::Input, PinCategory::Data, PinCardinality::Single, false);
+        Pins.emplace_back("Second", std::nullopt, true, PinDirection::Output, PinCategory::Data, PinCardinality::Single, false);
         return Pins;
     }
 
@@ -1875,9 +1839,7 @@ namespace
         MPP_CHECK(Family.IsValid());
         MPP_CHECK(Family.GetVariants().size() == 2U);
         MPP_CHECK(Family.GetPins().size() == 3U);
-        MPP_CHECK(std::all_of(
-            Family.GetPins().begin(),
-            Family.GetPins().end(),
+        MPP_CHECK(std::all_of(Family.GetPins().begin(), Family.GetPins().end(),
             [](const DescriptorSpecializationPin& Pin)
             {
                 return Pin.IsReflected();
@@ -1897,17 +1859,11 @@ namespace
         const DescriptorSpecializationFamily& Family = Families[0U];
         MPP_CHECK(Family.GetFamilyExternalIdentity().GetKey() == "200032");
         MPP_CHECK(Family.GetDisplayName() == "获取随机数");
-        MPP_CHECK(Family.GetAvailability() ==
-            std::vector<NodeAvailability>{NodeAvailability::Client});
+        MPP_CHECK(Family.GetAvailability() == std::vector<NodeAvailability>{NodeAvailability::Client});
         MPP_CHECK(!Family.GetExecutionControlSchema().has_value());
         MPP_CHECK(Family.GetSourceProvenance().has_value());
-        MPP_CHECK(
-            Family.GetSourceProvenance()->GetSourceDocumentIdentifier() ==
-            "布尔过滤器节点\\除法运算_连线.gia"
-        );
-        MPP_CHECK(
-            Family.GetSourceProvenance()->GetSourceRecordIdentifier() == "200032"
-        );
+        MPP_CHECK(Family.GetSourceProvenance()->GetSourceDocumentIdentifier() == "布尔过滤器节点\\除法运算_连线.gia");
+        MPP_CHECK(Family.GetSourceProvenance()->GetSourceRecordIdentifier() == "200032");
 
         const auto& Pins = Family.GetPins();
         MPP_CHECK(Pins[0U].GetName() == "下限");
@@ -1929,14 +1885,8 @@ namespace
     {
         const auto Families = AdaptAuthenticFixture();
         const auto& Variants = Families[0U].GetVariants();
-        MPP_CHECK(
-            Variants[0U].GetConcreteExternalIdentity().GetKey() ==
-            "family=200032;concrete=1011;variant-bytes=3:3,3"
-        );
-        MPP_CHECK(
-            Variants[1U].GetConcreteExternalIdentity().GetKey() ==
-            "family=200032;concrete=1012;variant-bytes=3:7,7"
-        );
+        MPP_CHECK(Variants[0U].GetConcreteExternalIdentity().GetKey() == "family=200032;concrete=1011;variant-bytes=3:3,3");
+        MPP_CHECK(Variants[1U].GetConcreteExternalIdentity().GetKey() == "family=200032;concrete=1012;variant-bytes=3:7,7");
         MPP_CHECK(Variants[0U].GetSpecializationKey() == "3,3");
         MPP_CHECK(Variants[1U].GetSpecializationKey() == "7,7");
 
@@ -1955,9 +1905,7 @@ namespace
             )},
             {DescriptorSpecializationPinBinding(PinIndex(0U), TypeDesc::String())}
         );
-        const auto OpaqueResult = DescriptorFamilySpecializer::Specialize(
-            {std::move(OpaqueFamily)}
-        );
+        const auto OpaqueResult = DescriptorFamilySpecializer::Specialize({std::move(OpaqueFamily)});
         MPP_CHECK(OpaqueResult.has_value());
         MPP_CHECK(OpaqueResult->IsValid());
         MPP_CHECK(!HasDescriptorIdentifierGetter<DescriptorSpecializationResult>);
@@ -1969,14 +1917,8 @@ namespace
         MPP_CHECK(Result.IsValid());
         MPP_CHECK(Result.GetConcreteRecords().size() == 2U);
 
-        const NormalizedNodeDescriptorRecord* IntegerRecord = FindConcreteRecord(
-            Result,
-            "family=200032;concrete=1011;variant-bytes=3:3,3"
-        );
-        const NormalizedNodeDescriptorRecord* FloatRecord = FindConcreteRecord(
-            Result,
-            "family=200032;concrete=1012;variant-bytes=3:7,7"
-        );
+        const NormalizedNodeDescriptorRecord* IntegerRecord = FindConcreteRecord(Result, "family=200032;concrete=1011;variant-bytes=3:3,3");
+        const NormalizedNodeDescriptorRecord* FloatRecord = FindConcreteRecord(Result, "family=200032;concrete=1012;variant-bytes=3:7,7");
         MPP_CHECK(IntegerRecord != nullptr);
         MPP_CHECK(FloatRecord != nullptr);
         for (const NormalizedPinRecord& Pin : IntegerRecord->GetPins())
@@ -2013,15 +1955,7 @@ namespace
             true,
             LiteralValue(std::int64_t(42))
         );
-        Pins.emplace_back(
-            "Reflected",
-            std::nullopt,
-            true,
-            PinDirection::Output,
-            PinCategory::Data,
-            PinCardinality::Single,
-            false
-        );
+        Pins.emplace_back("Reflected", std::nullopt, true, PinDirection::Output, PinCategory::Data, PinCardinality::Single, false);
         auto Family = MakeModelFamily(
             "model-fixed",
             "model-fixed-vector",
@@ -2029,9 +1963,7 @@ namespace
             std::move(Pins),
             {DescriptorSpecializationPinBinding(PinIndex(1U), TypeDesc::Vector3())}
         );
-        const auto Result = DescriptorFamilySpecializer::Specialize(
-            {std::move(Family)}
-        );
+        const auto Result = DescriptorFamilySpecializer::Specialize({std::move(Family)});
         MPP_CHECK(Result.has_value());
         MPP_CHECK(Result->IsValid());
         const auto& RecordPins = Result->GetConcreteRecords()[0U].GetPins();
@@ -2050,18 +1982,10 @@ namespace
                 DescriptorSpecializationPinBinding(PinIndex(1U), TypeDesc::Vector3())
             }
         );
-        const auto IndependentResult = DescriptorFamilySpecializer::Specialize(
-            {std::move(IndependentFamily)}
-        );
+        const auto IndependentResult = DescriptorFamilySpecializer::Specialize({std::move(IndependentFamily)});
         MPP_CHECK(IndependentResult.has_value());
-        MPP_CHECK(
-            IndependentResult->GetConcreteRecords()[0U].GetPins()[0U].GetType() ==
-            TypeDesc::String()
-        );
-        MPP_CHECK(
-            IndependentResult->GetConcreteRecords()[0U].GetPins()[1U].GetType() ==
-            TypeDesc::Vector3()
-        );
+        MPP_CHECK(IndependentResult->GetConcreteRecords()[0U].GetPins()[0U].GetType() == TypeDesc::String());
+        MPP_CHECK(IndependentResult->GetConcreteRecords()[0U].GetPins()[1U].GetType() == TypeDesc::Vector3());
 
         CheckSourceRejected([](JsonValue& Document)
         {
@@ -2103,17 +2027,12 @@ namespace
             {DescriptorSpecializationPinBinding(PinIndex(0U), TypeDesc::Integer())},
             SourceProvenance("logical-family-source", "default-family")
         );
-        const auto Result = DescriptorFamilySpecializer::Specialize(
-            {std::move(Family)}
-        );
+        const auto Result = DescriptorFamilySpecializer::Specialize({std::move(Family)});
         MPP_CHECK(Result.has_value());
         const auto& Record = Result->GetConcreteRecords()[0U];
         MPP_CHECK(Record.GetPins()[0U].GetDefaultValue().has_value());
         MPP_CHECK(Record.GetSourceProvenance().has_value());
-        MPP_CHECK(
-            Record.GetSourceProvenance()->GetSourceDocumentIdentifier() ==
-            "logical-family-source"
-        );
+        MPP_CHECK(Record.GetSourceProvenance()->GetSourceDocumentIdentifier() == "logical-family-source");
         MPP_CHECK(Record.GetExternalIdentity().GetKey() == "default-concrete");
     }
 
@@ -2123,14 +2042,11 @@ namespace
         const auto SecondAdaptation = AdaptAuthenticFixture();
         MPP_CHECK(FirstAdaptation == SecondAdaptation);
 
-        const auto FirstResult = DescriptorFamilySpecializer::Specialize(
-            FirstAdaptation
-        );
+        const auto FirstResult = DescriptorFamilySpecializer::Specialize(FirstAdaptation);
         MPP_CHECK(FirstResult.has_value());
 
         // Family construction canonicalizes variants; reconstruct to exercise input order.
-        std::vector<DescriptorSpecializationVariant> ReversedVariants =
-            SecondAdaptation[0U].GetVariants();
+        std::vector<DescriptorSpecializationVariant> ReversedVariants = SecondAdaptation[0U].GetVariants();
         std::reverse(ReversedVariants.begin(), ReversedVariants.end());
         DescriptorSpecializationFamily Reconstructed(
             SecondAdaptation[0U].GetFamilyExternalIdentity(),
@@ -2141,9 +2057,7 @@ namespace
             SecondAdaptation[0U].GetSourceProvenance(),
             std::move(ReversedVariants)
         );
-        const auto SecondResult = DescriptorFamilySpecializer::Specialize(
-            {std::move(Reconstructed)}
-        );
+        const auto SecondResult = DescriptorFamilySpecializer::Specialize({std::move(Reconstructed)});
         MPP_CHECK(SecondResult.has_value());
         MPP_CHECK(*FirstResult == *SecondResult);
 
@@ -2153,10 +2067,8 @@ namespace
             "deterministic-key-a",
             MakeTwoReflectedPins(),
             {
-                DescriptorSpecializationPinBinding(
-                    PinIndex(1U), TypeDesc::Vector3()),
-                DescriptorSpecializationPinBinding(
-                    PinIndex(0U), TypeDesc::String())
+                DescriptorSpecializationPinBinding(PinIndex(1U), TypeDesc::Vector3()),
+                DescriptorSpecializationPinBinding(PinIndex(0U), TypeDesc::String())
             }
         );
         auto ModelFamilyB = MakeModelFamily(
@@ -2165,25 +2077,16 @@ namespace
             "deterministic-key-b",
             MakeTwoReflectedPins(),
             {
-                DescriptorSpecializationPinBinding(
-                    PinIndex(1U), TypeDesc::Float()),
-                DescriptorSpecializationPinBinding(
-                    PinIndex(0U), TypeDesc::Integer())
+                DescriptorSpecializationPinBinding(PinIndex(1U), TypeDesc::Float()),
+                DescriptorSpecializationPinBinding(PinIndex(0U), TypeDesc::Integer())
             }
         );
-        const auto CanonicalModelResult = DescriptorFamilySpecializer::Specialize(
-            {ModelFamilyA, ModelFamilyB}
-        );
-        const auto PermutedModelResult = DescriptorFamilySpecializer::Specialize(
-            {std::move(ModelFamilyB), std::move(ModelFamilyA)}
-        );
+        const auto CanonicalModelResult = DescriptorFamilySpecializer::Specialize({ModelFamilyA, ModelFamilyB});
+        const auto PermutedModelResult = DescriptorFamilySpecializer::Specialize({std::move(ModelFamilyB), std::move(ModelFamilyA)});
         MPP_CHECK(CanonicalModelResult.has_value());
         MPP_CHECK(PermutedModelResult.has_value());
         MPP_CHECK(*CanonicalModelResult == *PermutedModelResult);
-        MPP_CHECK(
-            CanonicalModelResult->GetFamilies()[0U].GetVariants()[0U]
-                .GetPinBindings()[0U].GetFamilyPinIndex() == PinIndex(0U)
-        );
+        MPP_CHECK(CanonicalModelResult->GetFamilies()[0U].GetVariants()[0U].GetPinBindings()[0U].GetFamilyPinIndex() == PinIndex(0U));
 
         const auto FirstFailure = DescriptorFamilySpecializer::Specialize(
             {MakeModelFamily(
@@ -2212,35 +2115,18 @@ namespace
 
     void TestDescriptorSpecializationFamilyDiagnostics()
     {
-        const auto Malformed =
-            GenshinClientBooleanFilterReflectedDescriptorFamilySourceAdapter::Adapt(
-                "[",
-                GetAuthenticNodeModesJson()
-            );
+        const auto Malformed = GenshinClientBooleanFilterReflectedDescriptorFamilySourceAdapter::Adapt("[", GetAuthenticNodeModesJson());
         MPP_CHECK(!Malformed.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            Malformed.error(),
-            DiagnosticCode::
-                MalformedGenshinClientBooleanFilterReflectedDescriptorFamilySource
-        ));
+        MPP_CHECK(HasDiagnosticCode(Malformed.error(), DiagnosticCode::MalformedGenshinClientBooleanFilterReflectedDescriptorFamilySource));
 
-        const auto WrongRoot =
-            GenshinClientBooleanFilterReflectedDescriptorFamilySourceAdapter::Adapt(
-                "{}",
-                GetAuthenticNodeModesJson()
-            );
+        const auto WrongRoot = GenshinClientBooleanFilterReflectedDescriptorFamilySourceAdapter::Adapt("{}", GetAuthenticNodeModesJson());
         MPP_CHECK(!WrongRoot.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            WrongRoot.error(),
-            DiagnosticCode::
-                MalformedGenshinClientBooleanFilterReflectedDescriptorFamilySource
-        ));
+        MPP_CHECK(HasDiagnosticCode(WrongRoot.error(), DiagnosticCode::MalformedGenshinClientBooleanFilterReflectedDescriptorFamilySource));
 
         CheckSourceRejected([](JsonValue& Document)
         {
             Document[0U].erase("displayName");
-        }, DiagnosticCode::
-            MissingGenshinClientBooleanFilterReflectedDescriptorFamilySourceField);
+        }, DiagnosticCode::MissingGenshinClientBooleanFilterReflectedDescriptorFamilySourceField);
         CheckSourceRejected([](JsonValue& Document)
         {
             Document[0U]["subType"] = "int_filter";
@@ -2298,22 +2184,15 @@ namespace
             Document[0U]["reflectMap"][0U]["pins"][0U]["type"] = "str";
         });
 
-        const auto ModeFailure =
-            GenshinClientBooleanFilterReflectedDescriptorFamilySourceAdapter::Adapt(
-                GetAuthenticNodeMetadataJson(),
-                MakeMutatedModeMetadata([](JsonValue& Document)
-                {
-                    auto& Values =
-                        Document["graphs"]["bool_filter"]["classic"]["genericIds"];
-                    Values.erase(std::find(Values.begin(), Values.end(), 200032));
-                })
-            );
-        MPP_CHECK(!ModeFailure.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            ModeFailure.error(),
-            DiagnosticCode::
-                UnsupportedGenshinClientBooleanFilterReflectedDescriptorFamilySourceForm
+        const auto ModeFailure = GenshinClientBooleanFilterReflectedDescriptorFamilySourceAdapter::Adapt(GetAuthenticNodeMetadataJson(), MakeMutatedModeMetadata(
+            [](JsonValue& Document)
+            {
+                auto& Values = Document["graphs"]["bool_filter"]["classic"]["genericIds"];
+                Values.erase(std::find(Values.begin(), Values.end(), 200032));
+            }
         ));
+        MPP_CHECK(!ModeFailure.has_value());
+        MPP_CHECK(HasDiagnosticCode(ModeFailure.error(), DiagnosticCode::UnsupportedGenshinClientBooleanFilterReflectedDescriptorFamilySourceForm));
 
         auto MissingBindingFamily = MakeModelFamily(
             "missing-binding-family",
@@ -2322,18 +2201,10 @@ namespace
             MakeTwoReflectedPins(),
             {DescriptorSpecializationPinBinding(PinIndex(0U), TypeDesc::Integer())}
         );
-        const auto MissingBinding = DescriptorFamilySpecializer::Specialize(
-            {std::move(MissingBindingFamily)}
-        );
+        const auto MissingBinding = DescriptorFamilySpecializer::Specialize({std::move(MissingBindingFamily)});
         MPP_CHECK(!MissingBinding.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            MissingBinding.error(),
-            DiagnosticCode::InvalidDescriptorSpecializationVariantBinding
-        ));
-        MPP_CHECK(!HasDiagnosticCode(
-            MissingBinding.error(),
-            DiagnosticCode::InvalidDescriptorSpecializationFamily
-        ));
+        MPP_CHECK(HasDiagnosticCode(MissingBinding.error(), DiagnosticCode::InvalidDescriptorSpecializationVariantBinding));
+        MPP_CHECK(!HasDiagnosticCode(MissingBinding.error(), DiagnosticCode::InvalidDescriptorSpecializationFamily));
 
         auto DuplicateBindingFamily = MakeModelFamily(
             "duplicate-binding-family",
@@ -2353,18 +2224,10 @@ namespace
                 DescriptorSpecializationPinBinding(PinIndex(0U), TypeDesc::Float())
             }
         );
-        const auto DuplicateBinding = DescriptorFamilySpecializer::Specialize(
-            {std::move(DuplicateBindingFamily)}
-        );
+        const auto DuplicateBinding = DescriptorFamilySpecializer::Specialize({std::move(DuplicateBindingFamily)});
         MPP_CHECK(!DuplicateBinding.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            DuplicateBinding.error(),
-            DiagnosticCode::InvalidDescriptorSpecializationVariantBinding
-        ));
-        MPP_CHECK(!HasDiagnosticCode(
-            DuplicateBinding.error(),
-            DiagnosticCode::InvalidDescriptorSpecializationFamily
-        ));
+        MPP_CHECK(HasDiagnosticCode(DuplicateBinding.error(), DiagnosticCode::InvalidDescriptorSpecializationVariantBinding));
+        MPP_CHECK(!HasDiagnosticCode(DuplicateBinding.error(), DiagnosticCode::InvalidDescriptorSpecializationFamily));
 
         auto UnknownBindingFamily = MakeModelFamily(
             "unknown-binding-family",
@@ -2381,38 +2244,14 @@ namespace
             )},
             {DescriptorSpecializationPinBinding(PinIndex(3U), TypeDesc::Integer())}
         );
-        const auto UnknownBinding = DescriptorFamilySpecializer::Specialize(
-            {std::move(UnknownBindingFamily)}
-        );
+        const auto UnknownBinding = DescriptorFamilySpecializer::Specialize({std::move(UnknownBindingFamily)});
         MPP_CHECK(!UnknownBinding.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            UnknownBinding.error(),
-            DiagnosticCode::InvalidDescriptorSpecializationVariantBinding
-        ));
-        MPP_CHECK(!HasDiagnosticCode(
-            UnknownBinding.error(),
-            DiagnosticCode::InvalidDescriptorSpecializationFamily
-        ));
+        MPP_CHECK(HasDiagnosticCode(UnknownBinding.error(), DiagnosticCode::InvalidDescriptorSpecializationVariantBinding));
+        MPP_CHECK(!HasDiagnosticCode(UnknownBinding.error(), DiagnosticCode::InvalidDescriptorSpecializationFamily));
 
         std::vector<DescriptorSpecializationPin> FixedPins;
-        FixedPins.emplace_back(
-            "Fixed",
-            TypeDesc::Integer(),
-            false,
-            PinDirection::Input,
-            PinCategory::Data,
-            PinCardinality::Single,
-            false
-        );
-        FixedPins.emplace_back(
-            "Reflected",
-            std::nullopt,
-            true,
-            PinDirection::Output,
-            PinCategory::Data,
-            PinCardinality::Single,
-            false
-        );
+        FixedPins.emplace_back("Fixed", TypeDesc::Integer(), false, PinDirection::Input, PinCategory::Data, PinCardinality::Single, false);
+        FixedPins.emplace_back("Reflected", std::nullopt, true, PinDirection::Output, PinCategory::Data, PinCardinality::Single, false);
         auto FixedBindingFamily = MakeModelFamily(
             "fixed-binding-family",
             "fixed-binding-concrete",
@@ -2423,14 +2262,9 @@ namespace
                 DescriptorSpecializationPinBinding(PinIndex(1U), TypeDesc::Integer())
             }
         );
-        const auto FixedBinding = DescriptorFamilySpecializer::Specialize(
-            {std::move(FixedBindingFamily)}
-        );
+        const auto FixedBinding = DescriptorFamilySpecializer::Specialize({std::move(FixedBindingFamily)});
         MPP_CHECK(!FixedBinding.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            FixedBinding.error(),
-            DiagnosticCode::InvalidDescriptorSpecializationVariantBinding
-        ));
+        MPP_CHECK(HasDiagnosticCode(FixedBinding.error(), DiagnosticCode::InvalidDescriptorSpecializationVariantBinding));
 
         auto InvalidTypeFamily = MakeModelFamily(
             "invalid-type-family",
@@ -2447,40 +2281,25 @@ namespace
             )},
             {DescriptorSpecializationPinBinding(PinIndex(0U), TypeDesc())}
         );
-        const auto InvalidType = DescriptorFamilySpecializer::Specialize(
-            {std::move(InvalidTypeFamily)}
-        );
+        const auto InvalidType = DescriptorFamilySpecializer::Specialize({std::move(InvalidTypeFamily)});
         MPP_CHECK(!InvalidType.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            InvalidType.error(),
-            DiagnosticCode::InvalidDescriptorSpecializationVariantBinding
-        ));
+        MPP_CHECK(HasDiagnosticCode(InvalidType.error(), DiagnosticCode::InvalidDescriptorSpecializationVariantBinding));
 
         std::vector<DescriptorSpecializationPin> DuplicatePins;
-        DuplicatePins.emplace_back(
-            "Value",
-            std::nullopt,
-            true,
-            PinDirection::Input,
-            PinCategory::Data,
-            PinCardinality::Single,
-            false
-        );
+        DuplicatePins.emplace_back("Value", std::nullopt, true, PinDirection::Input, PinCategory::Data, PinCardinality::Single, false);
         std::vector<DescriptorSpecializationVariant> DuplicateVariants;
         DuplicateVariants.emplace_back(
             ExternalNodeIdentity("duplicate-concrete-a"),
             "duplicate-key",
             std::vector<DescriptorSpecializationPinBinding>{
-                DescriptorSpecializationPinBinding(
-                    PinIndex(0U), TypeDesc::Integer())
+                DescriptorSpecializationPinBinding(PinIndex(0U), TypeDesc::Integer())
             }
         );
         DuplicateVariants.emplace_back(
             ExternalNodeIdentity("duplicate-concrete-b"),
             "duplicate-key",
             std::vector<DescriptorSpecializationPinBinding>{
-                DescriptorSpecializationPinBinding(
-                    PinIndex(0U), TypeDesc::Float())
+                DescriptorSpecializationPinBinding(PinIndex(0U), TypeDesc::Float())
             }
         );
         DescriptorSpecializationFamily DuplicateVariantFamily(
@@ -2492,34 +2311,24 @@ namespace
             std::nullopt,
             std::move(DuplicateVariants)
         );
-        const auto DuplicateVariant = DescriptorFamilySpecializer::Specialize(
-            {std::move(DuplicateVariantFamily)}
-        );
+        const auto DuplicateVariant = DescriptorFamilySpecializer::Specialize({std::move(DuplicateVariantFamily)});
         MPP_CHECK(!DuplicateVariant.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            DuplicateVariant.error(),
-            DiagnosticCode::DuplicateDescriptorSpecializationVariant
-        ));
-        MPP_CHECK(!HasDiagnosticCode(
-            DuplicateVariant.error(),
-            DiagnosticCode::InvalidDescriptorSpecializationFamily
-        ));
+        MPP_CHECK(HasDiagnosticCode(DuplicateVariant.error(), DiagnosticCode::DuplicateDescriptorSpecializationVariant));
+        MPP_CHECK(!HasDiagnosticCode(DuplicateVariant.error(), DiagnosticCode::InvalidDescriptorSpecializationFamily));
 
         std::vector<DescriptorSpecializationVariant> DuplicateIdentityVariants;
         DuplicateIdentityVariants.emplace_back(
             ExternalNodeIdentity("duplicate-shared-concrete"),
             "identity-key-a",
             std::vector<DescriptorSpecializationPinBinding>{
-                DescriptorSpecializationPinBinding(
-                    PinIndex(0U), TypeDesc::Integer())
+                DescriptorSpecializationPinBinding(PinIndex(0U), TypeDesc::Integer())
             }
         );
         DuplicateIdentityVariants.emplace_back(
             ExternalNodeIdentity("duplicate-shared-concrete"),
             "identity-key-b",
             std::vector<DescriptorSpecializationPinBinding>{
-                DescriptorSpecializationPinBinding(
-                    PinIndex(0U), TypeDesc::Float())
+                DescriptorSpecializationPinBinding(PinIndex(0U), TypeDesc::Float())
             }
         );
         DescriptorSpecializationFamily DuplicateIdentityFamily(
@@ -2539,18 +2348,10 @@ namespace
             std::nullopt,
             std::move(DuplicateIdentityVariants)
         );
-        const auto DuplicateIdentity = DescriptorFamilySpecializer::Specialize(
-            {std::move(DuplicateIdentityFamily)}
-        );
+        const auto DuplicateIdentity = DescriptorFamilySpecializer::Specialize({std::move(DuplicateIdentityFamily)});
         MPP_CHECK(!DuplicateIdentity.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            DuplicateIdentity.error(),
-            DiagnosticCode::DuplicateDescriptorSpecializationVariant
-        ));
-        MPP_CHECK(!HasDiagnosticCode(
-            DuplicateIdentity.error(),
-            DiagnosticCode::InvalidDescriptorSpecializationFamily
-        ));
+        MPP_CHECK(HasDiagnosticCode(DuplicateIdentity.error(), DiagnosticCode::DuplicateDescriptorSpecializationVariant));
+        MPP_CHECK(!HasDiagnosticCode(DuplicateIdentity.error(), DiagnosticCode::InvalidDescriptorSpecializationFamily));
 
         auto CrossFamilyA = MakeModelFamily(
             "cross-family-a",
@@ -2582,26 +2383,19 @@ namespace
             )},
             {DescriptorSpecializationPinBinding(PinIndex(0U), TypeDesc::Float())}
         );
-        const auto CrossFamily = DescriptorFamilySpecializer::Specialize(
-            {std::move(CrossFamilyB), std::move(CrossFamilyA)}
-        );
+        const auto CrossFamily = DescriptorFamilySpecializer::Specialize({std::move(CrossFamilyB), std::move(CrossFamilyA)});
         MPP_CHECK(!CrossFamily.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            CrossFamily.error(),
-            DiagnosticCode::DuplicateExternalNodeIdentity
-        ));
+        MPP_CHECK(HasDiagnosticCode(CrossFamily.error(), DiagnosticCode::DuplicateExternalNodeIdentity));
     }
 
     void TestDescriptorSpecializationFamilyFailureAtomicity()
     {
-        const auto SourceFailure =
-            GenshinClientBooleanFilterReflectedDescriptorFamilySourceAdapter::Adapt(
-                MakeMutatedNodeMetadata([](JsonValue& Document)
-                {
-                    Document[0U]["reflectMap"][0U]["pins"].erase(0U);
-                }),
-                GetAuthenticNodeModesJson()
-            );
+        const auto SourceFailure = GenshinClientBooleanFilterReflectedDescriptorFamilySourceAdapter::Adapt(MakeMutatedNodeMetadata(
+            [](JsonValue& Document)
+            {
+                Document[0U]["reflectMap"][0U]["pins"].erase(0U);
+            }
+        ), GetAuthenticNodeModesJson());
         MPP_CHECK(!SourceFailure.has_value());
 
         auto BindingFailureFamily = MakeModelFamily(
@@ -2611,9 +2405,7 @@ namespace
             MakeTwoReflectedPins(),
             {DescriptorSpecializationPinBinding(PinIndex(0U), TypeDesc::Integer())}
         );
-        const auto BindingFailure = DescriptorFamilySpecializer::Specialize(
-            {std::move(BindingFailureFamily)}
-        );
+        const auto BindingFailure = DescriptorFamilySpecializer::Specialize({std::move(BindingFailureFamily)});
         MPP_CHECK(!BindingFailure.has_value());
 
         std::vector<DescriptorSpecializationVariant> DuplicateVariants;
@@ -2621,16 +2413,14 @@ namespace
             ExternalNodeIdentity("atomic-duplicate-concrete-a"),
             "atomic-duplicate-key",
             std::vector<DescriptorSpecializationPinBinding>{
-                DescriptorSpecializationPinBinding(
-                    PinIndex(0U), TypeDesc::Integer())
+                DescriptorSpecializationPinBinding(PinIndex(0U), TypeDesc::Integer())
             }
         );
         DuplicateVariants.emplace_back(
             ExternalNodeIdentity("atomic-duplicate-concrete-b"),
             "atomic-duplicate-key",
             std::vector<DescriptorSpecializationPinBinding>{
-                DescriptorSpecializationPinBinding(
-                    PinIndex(0U), TypeDesc::Float())
+                DescriptorSpecializationPinBinding(PinIndex(0U), TypeDesc::Float())
             }
         );
         const auto DuplicateVariantFailure = DescriptorFamilySpecializer::Specialize(
@@ -2645,14 +2435,8 @@ namespace
             )}
         );
         MPP_CHECK(!DuplicateVariantFailure.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            DuplicateVariantFailure.error(),
-            DiagnosticCode::DuplicateDescriptorSpecializationVariant
-        ));
-        MPP_CHECK(!HasDiagnosticCode(
-            DuplicateVariantFailure.error(),
-            DiagnosticCode::InvalidDescriptorSpecializationFamily
-        ));
+        MPP_CHECK(HasDiagnosticCode(DuplicateVariantFailure.error(), DiagnosticCode::DuplicateDescriptorSpecializationVariant));
+        MPP_CHECK(!HasDiagnosticCode(DuplicateVariantFailure.error(), DiagnosticCode::InvalidDescriptorSpecializationFamily));
 
         std::vector<DescriptorSpecializationPin> InvalidDefaultPins;
         InvalidDefaultPins.emplace_back(
@@ -2672,18 +2456,11 @@ namespace
             std::move(InvalidDefaultPins),
             {DescriptorSpecializationPinBinding(PinIndex(0U), TypeDesc::Vector3())}
         );
-        const auto InvalidDefault = DescriptorFamilySpecializer::Specialize(
-            {std::move(InvalidDefaultFamily)}
-        );
+        const auto InvalidDefault = DescriptorFamilySpecializer::Specialize({std::move(InvalidDefaultFamily)});
         MPP_CHECK(!InvalidDefault.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            InvalidDefault.error(),
-            DiagnosticCode::InvalidNormalizedDescriptorRecord
-        ));
+        MPP_CHECK(HasDiagnosticCode(InvalidDefault.error(), DiagnosticCode::InvalidNormalizedDescriptorRecord));
 
-        const auto ValidAfterFailures = DescriptorFamilySpecializer::Specialize(
-            AdaptAuthenticFixture()
-        );
+        const auto ValidAfterFailures = DescriptorFamilySpecializer::Specialize(AdaptAuthenticFixture());
         MPP_CHECK(ValidAfterFailures.has_value());
         MPP_CHECK(ValidAfterFailures->IsValid());
         MPP_CHECK(ValidAfterFailures->GetConcreteRecords().size() == 2U);
@@ -2694,10 +2471,8 @@ namespace
         const DescriptorSpecializationResult Result = SpecializeAuthenticFixture();
         MPP_CHECK(Result.IsValid());
 
-        const std::string SourceNamespace =
-            "genshin.client-bool-filter-reflected-descriptor-family-source";
-        const std::string SourceRevision =
-            "genshin-ts@26bdf2a9a3fadba934423940489236f0b53eb3ea;"
+        const std::string SourceNamespace = "genshin.client-bool-filter-reflected-descriptor-family-source";
+        const std::string SourceRevision = "genshin-ts@26bdf2a9a3fadba934423940489236f0b53eb3ea;"
             "client_node_metadata.json@93237c724f6453650ae9394077620c6e0fddb3d3;"
             "client_node_modes.json@b7e14a0dd7102ccd682235cf958a2d3d36378033";
 
@@ -2710,14 +2485,8 @@ namespace
         MPP_CHECK(Catalogue.has_value());
         MPP_CHECK(Catalogue->IsValid());
         MPP_CHECK(Catalogue->GetEntryCount() == 2U);
-        MPP_CHECK(
-            Catalogue->GetEntries()[0U].GetDescriptorIdentifier() ==
-            NodeDescriptorId(1U)
-        );
-        MPP_CHECK(
-            Catalogue->GetEntries()[1U].GetDescriptorIdentifier() ==
-            NodeDescriptorId(2U)
-        );
+        MPP_CHECK(Catalogue->GetEntries()[0U].GetDescriptorIdentifier() == NodeDescriptorId(1U));
+        MPP_CHECK(Catalogue->GetEntries()[1U].GetDescriptorIdentifier() == NodeDescriptorId(2U));
 
         const auto RepeatedCatalogue = DescriptorCatalogueBuilder::Build(
             SourceNamespace,
@@ -2736,31 +2505,15 @@ namespace
         using FamilyVector = std::vector<DescriptorSpecializationFamily>;
         using RecordVector = std::vector<NormalizedNodeDescriptorRecord>;
         using ExpectedAdaptation = std::expected<FamilyVector, DiagnosticCollection>;
-        using ExpectedSpecialization =
-            std::expected<DescriptorSpecializationResult, DiagnosticCollection>;
+        using ExpectedSpecialization = std::expected<DescriptorSpecializationResult, DiagnosticCollection>;
 
-        static_assert(!std::is_constructible_v<
-            DescriptorSpecializationResult,
-            FamilyVector,
-            RecordVector
-        >);
-        static_assert(std::is_same_v<
-            decltype(
-                GenshinClientBooleanFilterReflectedDescriptorFamilySourceAdapter::
-                    Adapt(std::string(), std::string())
-            ),
-            ExpectedAdaptation
-        >);
-        static_assert(std::is_same_v<
-            decltype(DescriptorFamilySpecializer::Specialize(FamilyVector())),
-            ExpectedSpecialization
-        >);
+        static_assert(!std::is_constructible_v<DescriptorSpecializationResult, FamilyVector, RecordVector>);
+        static_assert(std::is_same_v<decltype(GenshinClientBooleanFilterReflectedDescriptorFamilySourceAdapter::Adapt(std::string(), std::string())), ExpectedAdaptation>);
+        static_assert(std::is_same_v<decltype(DescriptorFamilySpecializer::Specialize(FamilyVector())), ExpectedSpecialization>);
         static_assert(!HasDescriptorIdentifierGetter<DescriptorSpecializationFamily>);
         static_assert(!HasDescriptorIdentifierGetter<DescriptorSpecializationResult>);
         static_assert(!HasGraphSurface<DescriptorFamilySpecializer>);
-        static_assert(!HasGraphSurface<
-            GenshinClientBooleanFilterReflectedDescriptorFamilySourceAdapter
-        >);
+        static_assert(!HasGraphSurface<GenshinClientBooleanFilterReflectedDescriptorFamilySourceAdapter>);
 
         const DescriptorSpecializationResult Result = SpecializeAuthenticFixture();
         MPP_CHECK(Result.IsValid());

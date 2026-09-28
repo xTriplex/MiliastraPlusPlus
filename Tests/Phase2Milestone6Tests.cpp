@@ -25,9 +25,7 @@ namespace
     void CheckType(const TypeDesc& Type)
     {
         GraphIR Graph;
-        Graph.AddVariable(GraphVariable{
-            GraphVariableId(1U), "Value", Type, std::nullopt
-        });
+        Graph.AddVariable(GraphVariable{GraphVariableId(1U), "Value", Type, std::nullopt});
         const auto Parsed = Deserialize(Serialize(Graph));
         Check(Parsed.has_value());
         Check(Parsed->GetVariables().front().Type == Type);
@@ -36,9 +34,7 @@ namespace
     void CheckLiteral(const LiteralValue& Literal)
     {
         GraphIR Graph;
-        Graph.AddVariable(GraphVariable{
-            GraphVariableId(1U), "Value", TypeDesc::Generic(GenericParameterId(1U)), Literal
-        });
+        Graph.AddVariable(GraphVariable{GraphVariableId(1U), "Value", TypeDesc::Generic(GenericParameterId(1U)), Literal});
         const auto Parsed = Deserialize(Serialize(Graph));
         Check(Parsed.has_value());
         Check(Parsed->GetVariables().front().DefaultValue == Literal);
@@ -64,8 +60,7 @@ namespace
         CheckType(TypeDesc::ConfigId());
         CheckType(TypeDesc::Faction());
         CheckType(TypeDesc::Generic(GenericParameterId(4U)));
-        CheckType(TypeDesc::List(TypeDesc::Dictionary(
-            TypeDesc::String(), TypeDesc::List(TypeDesc::Integer()))));
+        CheckType(TypeDesc::List(TypeDesc::Dictionary(TypeDesc::String(), TypeDesc::List(TypeDesc::Integer()))));
         CheckType(TypeDesc::StructObject(StructTypeId(8U)));
 
         CheckLiteral(LiteralValue{});
@@ -82,29 +77,12 @@ namespace
         GraphIR Original;
         Original.AddNode(NodeInstance{NodeInstanceId(1U), NodeDescriptorId(7U)});
         Original.AddNode(NodeInstance{NodeInstanceId(2U), NodeDescriptorId(7U)});
-        Original.AddVariable(GraphVariable{
-            GraphVariableId(1U), "Score", TypeDesc::Integer(),
-            LiteralValue(LiteralValue::Data{std::int64_t{9}})
-        });
-        Original.AddVariable(GraphVariable{
-            GraphVariableId(2U), "NoDefault", TypeDesc::Float(), std::nullopt
-        });
-        Original.BindInput(
-            NodeInstanceId(1U), PinIndex(0U),
-            LiteralValue(LiteralValue::Data{std::int64_t{1}})
-        );
-        Original.BindInput(
-            NodeInstanceId(1U), PinIndex(1U),
-            OutputReference{NodeInstanceId(2U), PinIndex(3U)},
-            TypeDesc::List(TypeDesc::Integer())
-        );
-        Original.BindInput(
-            NodeInstanceId(2U), PinIndex(2U),
-            GraphVariableReference{GraphVariableId(1U)}
-        );
-        Original.AddControlEdge(ControlEdge{
-            NodeInstanceId(1U), PinIndex(4U), NodeInstanceId(2U), PinIndex(5U)
-        });
+        Original.AddVariable(GraphVariable{GraphVariableId(1U), "Score", TypeDesc::Integer(), LiteralValue(LiteralValue::Data{std::int64_t{9}})});
+        Original.AddVariable(GraphVariable{GraphVariableId(2U), "NoDefault", TypeDesc::Float(), std::nullopt});
+        Original.BindInput(NodeInstanceId(1U), PinIndex(0U), LiteralValue(LiteralValue::Data{std::int64_t{1}}));
+        Original.BindInput(NodeInstanceId(1U), PinIndex(1U), OutputReference{NodeInstanceId(2U), PinIndex(3U)}, TypeDesc::List(TypeDesc::Integer()));
+        Original.BindInput(NodeInstanceId(2U), PinIndex(2U), GraphVariableReference{GraphVariableId(1U)});
+        Original.AddControlEdge(ControlEdge{NodeInstanceId(1U), PinIndex(4U), NodeInstanceId(2U), PinIndex(5U)});
         const nlohmann::json Serialized = Serialize(Original);
         Check(Serialized["irVersion"] == 3);
         Check(Serialized["executionModel"] == "Unstructured");
@@ -121,8 +99,7 @@ namespace
         Check(RoundTrip->GetInputBindings()[1].DestinationInputPin == PinIndex(1U));
         Check(std::get<OutputReference>(RoundTrip->GetInputBindings()[1].Binding).SourceNode == NodeInstanceId(2U));
         Check(RoundTrip->GetInputBindings()[0U].OutputTypeConstraint == std::nullopt);
-        Check(RoundTrip->GetInputBindings()[1U].OutputTypeConstraint ==
-            TypeDesc::List(TypeDesc::Integer()));
+        Check(RoundTrip->GetInputBindings()[1U].OutputTypeConstraint == TypeDesc::List(TypeDesc::Integer()));
         Check(RoundTrip->GetInputBindings()[2U].OutputTypeConstraint == std::nullopt);
 
         // This legacy document has control edges but no structured ownership to infer.
@@ -151,18 +128,15 @@ namespace
         Check(LegacyGraph->GetNodeCount() == 2U);
         Check(LegacyGraph->GetInputBindingCount() == 1U);
         Check(!LegacyGraph->GetInputBindings()[0U].OutputTypeConstraint.has_value());
-        Check(std::get<OutputReference>(LegacyGraph->GetInputBindings()[0U].Binding) ==
-            OutputReference{NodeInstanceId(2U), PinIndex(3U)});
+        Check(std::get<OutputReference>(LegacyGraph->GetInputBindings()[0U].Binding) == OutputReference{NodeInstanceId(2U), PinIndex(3U)});
         const nlohmann::json UpgradedLegacyGraph = Serialize(*LegacyGraph);
         Check(UpgradedLegacyGraph["irVersion"] == 3);
         Check(UpgradedLegacyGraph["executionModel"] == "Unstructured");
         Check(UpgradedLegacyGraph["inputBindings"][0U]["outputTypeConstraint"].is_null());
         Check(UpgradedLegacyGraph["nodes"][0U]["id"] == VersionOne["nodes"][0U]["id"]);
-        Check(UpgradedLegacyGraph["nodes"][0U]["descriptor"] ==
-            VersionOne["nodes"][0U]["descriptor"]);
+        Check(UpgradedLegacyGraph["nodes"][0U]["descriptor"] == VersionOne["nodes"][0U]["descriptor"]);
         Check(UpgradedLegacyGraph["nodes"][0U]["executionRegion"].is_null());
-        Check(UpgradedLegacyGraph["inputBindings"][0U]["binding"] ==
-            VersionOne["inputBindings"][0U]["binding"]);
+        Check(UpgradedLegacyGraph["inputBindings"][0U]["binding"] == VersionOne["inputBindings"][0U]["binding"]);
 
         nlohmann::json VersionTwoMissingConstraint = Serialize(Original);
         VersionTwoMissingConstraint["inputBindings"][0U].erase("outputTypeConstraint");
@@ -196,16 +170,10 @@ namespace
             });
             return Deserialize(Document);
         };
-        Check(DeserializeIntegerDefault(
-            nlohmann::json(std::numeric_limits<std::int64_t>::min())).has_value());
-        Check(DeserializeIntegerDefault(
-            nlohmann::json(std::numeric_limits<std::int64_t>::max())).has_value());
-        Check(!DeserializeIntegerDefault(nlohmann::json(
-            static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()) + 1U
-        )).has_value());
-        Check(!DeserializeIntegerDefault(nlohmann::json(
-            std::numeric_limits<std::uint64_t>::max()
-        )).has_value());
+        Check(DeserializeIntegerDefault(nlohmann::json(std::numeric_limits<std::int64_t>::min())).has_value());
+        Check(DeserializeIntegerDefault(nlohmann::json(std::numeric_limits<std::int64_t>::max())).has_value());
+        Check(!DeserializeIntegerDefault(nlohmann::json(static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()) + 1U)).has_value());
+        Check(!DeserializeIntegerDefault(nlohmann::json(std::numeric_limits<std::uint64_t>::max())).has_value());
 
         GraphIR InvalidIds;
         InvalidIds.AddNode(NodeInstance{NodeInstanceId{}, NodeDescriptorId{}});
@@ -228,20 +196,15 @@ namespace
         UnknownField["extra"] = 4;
         Check(Deserialize(UnknownField).has_value());
         nlohmann::json Unknown = Serialize(Empty);
-        Unknown["nodes"].push_back({{"id", 1U}, {"descriptor", 2U},
-            {"executionRegion", nullptr}, {"kind", "unknown"}});
+        Unknown["nodes"].push_back({{"id", 1U}, {"descriptor", 2U}, {"executionRegion", nullptr}, {"kind", "unknown"}});
         Check(Deserialize(Unknown).has_value());
 
         nlohmann::json UnknownType = Serialize(Empty);
-        UnknownType["variables"].push_back({
-            {"id", 1U}, {"name", "Bad"}, {"type", {{"kind", "FutureType"}}}
-        });
+        UnknownType["variables"].push_back({{"id", 1U}, {"name", "Bad"}, {"type", {{"kind", "FutureType"}}}});
         Check(!Deserialize(UnknownType).has_value());
 
         nlohmann::json Overflow = Serialize(Empty);
-        Overflow["nodes"].push_back({
-            {"id", 1U}, {"descriptor", 0x100000000ULL}
-        });
+        Overflow["nodes"].push_back({{"id", 1U}, {"descriptor", 0x100000000ULL}});
         Check(!Deserialize(Overflow).has_value());
 
     }

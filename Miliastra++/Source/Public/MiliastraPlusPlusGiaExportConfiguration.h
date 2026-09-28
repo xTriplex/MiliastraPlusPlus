@@ -124,48 +124,30 @@ namespace MiliastraPlusPlus
         {
             DiagnosticCollection Diagnostics;
 
-            if (!GiaExportConfigurationDetail::IsSupportedTargetProfile(TargetProfile) ||
-                !GiaExportConfigurationDetail::IsSupportedMode(Mode))
+            if (!GiaExportConfigurationDetail::IsSupportedTargetProfile(TargetProfile) || !GiaExportConfigurationDetail::IsSupportedMode(Mode))
             {
-                Diagnostics.push_back(GiaExportConfigurationDetail::MakeDiagnostic(
-                    DiagnosticCode::UnsupportedGiaExportTarget,
-                    "The requested GIA export target or mode is unsupported."
-                ));
+                Diagnostics.push_back(GiaExportConfigurationDetail::MakeDiagnostic(DiagnosticCode::UnsupportedGiaExportTarget, "The requested GIA export target or mode is unsupported."));
             }
 
             if (!GraphIdentifier.IsValid())
             {
-                Diagnostics.push_back(GiaExportConfigurationDetail::MakeDiagnostic(
-                    DiagnosticCode::InvalidGiaExportConfiguration,
-                    "The GIA graph identifier must be greater than zero."
-                ));
+                Diagnostics.push_back(GiaExportConfigurationDetail::MakeDiagnostic(DiagnosticCode::InvalidGiaExportConfiguration, "The GIA graph identifier must be greater than zero."));
             }
 
             if (GraphName.empty())
             {
-                Diagnostics.push_back(GiaExportConfigurationDetail::MakeDiagnostic(
-                    DiagnosticCode::InvalidGiaExportConfiguration,
-                    "The GIA graph name must not be empty."
-                ));
+                Diagnostics.push_back(GiaExportConfigurationDetail::MakeDiagnostic(DiagnosticCode::InvalidGiaExportConfiguration, "The GIA graph name must not be empty."));
             }
 
             if (!UniqueIdentifier.IsValid())
             {
-                Diagnostics.push_back(GiaExportConfigurationDetail::MakeDiagnostic(
-                    DiagnosticCode::InvalidGiaExportConfiguration,
-                    "The GIA unique identifier must be greater than zero."
-                ));
+                Diagnostics.push_back(GiaExportConfigurationDetail::MakeDiagnostic(DiagnosticCode::InvalidGiaExportConfiguration, "The GIA unique identifier must be greater than zero."));
             }
 
-            const double ResolvedEvaluationInterval =
-                EvaluationInterval.value_or(0.3);
-            if (!std::isfinite(ResolvedEvaluationInterval) ||
-                ResolvedEvaluationInterval < 0.0)
+            const double ResolvedEvaluationInterval = EvaluationInterval.value_or(0.3);
+            if (!std::isfinite(ResolvedEvaluationInterval) || ResolvedEvaluationInterval < 0.0)
             {
-                Diagnostics.push_back(GiaExportConfigurationDetail::MakeDiagnostic(
-                    DiagnosticCode::InvalidGiaExportConfiguration,
-                    "The GIA evaluation interval must be finite and non-negative."
-                ));
+                Diagnostics.push_back(GiaExportConfigurationDetail::MakeDiagnostic(DiagnosticCode::InvalidGiaExportConfiguration, "The GIA evaluation interval must be finite and non-negative."));
             }
 
             if (!Diagnostics.empty())
@@ -173,14 +155,7 @@ namespace MiliastraPlusPlus
                 return std::unexpected(std::move(Diagnostics));
             }
 
-            return GiaExportConfiguration(
-                TargetProfile,
-                Mode,
-                GraphIdentifier,
-                std::move(GraphName),
-                UniqueIdentifier,
-                ResolvedEvaluationInterval
-            );
+            return GiaExportConfiguration(TargetProfile, Mode, GraphIdentifier, std::move(GraphName), UniqueIdentifier, ResolvedEvaluationInterval);
         }
 
         [[nodiscard]] GiaExportTargetProfile GetTargetProfile() const noexcept
@@ -215,9 +190,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] bool IsValid() const noexcept
         {
-            return GiaExportConfigurationDetail::IsSupportedTargetProfile(
-                       m_TargetProfile
-                   ) &&
+            return GiaExportConfigurationDetail::IsSupportedTargetProfile(m_TargetProfile) &&
                 GiaExportConfigurationDetail::IsSupportedMode(m_Mode) &&
                 m_GraphIdentifier.IsValid() &&
                 !m_GraphName.empty() &&
@@ -235,8 +208,7 @@ namespace MiliastraPlusPlus
             GiaGraphIdentifier GraphIdentifier,
             std::string GraphName,
             GiaUniqueIdentifier UniqueIdentifier,
-            double EvaluationInterval
-        )
+            double EvaluationInterval)
             : m_TargetProfile(TargetProfile)
             , m_Mode(Mode)
             , m_GraphIdentifier(GraphIdentifier)

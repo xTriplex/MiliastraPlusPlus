@@ -116,12 +116,7 @@ namespace MiliastraPlusPlus
 
         inline void AddUnsupported(std::vector<PendingDiagnostic>& Diagnostics, std::string Message, const SourceContext& Context = {})
         {
-            AddDiagnostic(
-                Diagnostics,
-                DiagnosticCode::UnsupportedGenshinClientBooleanFilterReflectedDescriptorFamilySourceForm,
-                std::move(Message),
-                Context
-            );
+            AddDiagnostic(Diagnostics, DiagnosticCode::UnsupportedGenshinClientBooleanFilterReflectedDescriptorFamilySourceForm, std::move(Message), Context);
         }
 
         [[nodiscard]] inline const JsonValue* FindMember(const JsonValue& Object, std::string_view Name)
@@ -135,25 +130,15 @@ namespace MiliastraPlusPlus
             const JsonValue& Object,
             const std::array<std::string_view, Count>& AllowedFields,
             std::vector<PendingDiagnostic>& Diagnostics,
-            const SourceContext& Context
-        )
+            const SourceContext& Context)
         {
             bool Valid = true;
             for (auto Iterator = Object.begin(); Iterator != Object.end(); ++Iterator)
             {
                 const std::string_view Field = Iterator.key();
-                if (std::find(
-                        AllowedFields.begin(),
-                        AllowedFields.end(),
-                        Field
-                    ) == AllowedFields.end())
+                if (std::find(AllowedFields.begin(), AllowedFields.end(), Field) == AllowedFields.end())
                 {
-                    AddUnsupported(
-                        Diagnostics,
-                        "Unsupported reflected-family source field: " +
-                            std::string(Field) + ".",
-                        Context
-                    );
+                    AddUnsupported(Diagnostics, "Unsupported reflected-family source field: " + std::string(Field) + ".", Context);
                     Valid = false;
                 }
             }
@@ -188,11 +173,7 @@ namespace MiliastraPlusPlus
         [[nodiscard]] inline std::string ToCanonicalDecimal(std::uint64_t Value)
         {
             std::array<char, 32U> Buffer{};
-            const auto Result = std::to_chars(
-                Buffer.data(),
-                Buffer.data() + Buffer.size(),
-                Value
-            );
+            const auto Result = std::to_chars(Buffer.data(), Buffer.data() + Buffer.size(), Value);
             return std::string(Buffer.data(), Result.ptr);
         }
 
@@ -200,8 +181,7 @@ namespace MiliastraPlusPlus
             const JsonValue& Object,
             std::string_view Field,
             std::vector<PendingDiagnostic>& Diagnostics,
-            const SourceContext& Context
-        )
+            const SourceContext& Context)
         {
             const JsonValue* Value = FindMember(Object, Field);
             if (Value == nullptr)
@@ -210,16 +190,10 @@ namespace MiliastraPlusPlus
                 return std::nullopt;
             }
 
-            const std::optional<std::uint64_t> Converted =
-                TryConvertUnsignedInteger(*Value);
+            const std::optional<std::uint64_t> Converted = TryConvertUnsignedInteger(*Value);
             if (!Converted.has_value())
             {
-                AddUnsupported(
-                    Diagnostics,
-                    "Reflected-family source field must be a non-negative integer: " +
-                        std::string(Field) + ".",
-                    Context
-                );
+                AddUnsupported(Diagnostics, "Reflected-family source field must be a non-negative integer: " + std::string(Field) + ".", Context);
             }
             return Converted;
         }
@@ -228,8 +202,7 @@ namespace MiliastraPlusPlus
             const JsonValue& Object,
             std::string_view Field,
             std::vector<PendingDiagnostic>& Diagnostics,
-            const SourceContext& Context
-        )
+            const SourceContext& Context)
         {
             const JsonValue* Value = FindMember(Object, Field);
             if (Value == nullptr)
@@ -239,24 +212,14 @@ namespace MiliastraPlusPlus
             }
             if (!Value->is_string())
             {
-                AddUnsupported(
-                    Diagnostics,
-                    "Reflected-family source field must be a string: " +
-                        std::string(Field) + ".",
-                    Context
-                );
+                AddUnsupported(Diagnostics, "Reflected-family source field must be a string: " + std::string(Field) + ".", Context);
                 return std::nullopt;
             }
 
             std::string Result = Value->get<std::string>();
             if (Result.empty())
             {
-                AddUnsupported(
-                    Diagnostics,
-                    "Reflected-family source field must not be empty: " +
-                        std::string(Field) + ".",
-                    Context
-                );
+                AddUnsupported(Diagnostics, "Reflected-family source field must not be empty: " + std::string(Field) + ".", Context);
                 return std::nullopt;
             }
             return Result;
@@ -266,8 +229,7 @@ namespace MiliastraPlusPlus
             const JsonValue& Object,
             std::string_view Field,
             std::vector<PendingDiagnostic>& Diagnostics,
-            const SourceContext& Context
-        )
+            const SourceContext& Context)
         {
             const JsonValue* Value = FindMember(Object, Field);
             if (Value == nullptr)
@@ -277,12 +239,7 @@ namespace MiliastraPlusPlus
             }
             if (!Value->is_boolean())
             {
-                AddUnsupported(
-                    Diagnostics,
-                    "Reflected-family source field must be boolean: " +
-                        std::string(Field) + ".",
-                    Context
-                );
+                AddUnsupported(Diagnostics, "Reflected-family source field must be boolean: " + std::string(Field) + ".", Context);
                 return std::nullopt;
             }
             return Value->get<bool>();
@@ -293,15 +250,11 @@ namespace MiliastraPlusPlus
             std::string_view Name,
             std::set<std::uint64_t>& GenericIds,
             ModeMembership& Mode,
-            std::vector<PendingDiagnostic>& Diagnostics
-        )
+            std::vector<PendingDiagnostic>& Diagnostics)
         {
             if (!Group.is_object())
             {
-                AddUnsupported(
-                    Diagnostics,
-                    "Required bool-filter mode group must be an object."
-                );
+                AddUnsupported(Diagnostics, "Required bool-filter mode group must be an object.");
                 Mode.Valid = false;
                 return false;
             }
@@ -334,14 +287,10 @@ namespace MiliastraPlusPlus
             {
                 for (const JsonValue& Value : *Values)
                 {
-                    const std::optional<std::uint64_t> GenericId =
-                        TryConvertUnsignedInteger(Value);
+                    const std::optional<std::uint64_t> GenericId = TryConvertUnsignedInteger(Value);
                     if (!GenericId.has_value())
                     {
-                        AddUnsupported(
-                            Diagnostics,
-                            "Bool-filter genericIds entries must be non-negative integers."
-                        );
+                        AddUnsupported(Diagnostics, "Bool-filter genericIds entries must be non-negative integers.");
                         Valid = false;
                     }
                     else
@@ -360,11 +309,7 @@ namespace MiliastraPlusPlus
             ModeMembership Mode;
             if (!Document.is_object())
             {
-                AddDiagnostic(
-                    Diagnostics,
-                    DiagnosticCode::MalformedGenshinClientBooleanFilterReflectedDescriptorFamilySource,
-                    "Mode source document must be a JSON object."
-                );
+                AddDiagnostic(Diagnostics, DiagnosticCode::MalformedGenshinClientBooleanFilterReflectedDescriptorFamilySource, "Mode source document must be a JSON object.");
                 Mode.Valid = false;
                 return Mode;
             }
@@ -408,10 +353,7 @@ namespace MiliastraPlusPlus
             }
             if (!BooleanFilter->is_object())
             {
-                AddUnsupported(
-                    Diagnostics,
-                    "Mode document graphs.bool_filter must be an object."
-                );
+                AddUnsupported(Diagnostics, "Mode document graphs.bool_filter must be an object.");
                 Mode.Valid = false;
                 return Mode;
             }
@@ -424,13 +366,7 @@ namespace MiliastraPlusPlus
             }
             else
             {
-                ParseModeGroup(
-                    *Beyond,
-                    "graphs.bool_filter.beyond",
-                    Mode.BeyondGenericIds,
-                    Mode,
-                    Diagnostics
-                );
+                ParseModeGroup(*Beyond, "graphs.bool_filter.beyond", Mode.BeyondGenericIds, Mode, Diagnostics);
             }
 
             const JsonValue* Classic = FindMember(*BooleanFilter, "classic");
@@ -441,13 +377,7 @@ namespace MiliastraPlusPlus
             }
             else
             {
-                ParseModeGroup(
-                    *Classic,
-                    "graphs.bool_filter.classic",
-                    Mode.ClassicGenericIds,
-                    Mode,
-                    Diagnostics
-                );
+                ParseModeGroup(*Classic, "graphs.bool_filter.classic", Mode.ClassicGenericIds, Mode, Diagnostics);
             }
 
             return Mode;
@@ -459,8 +389,7 @@ namespace MiliastraPlusPlus
             std::uint64_t ExpectedIndex,
             std::string_view ExpectedName,
             std::vector<PendingDiagnostic>& Diagnostics,
-            const SourceContext& Context
-        )
+            const SourceContext& Context)
         {
             if (!Pin.is_object())
             {
@@ -470,21 +399,11 @@ namespace MiliastraPlusPlus
 
             if (Input)
             {
-                static_cast<void>(ValidateKnownFields(
-                    Pin,
-                    InputPinFields,
-                    Diagnostics,
-                    Context
-                ));
+                static_cast<void>(ValidateKnownFields(Pin, InputPinFields, Diagnostics, Context));
             }
             else
             {
-                static_cast<void>(ValidateKnownFields(
-                    Pin,
-                    OutputPinFields,
-                    Diagnostics,
-                    Context
-                ));
+                static_cast<void>(ValidateKnownFields(Pin, OutputPinFields, Diagnostics, Context));
             }
             const auto Index = ReadUnsignedInteger(Pin, "index", Diagnostics, Context);
             const auto Kind = ReadString(Pin, "kind", Diagnostics, Context);
@@ -505,23 +424,11 @@ namespace MiliastraPlusPlus
                 (!Input || (Connectable.has_value() && *Connectable));
             if (!Valid)
             {
-                AddUnsupported(
-                    Diagnostics,
-                    "Family pin does not match the selected reflected source form.",
-                    Context
-                );
+                AddUnsupported(Diagnostics, "Family pin does not match the selected reflected source form.", Context);
                 return std::nullopt;
             }
 
-            return DescriptorSpecializationPin(
-                *Name,
-                std::nullopt,
-                true,
-                Input ? PinDirection::Input : PinDirection::Output,
-                PinCategory::Data,
-                PinCardinality::Single,
-                false
-            );
+            return DescriptorSpecializationPin(*Name, std::nullopt, true, Input ? PinDirection::Input : PinDirection::Output, PinCategory::Data, PinCardinality::Single, false);
         }
 
         [[nodiscard]] inline std::optional<DescriptorSpecializationPinBinding> ParseBinding(
@@ -529,8 +436,7 @@ namespace MiliastraPlusPlus
             std::uint64_t ConcreteId,
             std::vector<bool>& SeenPins,
             std::vector<PendingDiagnostic>& Diagnostics,
-            const SourceContext& Context
-        )
+            const SourceContext& Context)
         {
             if (!Pin.is_object())
             {
@@ -543,41 +449,23 @@ namespace MiliastraPlusPlus
             const bool Output = Kind.has_value() && *Kind == "output";
             if (!Input && !Output)
             {
-                AddUnsupported(
-                    Diagnostics,
-                    "Variant binding kind must be input or output.",
-                    Context
-                );
+                AddUnsupported(Diagnostics, "Variant binding kind must be input or output.", Context);
                 return std::nullopt;
             }
 
             if (Input)
             {
-                static_cast<void>(ValidateKnownFields(
-                    Pin,
-                    InputBindingFields,
-                    Diagnostics,
-                    Context
-                ));
+                static_cast<void>(ValidateKnownFields(Pin, InputBindingFields, Diagnostics, Context));
             }
             else
             {
-                static_cast<void>(ValidateKnownFields(
-                    Pin,
-                    OutputBindingFields,
-                    Diagnostics,
-                    Context
-                ));
+                static_cast<void>(ValidateKnownFields(Pin, OutputBindingFields, Diagnostics, Context));
             }
-            const auto SourceIndex = ReadUnsignedInteger(
-                Pin, "index", Diagnostics, Context);
+            const auto SourceIndex = ReadUnsignedInteger(Pin, "index", Diagnostics, Context);
             const auto Type = ReadString(Pin, "type", Diagnostics, Context);
-            const auto IndexOfConcrete = ReadUnsignedInteger(
-                Pin, "indexOfConcrete", Diagnostics, Context);
-            const auto ClientVariableType = ReadUnsignedInteger(
-                Pin, "clientVarType", Diagnostics, Context);
-            const auto ConnectionType = ReadUnsignedInteger(
-                Pin, "connectionType", Diagnostics, Context);
+            const auto IndexOfConcrete = ReadUnsignedInteger(Pin, "indexOfConcrete", Diagnostics, Context);
+            const auto ClientVariableType = ReadUnsignedInteger(Pin, "clientVarType", Diagnostics, Context);
+            const auto ConnectionType = ReadUnsignedInteger(Pin, "connectionType", Diagnostics, Context);
             std::optional<bool> Connectable;
             if (Input)
             {
@@ -609,37 +497,25 @@ namespace MiliastraPlusPlus
                 (!Input || (Connectable.has_value() && *Connectable));
             if (!Valid)
             {
-                AddUnsupported(
-                    Diagnostics,
-                    "Variant binding does not match its selected concrete source form.",
-                    Context
-                );
+                AddUnsupported(Diagnostics, "Variant binding does not match its selected concrete source form.", Context);
                 return std::nullopt;
             }
 
             if (SeenPins[*FamilyPinIndex])
             {
-                AddUnsupported(
-                    Diagnostics,
-                    "Variant contains a duplicate reflected pin binding.",
-                    Context
-                );
+                AddUnsupported(Diagnostics, "Variant contains a duplicate reflected pin binding.", Context);
                 return std::nullopt;
             }
             SeenPins[*FamilyPinIndex] = true;
 
-            return DescriptorSpecializationPinBinding(
-                PinIndex(*FamilyPinIndex),
-                IntegerVariant ? TypeDesc::Integer() : TypeDesc::Float()
-            );
+            return DescriptorSpecializationPinBinding(PinIndex(*FamilyPinIndex), IntegerVariant ? TypeDesc::Integer() : TypeDesc::Float());
         }
 
         [[nodiscard]] inline std::optional<DescriptorSpecializationVariant> ParseVariant(
             const JsonValue& Variant,
             const std::string& FamilyKey,
             std::vector<PendingDiagnostic>& Diagnostics,
-            const SourceContext& Context
-        )
+            const SourceContext& Context)
         {
             if (!Variant.is_object())
             {
@@ -647,16 +523,9 @@ namespace MiliastraPlusPlus
                 return std::nullopt;
             }
 
-            static_cast<void>(ValidateKnownFields(
-                Variant,
-                VariantFields,
-                Diagnostics,
-                Context
-            ));
-            const auto ConcreteId = ReadUnsignedInteger(
-                Variant, "concreteId", Diagnostics, Context);
-            const auto VariantKey = ReadString(
-                Variant, "variantKey", Diagnostics, Context);
+            static_cast<void>(ValidateKnownFields(Variant, VariantFields, Diagnostics, Context));
+            const auto ConcreteId = ReadUnsignedInteger(Variant, "concreteId", Diagnostics, Context);
+            const auto VariantKey = ReadString(Variant, "variantKey", Diagnostics, Context);
             const JsonValue* Pins = FindMember(Variant, "pins");
             if (Pins == nullptr)
             {
@@ -667,8 +536,7 @@ namespace MiliastraPlusPlus
                 AddUnsupported(Diagnostics, "Variant pins must be an array.", Context);
             }
 
-            if (!ConcreteId.has_value() || !VariantKey.has_value() ||
-                Pins == nullptr || !Pins->is_array())
+            if (!ConcreteId.has_value() || !VariantKey.has_value() || Pins == nullptr || !Pins->is_array())
             {
                 return std::nullopt;
             }
@@ -676,14 +544,9 @@ namespace MiliastraPlusPlus
             const bool IntegerVariant = *ConcreteId == 1011U;
             const bool FloatVariant = *ConcreteId == 1012U;
             const std::string ExpectedKey = IntegerVariant ? "3,3" : "7,7";
-            if ((!IntegerVariant && !FloatVariant) || *VariantKey != ExpectedKey ||
-                Pins->size() != 3U)
+            if ((!IntegerVariant && !FloatVariant) || *VariantKey != ExpectedKey || Pins->size() != 3U)
             {
-                AddUnsupported(
-                    Diagnostics,
-                    "Reflect-map variant does not match a selected concrete ID/key pair.",
-                    Context
-                );
+                AddUnsupported(Diagnostics, "Reflect-map variant does not match a selected concrete ID/key pair.", Context);
                 return std::nullopt;
             }
 
@@ -692,13 +555,7 @@ namespace MiliastraPlusPlus
             Bindings.reserve(3U);
             for (const JsonValue& Pin : *Pins)
             {
-                const auto Binding = ParseBinding(
-                    Pin,
-                    *ConcreteId,
-                    SeenPins,
-                    Diagnostics,
-                    Context
-                );
+                const auto Binding = ParseBinding(Pin, *ConcreteId, SeenPins, Diagnostics, Context);
                 if (Binding.has_value())
                 {
                     Bindings.push_back(*Binding);
@@ -706,77 +563,50 @@ namespace MiliastraPlusPlus
             }
 
             if (!std::all_of(SeenPins.begin(), SeenPins.end(), [](bool Seen)
-                {
-                    return Seen;
-                }))
             {
-                AddUnsupported(
-                    Diagnostics,
-                    "Variant must bind every selected reflected family pin exactly once.",
-                    Context
-                );
+                return Seen;
+            }))
+            {
+                AddUnsupported(Diagnostics, "Variant must bind every selected reflected family pin exactly once.", Context);
                 return std::nullopt;
             }
 
             const std::string ConcreteKey = ToCanonicalDecimal(*ConcreteId);
-            const std::string ConcreteExternalKey =
-                "family=" + FamilyKey + ";concrete=" + ConcreteKey +
+            const std::string ConcreteExternalKey = "family=" + FamilyKey + ";concrete=" + ConcreteKey +
                 ";variant-bytes=" + ToCanonicalDecimal(VariantKey->size()) +
                 ":" + *VariantKey;
-            return DescriptorSpecializationVariant(
-                ExternalNodeIdentity(ConcreteExternalKey),
-                *VariantKey,
-                std::move(Bindings)
-            );
+            return DescriptorSpecializationVariant(ExternalNodeIdentity(ConcreteExternalKey), *VariantKey, std::move(Bindings));
         }
 
         [[nodiscard]] inline std::optional<DescriptorSpecializationFamily> ParseRecord(
             const JsonValue& Record,
             const ModeMembership& Mode,
-            std::vector<PendingDiagnostic>& Diagnostics
-        )
+            std::vector<PendingDiagnostic>& Diagnostics)
         {
             SourceContext Context;
             if (!Record.is_object())
             {
-                AddDiagnostic(
-                    Diagnostics,
-                    DiagnosticCode::MalformedGenshinClientBooleanFilterReflectedDescriptorFamilySource,
-                    "Node source record must be a JSON object."
-                );
+                AddDiagnostic(Diagnostics, DiagnosticCode::MalformedGenshinClientBooleanFilterReflectedDescriptorFamilySource, "Node source record must be a JSON object.");
                 return std::nullopt;
             }
 
-            const auto GenericId = ReadUnsignedInteger(
-                Record, "genericId", Diagnostics, Context);
+            const auto GenericId = ReadUnsignedInteger(Record, "genericId", Diagnostics, Context);
             if (GenericId.has_value())
             {
                 Context.ExternalKey = ToCanonicalDecimal(*GenericId);
             }
-            const auto SampleFile = ReadString(
-                Record, "sampleFile", Diagnostics, Context);
+            const auto SampleFile = ReadString(Record, "sampleFile", Diagnostics, Context);
             if (GenericId.has_value() && SampleFile.has_value())
             {
-                Context.Provenance = SourceProvenance(
-                    *SampleFile,
-                    Context.ExternalKey
-                );
+                Context.Provenance = SourceProvenance(*SampleFile, Context.ExternalKey);
             }
 
-            static_cast<void>(ValidateKnownFields(
-                Record,
-                RecordFields,
-                Diagnostics,
-                Context
-            ));
+            static_cast<void>(ValidateKnownFields(Record, RecordFields, Diagnostics, Context));
             const auto SubType = ReadString(Record, "subType", Diagnostics, Context);
             const auto NodeType = ReadString(Record, "nodeType", Diagnostics, Context);
-            const auto DisplayName = ReadString(
-                Record, "displayName", Diagnostics, Context);
-            const auto GraphType = ReadUnsignedInteger(
-                Record, "graphType", Diagnostics, Context);
-            const auto SpecialKind = ReadString(
-                Record, "specialKind", Diagnostics, Context);
+            const auto DisplayName = ReadString(Record, "displayName", Diagnostics, Context);
+            const auto GraphType = ReadUnsignedInteger(Record, "graphType", Diagnostics, Context);
+            const auto SpecialKind = ReadString(Record, "specialKind", Diagnostics, Context);
 
             bool RecordShapeValid = SubType.has_value() && *SubType == "bool_filter" &&
                 NodeType.has_value() && *NodeType == "get_random_number" &&
@@ -785,11 +615,7 @@ namespace MiliastraPlusPlus
                 SpecialKind.has_value() && *SpecialKind == "reflect";
             if (!RecordShapeValid)
             {
-                AddUnsupported(
-                    Diagnostics,
-                    "Node record is outside the selected reflected bool-filter family.",
-                    Context
-                );
+                AddUnsupported(Diagnostics, "Node record is outside the selected reflected bool-filter family.", Context);
             }
 
             const JsonValue* ConcreteId = FindMember(Record, "concreteId");
@@ -800,11 +626,7 @@ namespace MiliastraPlusPlus
             }
             else if (!ConcreteId->is_null())
             {
-                AddUnsupported(
-                    Diagnostics,
-                    "Selected reflected family concreteId must be null.",
-                    Context
-                );
+                AddUnsupported(Diagnostics, "Selected reflected family concreteId must be null.", Context);
                 RecordShapeValid = false;
             }
 
@@ -816,23 +638,16 @@ namespace MiliastraPlusPlus
             }
             else if (!Flows->is_array() || !Flows->empty())
             {
-                AddUnsupported(
-                    Diagnostics,
-                    "Selected reflected family flows must be an empty array.",
-                    Context
-                );
+                AddUnsupported(Diagnostics, "Selected reflected family flows must be an empty array.", Context);
                 RecordShapeValid = false;
             }
 
-            if (!Mode.Valid || !GenericId.has_value() ||
+            if (!Mode.Valid ||
+                !GenericId.has_value() ||
                 !Mode.BeyondGenericIds.contains(*GenericId) ||
                 !Mode.ClassicGenericIds.contains(*GenericId))
             {
-                AddUnsupported(
-                    Diagnostics,
-                    "Selected reflected family must be available in both bool-filter modes.",
-                    Context
-                );
+                AddUnsupported(Diagnostics, "Selected reflected family must be available in both bool-filter modes.", Context);
                 RecordShapeValid = false;
             }
 
@@ -855,28 +670,21 @@ namespace MiliastraPlusPlus
             {
                 return std::nullopt;
             }
-            if (!Inputs->is_array() || Inputs->size() != 2U ||
-                !Outputs->is_array() || Outputs->size() != 1U ||
-                !ReflectMap->is_array() || ReflectMap->size() != 2U)
+            if (!Inputs->is_array() ||
+                Inputs->size() != 2U ||
+                !Outputs->is_array() ||
+                Outputs->size() != 1U ||
+                !ReflectMap->is_array() ||
+                ReflectMap->size() != 2U)
             {
-                AddUnsupported(
-                    Diagnostics,
-                    "Selected reflected family requires two inputs, one output, and two variants.",
-                    Context
-                );
+                AddUnsupported(Diagnostics, "Selected reflected family requires two inputs, one output, and two variants.", Context);
                 return std::nullopt;
             }
 
             std::vector<DescriptorSpecializationPin> Pins;
-            const auto Input0 = ParseBasePin(
-                (*Inputs)[0U], true, 0U,
-                "\xE4\xB8\x8B\xE9\x99\x90", Diagnostics, Context);
-            const auto Input1 = ParseBasePin(
-                (*Inputs)[1U], true, 1U,
-                "\xE4\xB8\x8A\xE9\x99\x90", Diagnostics, Context);
-            const auto Output0 = ParseBasePin(
-                (*Outputs)[0U], false, 0U,
-                "\xE9\x9A\x8F\xE6\x9C\xBA\xE6\x95\xB0", Diagnostics, Context);
+            const auto Input0 = ParseBasePin((*Inputs)[0U], true, 0U, "\xE4\xB8\x8B\xE9\x99\x90", Diagnostics, Context);
+            const auto Input1 = ParseBasePin((*Inputs)[1U], true, 1U, "\xE4\xB8\x8A\xE9\x99\x90", Diagnostics, Context);
+            const auto Output0 = ParseBasePin((*Outputs)[0U], false, 0U, "\xE9\x9A\x8F\xE6\x9C\xBA\xE6\x95\xB0", Diagnostics, Context);
             if (Input0.has_value())
             {
                 Pins.push_back(*Input0);
@@ -895,47 +703,30 @@ namespace MiliastraPlusPlus
             std::set<std::string> VariantKeys;
             for (const JsonValue& VariantValue : *ReflectMap)
             {
-                const auto ConcreteIdValue = VariantValue.is_object()
-                    ? ReadUnsignedInteger(
-                        VariantValue, "concreteId", Diagnostics, Context)
-                    : std::nullopt;
-                const auto VariantKeyValue = VariantValue.is_object()
-                    ? ReadString(VariantValue, "variantKey", Diagnostics, Context)
-                    : std::nullopt;
-                if (ConcreteIdValue.has_value() &&
-                    !ConcreteIds.insert(*ConcreteIdValue).second)
+                const auto ConcreteIdValue = VariantValue.is_object() ? ReadUnsignedInteger(VariantValue, "concreteId", Diagnostics, Context) : std::nullopt;
+                const auto VariantKeyValue = VariantValue.is_object() ? ReadString(VariantValue, "variantKey", Diagnostics, Context) : std::nullopt;
+                if (ConcreteIdValue.has_value() && !ConcreteIds.insert(*ConcreteIdValue).second)
                 {
-                    AddUnsupported(
-                        Diagnostics,
-                        "Source concreteId is duplicated.",
-                        Context
-                    );
+                    AddUnsupported(Diagnostics, "Source concreteId is duplicated.", Context);
                 }
-                if (VariantKeyValue.has_value() &&
-                    !VariantKeys.insert(*VariantKeyValue).second)
+                if (VariantKeyValue.has_value() && !VariantKeys.insert(*VariantKeyValue).second)
                 {
-                    AddUnsupported(
-                        Diagnostics,
-                        "Source variantKey is duplicated.",
-                        Context
-                    );
+                    AddUnsupported(Diagnostics, "Source variantKey is duplicated.", Context);
                 }
 
-                const auto Variant = ParseVariant(
-                    VariantValue,
-                    Context.ExternalKey,
-                    Diagnostics,
-                    Context
-                );
+                const auto Variant = ParseVariant(VariantValue, Context.ExternalKey, Diagnostics, Context);
                 if (Variant.has_value())
                 {
                     Variants.push_back(*Variant);
                 }
             }
 
-            if (!RecordShapeValid || !DisplayName.has_value() ||
-                !Context.Provenance.has_value() || Pins.size() != 3U ||
-                Variants.size() != 2U || ConcreteIds.size() != 2U ||
+            if (!RecordShapeValid ||
+                !DisplayName.has_value() ||
+                !Context.Provenance.has_value() ||
+                Pins.size() != 3U ||
+                Variants.size() != 2U ||
+                ConcreteIds.size() != 2U ||
                 VariantKeys.size() != 2U)
             {
                 return std::nullopt;
@@ -952,11 +743,7 @@ namespace MiliastraPlusPlus
             );
             if (!Family.IsValid())
             {
-                AddUnsupported(
-                    Diagnostics,
-                    "Selected reflected family does not produce a valid backend-neutral family.",
-                    Context
-                );
+                AddUnsupported(Diagnostics, "Selected reflected family does not produce a valid backend-neutral family.", Context);
                 return std::nullopt;
             }
 
@@ -969,16 +756,9 @@ namespace MiliastraPlusPlus
     public:
         GenshinClientBooleanFilterReflectedDescriptorFamilySourceAdapter() = delete;
 
-        [[nodiscard]] static std::expected<
-            std::vector<DescriptorSpecializationFamily>,
-            DiagnosticCollection
-        > Adapt(
-            std::string NodeMetadataJson,
-            std::string NodeModesJson
-        )
+        [[nodiscard]] static std::expected<std::vector<DescriptorSpecializationFamily>, DiagnosticCollection> Adapt(std::string NodeMetadataJson, std::string NodeModesJson)
         {
-            using namespace
-                GenshinClientBooleanFilterReflectedDescriptorFamilySourceAdapterDetail;
+            using namespace GenshinClientBooleanFilterReflectedDescriptorFamilySourceAdapterDetail;
 
             std::vector<PendingDiagnostic> PendingDiagnostics;
             std::optional<JsonValue> NodeDocument;
@@ -989,11 +769,7 @@ namespace MiliastraPlusPlus
             }
             catch (const nlohmann::json::exception&)
             {
-                AddDiagnostic(
-                    PendingDiagnostics,
-                    DiagnosticCode::MalformedGenshinClientBooleanFilterReflectedDescriptorFamilySource,
-                    "Node source document contains malformed JSON."
-                );
+                AddDiagnostic(PendingDiagnostics, DiagnosticCode::MalformedGenshinClientBooleanFilterReflectedDescriptorFamilySource, "Node source document contains malformed JSON.");
             }
 
             try
@@ -1002,11 +778,7 @@ namespace MiliastraPlusPlus
             }
             catch (const nlohmann::json::exception&)
             {
-                AddDiagnostic(
-                    PendingDiagnostics,
-                    DiagnosticCode::MalformedGenshinClientBooleanFilterReflectedDescriptorFamilySource,
-                    "Mode source document contains malformed JSON."
-                );
+                AddDiagnostic(PendingDiagnostics, DiagnosticCode::MalformedGenshinClientBooleanFilterReflectedDescriptorFamilySource, "Mode source document contains malformed JSON.");
             }
 
             ModeMembership Mode;
@@ -1024,26 +796,15 @@ namespace MiliastraPlusPlus
             {
                 if (!NodeDocument->is_array())
                 {
-                    AddDiagnostic(
-                        PendingDiagnostics,
-                        DiagnosticCode::MalformedGenshinClientBooleanFilterReflectedDescriptorFamilySource,
-                        "Node source document must be a JSON array."
-                    );
+                    AddDiagnostic(PendingDiagnostics, DiagnosticCode::MalformedGenshinClientBooleanFilterReflectedDescriptorFamilySource, "Node source document must be a JSON array.");
                 }
                 else if (NodeDocument->size() != 1U)
                 {
-                    AddUnsupported(
-                        PendingDiagnostics,
-                        "Node source document must contain exactly one selected family record."
-                    );
+                    AddUnsupported(PendingDiagnostics, "Node source document must contain exactly one selected family record.");
                 }
                 else
                 {
-                    const auto Family = ParseRecord(
-                        (*NodeDocument)[0U],
-                        Mode,
-                        PendingDiagnostics
-                    );
+                    const auto Family = ParseRecord((*NodeDocument)[0U], Mode, PendingDiagnostics);
                     if (Family.has_value())
                     {
                         Families.push_back(*Family);
@@ -1053,11 +814,7 @@ namespace MiliastraPlusPlus
 
             if (!PendingDiagnostics.empty())
             {
-                return std::unexpected(
-                    DescriptorCatalogueDetail::MaterializePendingDiagnostics(
-                        std::move(PendingDiagnostics)
-                    )
-                );
+                return std::unexpected(DescriptorCatalogueDetail::MaterializePendingDiagnostics(std::move(PendingDiagnostics)));
             }
 
             return Families;

@@ -42,8 +42,7 @@ namespace MiliastraPlusPlus
                 const Node* SourceNode = SourceGraph.FindNodeByIdentifier(NodeMapping.SourceNode);
                 if (SourceNode == nullptr || !NodeMapping.Descriptor.IsValid())
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidGraphIRAdapterMapping,
-                        "The adapter mapping references a missing node or invalid descriptor.");
+                    Add(Diagnostics, DiagnosticCode::InvalidGraphIRAdapterMapping, "The adapter mapping references a missing node or invalid descriptor.");
                     continue;
                 }
 
@@ -52,12 +51,12 @@ namespace MiliastraPlusPlus
                 for (const GraphIRPinMapping& PinMapping : NodeMapping.Pins)
                 {
                     const Pin* SourcePin = SourceNode->GetPinByIdentifier(PinMapping.SourcePin);
-                    if (SourcePin == nullptr || !PinMapping.GraphIRPin.IsValid() ||
+                    if (SourcePin == nullptr ||
+                        !PinMapping.GraphIRPin.IsValid() ||
                         !SourcePins.insert(PinMapping.SourcePin.GetValue()).second ||
                         !GraphIRPins.insert(PinMapping.GraphIRPin.GetValue()).second)
                     {
-                        Add(Diagnostics, DiagnosticCode::InvalidGraphIRAdapterMapping,
-                            "The adapter mapping contains a missing, invalid, or duplicate pin mapping.");
+                        Add(Diagnostics, DiagnosticCode::InvalidGraphIRAdapterMapping, "The adapter mapping contains a missing, invalid, or duplicate pin mapping.");
                     }
                 }
             }
@@ -67,19 +66,16 @@ namespace MiliastraPlusPlus
             {
                 if (!SourceNodes.insert(NodeMapping.SourceNode.GetValue()).second)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidGraphIRAdapterMapping,
-                        "The adapter mapping contains duplicate source node mappings.");
+                    Add(Diagnostics, DiagnosticCode::InvalidGraphIRAdapterMapping, "The adapter mapping contains duplicate source node mappings.");
                 }
             }
 
             for (const std::unique_ptr<Node>& SourceNode : SourceGraph.GetNodes())
             {
-                const GraphIRNodeMapping* NodeMapping = FindNodeMapping(
-                    Mapping, SourceNode->GetIdentifier());
+                const GraphIRNodeMapping* NodeMapping = FindNodeMapping(Mapping, SourceNode->GetIdentifier());
                 if (NodeMapping == nullptr || !NodeMapping->Descriptor.IsValid())
                 {
-                    Add(Diagnostics, DiagnosticCode::MissingAdapterNodeMapping,
-                        "The Phase 1 node has no valid GraphIR descriptor mapping.");
+                    Add(Diagnostics, DiagnosticCode::MissingAdapterNodeMapping, "The Phase 1 node has no valid GraphIR descriptor mapping.");
                     continue;
                 }
 
@@ -93,33 +89,23 @@ namespace MiliastraPlusPlus
             {
                 const PinReference& SourceReference = SourceLink.GetSourcePinReference();
                 const PinReference& DestinationReference = SourceLink.GetDestinationPinReference();
-                const Node* SourceNode = SourceGraph.FindNodeByIdentifier(
-                    SourceReference.OwningNodeIdentifier);
-                const Node* DestinationNode = SourceGraph.FindNodeByIdentifier(
-                    DestinationReference.OwningNodeIdentifier);
+                const Node* SourceNode = SourceGraph.FindNodeByIdentifier(SourceReference.OwningNodeIdentifier);
+                const Node* DestinationNode = SourceGraph.FindNodeByIdentifier(DestinationReference.OwningNodeIdentifier);
                 const Pin* SourcePin = SourceGraph.FindPinByReference(SourceReference);
                 const Pin* DestinationPin = SourceGraph.FindPinByReference(DestinationReference);
-                const GraphIRNodeMapping* SourceMapping = FindNodeMapping(
-                    Mapping, SourceReference.OwningNodeIdentifier);
-                const GraphIRNodeMapping* DestinationMapping = FindNodeMapping(
-                    Mapping, DestinationReference.OwningNodeIdentifier);
+                const GraphIRNodeMapping* SourceMapping = FindNodeMapping(Mapping, SourceReference.OwningNodeIdentifier);
+                const GraphIRNodeMapping* DestinationMapping = FindNodeMapping(Mapping, DestinationReference.OwningNodeIdentifier);
 
-                const PinIndex* SourceIndex = FindPinMapping(
-                    SourceMapping, SourceReference.LocalPinIdentifier);
-                const PinIndex* DestinationIndex = FindPinMapping(
-                    DestinationMapping, DestinationReference.LocalPinIdentifier);
-                if (SourceNode == nullptr || DestinationNode == nullptr ||
-                    SourcePin == nullptr || DestinationPin == nullptr)
+                const PinIndex* SourceIndex = FindPinMapping(SourceMapping, SourceReference.LocalPinIdentifier);
+                const PinIndex* DestinationIndex = FindPinMapping(DestinationMapping, DestinationReference.LocalPinIdentifier);
+                if (SourceNode == nullptr || DestinationNode == nullptr || SourcePin == nullptr || DestinationPin == nullptr)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidGraphIRAdapterLink,
-                        "A Phase 1 link cannot be represented with the supplied GraphIR mapping.");
+                    Add(Diagnostics, DiagnosticCode::InvalidGraphIRAdapterLink, "A Phase 1 link cannot be represented with the supplied GraphIR mapping.");
                     continue;
                 }
-                if (SourceMapping == nullptr || DestinationMapping == nullptr ||
-                    SourceIndex == nullptr || DestinationIndex == nullptr)
+                if (SourceMapping == nullptr || DestinationMapping == nullptr || SourceIndex == nullptr || DestinationIndex == nullptr)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidGraphIRAdapterMapping,
-                        "A Phase 1 link has no complete explicit GraphIR pin mapping.");
+                    Add(Diagnostics, DiagnosticCode::InvalidGraphIRAdapterMapping, "A Phase 1 link has no complete explicit GraphIR pin mapping.");
                     continue;
                 }
 
@@ -148,16 +134,11 @@ namespace MiliastraPlusPlus
                 }
                 else if (IsDataLink)
                 {
-                    Result.BindInput(
-                        DestinationNodeId,
-                        *DestinationIndex,
-                        OutputReference{SourceNodeId, *SourceIndex}
-                    );
+                    Result.BindInput(DestinationNodeId, *DestinationIndex, OutputReference{SourceNodeId, *SourceIndex});
                 }
                 else
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidGraphIRAdapterLink,
-                        "A Phase 1 link has an unsupported direction, category, or execution type.");
+                    Add(Diagnostics, DiagnosticCode::InvalidGraphIRAdapterLink, "A Phase 1 link has an unsupported direction, category, or execution type.");
                 }
             }
 

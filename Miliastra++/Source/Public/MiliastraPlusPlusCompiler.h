@@ -69,7 +69,7 @@ namespace MiliastraPlusPlus
                         .Severity = DiagnosticSeverity::Error,
                         .Code = DiagnosticCode::FileWriteFailure,
                         .Message = "The compiler could not write the complete output file."
-                    });
+                        });
                 }
                 return false;
             }
@@ -81,7 +81,7 @@ namespace MiliastraPlusPlus
                         .Severity = DiagnosticSeverity::Error,
                         .Code = DiagnosticCode::FileWriteFailure,
                         .Message = "The compiler encountered an exception while writing the output file."
-                    });
+                        });
                 }
                 return false;
             }

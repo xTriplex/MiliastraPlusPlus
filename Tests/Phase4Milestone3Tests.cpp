@@ -32,8 +32,7 @@ namespace
 {
     [[noreturn]] void Fail(const char* Expression, const std::source_location& Location)
     {
-        std::fprintf(stderr, "Check failed: %s (%s:%u)\n", Expression,
-            Location.file_name(), Location.line());
+        std::fprintf(stderr, "Check failed: %s (%s:%u)\n", Expression, Location.file_name(), Location.line());
         std::abort();
     }
 
@@ -57,8 +56,7 @@ namespace
 
     PinSchema Flow(const char* Name, PinDirection Direction, PinCardinality Cardinality = PinCardinality::Single)
     {
-        return PinSchema(Name, TypeDesc::Flow(), Direction, PinCategory::Execution,
-            Cardinality);
+        return PinSchema(Name, TypeDesc::Flow(), Direction, PinCategory::Execution, Cardinality);
     }
 
     NodeDescriptor EntryDescriptor()
@@ -73,8 +71,7 @@ namespace
         return NodeDescriptor(SequenceId, "Step", {NodeAvailability::Server},
             {Flow("in", PinDirection::Input),
              Flow("out", PinDirection::Output),
-             PinSchema("bool result", TypeDesc::Boolean(), PinDirection::Output,
-                 PinCategory::Data),
+             PinSchema("bool result", TypeDesc::Boolean(), PinDirection::Output, PinCategory::Data),
              PinSchema("bool data", TypeDesc::Boolean(), PinDirection::Input,
                  PinCategory::Data, PinCardinality::Single, true)},
             SequenceControlSchema{PinIndex(0U), PinIndex(1U)});
@@ -84,8 +81,7 @@ namespace
     {
         return NodeDescriptor(BranchId, "TwoWay", {NodeAvailability::Server},
             {Flow("in", PinDirection::Input),
-             PinSchema("condition", TypeDesc::Boolean(), PinDirection::Input,
-                 PinCategory::Data, PinCardinality::Single, true),
+            PinSchema("condition", TypeDesc::Boolean(), PinDirection::Input, PinCategory::Data, PinCardinality::Single, true),
              Flow("arbitrary true label", PinDirection::Output),
              Flow("arbitrary false label", PinDirection::Output)},
             BranchControlSchema{PinIndex(0U), PinIndex(1U), PinIndex(2U), PinIndex(3U)});
@@ -178,8 +174,7 @@ namespace
         MPP_CHECK(Prefix.has_value());
         auto Condition = Builder.GetOutput<bool>(Prefix->Node, PinIndex(2U));
         MPP_CHECK(Condition.has_value());
-        auto Loop = Builder.BeginLoop(Entry->Scope, Prefix->Output, ConditionalLoopId,
-            ValueOrExpr<bool>(*Condition));
+        auto Loop = Builder.BeginLoop(Entry->Scope, Prefix->Output, ConditionalLoopId, ValueOrExpr<bool>(*Condition));
         MPP_CHECK(Loop.has_value());
         MPP_CHECK(Loop->Node.GetIdentifier() == NodeInstanceId(3U));
         MPP_CHECK(Loop->BodyOutput.GetSourceOutputPin() == PinIndex(1U));
@@ -192,8 +187,7 @@ namespace
         MPP_CHECK(ClosedLoop->ExitOutput->GetSourceNode() == Loop->Node.GetIdentifier());
         MPP_CHECK(ClosedLoop->ExitOutput->GetSourceOutputPin() == PinIndex(2U));
         MPP_CHECK(ClosedLoop->ExitOutput->GetRegion() == ExecutionRegionId(1U));
-        auto Suffix = Builder.AppendExecutionNode(Entry->Scope,
-            *ClosedLoop->ExitOutput, SequenceId);
+        auto Suffix = Builder.AppendExecutionNode(Entry->Scope, *ClosedLoop->ExitOutput, SequenceId);
         MPP_CHECK(Suffix.has_value());
         MPP_CHECK(Builder.EndEntry(std::move(Entry->Scope)).has_value());
         auto Graph = std::move(Builder).Finalize();
@@ -224,11 +218,9 @@ namespace
         auto ConditionalLoop = ConditionalBuilder.BeginLoop(ConditionalEntry->Scope,
             ConditionalEntry->RootOutput, ConditionalLoopId, BooleanExpression(true));
         MPP_CHECK(ConditionalLoop.has_value());
-        auto ConditionalBody = ConditionalBuilder.AppendExecutionNode(ConditionalLoop->Scope,
-            ConditionalLoop->BodyOutput, SequenceId);
+        auto ConditionalBody = ConditionalBuilder.AppendExecutionNode(ConditionalLoop->Scope, ConditionalLoop->BodyOutput, SequenceId);
         MPP_CHECK(ConditionalBody.has_value());
-        MPP_CHECK(ConditionalBuilder.Continue(ConditionalLoop->Scope,
-            ConditionalBody->Output).has_value());
+        MPP_CHECK(ConditionalBuilder.Continue(ConditionalLoop->Scope, ConditionalBody->Output).has_value());
         auto ConditionalResult = ConditionalBuilder.EndLoop(std::move(ConditionalLoop->Scope));
         MPP_CHECK(ConditionalResult.has_value() && ConditionalResult->ExitOutput.has_value());
         MPP_CHECK(ConditionalBuilder.EndEntry(std::move(ConditionalEntry->Scope)).has_value());
@@ -240,30 +232,23 @@ namespace
         GraphBuilder UnconditionalBuilder(Registry);
         auto UnconditionalEntry = UnconditionalBuilder.BeginEntry(EntryId);
         MPP_CHECK(UnconditionalEntry.has_value());
-        auto Prefix = UnconditionalBuilder.AppendExecutionNode(UnconditionalEntry->Scope,
-            UnconditionalEntry->RootOutput, SequenceId);
+        auto Prefix = UnconditionalBuilder.AppendExecutionNode(UnconditionalEntry->Scope, UnconditionalEntry->RootOutput, SequenceId);
         MPP_CHECK(Prefix.has_value());
         auto PrefixValue = UnconditionalBuilder.GetOutput<bool>(Prefix->Node, PinIndex(2U));
         MPP_CHECK(PrefixValue.has_value());
-        auto UnconditionalLoop = UnconditionalBuilder.BeginLoop(UnconditionalEntry->Scope,
-            Prefix->Output, UnconditionalLoopId);
+        auto UnconditionalLoop = UnconditionalBuilder.BeginLoop(UnconditionalEntry->Scope, Prefix->Output, UnconditionalLoopId);
         MPP_CHECK(UnconditionalLoop.has_value());
-        auto UnconditionalBody = UnconditionalBuilder.AppendExecutionNode(
-            UnconditionalLoop->Scope, UnconditionalLoop->BodyOutput, SequenceId);
+        auto UnconditionalBody = UnconditionalBuilder.AppendExecutionNode(UnconditionalLoop->Scope, UnconditionalLoop->BodyOutput, SequenceId);
         MPP_CHECK(UnconditionalBody.has_value());
-        MPP_CHECK(UnconditionalBuilder.Break(UnconditionalLoop->Scope,
-            UnconditionalBody->Output).has_value());
-        auto ReusedBreak = UnconditionalBuilder.Break(UnconditionalLoop->Scope,
-            UnconditionalBody->Output);
+        MPP_CHECK(UnconditionalBuilder.Break(UnconditionalLoop->Scope, UnconditionalBody->Output).has_value());
+        auto ReusedBreak = UnconditionalBuilder.Break(UnconditionalLoop->Scope, UnconditionalBody->Output);
         MPP_CHECK(!ReusedBreak.has_value());
         MPP_CHECK(HasCode(ReusedBreak.error(), DiagnosticCode::ExecutionEndpointAlreadyConsumed));
         auto UnconditionalResult = UnconditionalBuilder.EndLoop(std::move(UnconditionalLoop->Scope));
         MPP_CHECK(UnconditionalResult.has_value() && UnconditionalResult->ExitOutput.has_value());
-        auto After = UnconditionalBuilder.AppendExecutionNode(UnconditionalEntry->Scope,
-            *UnconditionalResult->ExitOutput, SequenceId);
+        auto After = UnconditionalBuilder.AppendExecutionNode(UnconditionalEntry->Scope, *UnconditionalResult->ExitOutput, SequenceId);
         MPP_CHECK(After.has_value());
-        MPP_CHECK(UnconditionalBuilder.BindInput(After->Node, PinIndex(3U),
-            ValueOrExpr<bool>(*PrefixValue)).has_value());
+        MPP_CHECK(UnconditionalBuilder.BindInput(After->Node, PinIndex(3U), ValueOrExpr<bool>(*PrefixValue)).has_value());
         MPP_CHECK(UnconditionalBuilder.EndEntry(std::move(UnconditionalEntry->Scope)).has_value());
         auto UnconditionalGraph = std::move(UnconditionalBuilder).Finalize();
         MPP_CHECK(UnconditionalGraph.has_value());
@@ -271,8 +256,7 @@ namespace
         bool HasBreakEdge = false;
         for (const ControlEdge& Edge : UnconditionalGraph->GetControlEdges())
         {
-            HasBreakEdge = HasBreakEdge || (Edge.DestinationInputPin == PinIndex(4U) &&
-                Edge.DestinationNode == UnconditionalLoop->Node.GetIdentifier());
+            HasBreakEdge = HasBreakEdge || (Edge.DestinationInputPin == PinIndex(4U) && Edge.DestinationNode == UnconditionalLoop->Node.GetIdentifier());
         }
         MPP_CHECK(HasBreakEdge);
     }
@@ -282,8 +266,7 @@ namespace
         GraphBuilder Builder(Registry);
         auto Entry = Builder.BeginEntry(EntryId);
         MPP_CHECK(Entry.has_value());
-        auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput,
-            UnconditionalLoopId);
+        auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput, UnconditionalLoopId);
         MPP_CHECK(Loop.has_value());
         auto EmptyEnd = Builder.EndLoop(std::move(Loop->Scope));
         MPP_CHECK(!EmptyEnd.has_value());
@@ -309,8 +292,7 @@ namespace
             GraphBuilder Builder(Registry);
             auto Entry = Builder.BeginEntry(EntryId);
             MPP_CHECK(Entry.has_value());
-            auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput,
-                ConditionalLoopId, BooleanExpression(true));
+            auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput, ConditionalLoopId, BooleanExpression(true));
             MPP_CHECK(Loop.has_value());
             auto EmptyEnd = Builder.EndLoop(std::move(Loop->Scope));
             MPP_CHECK(!EmptyEnd.has_value());
@@ -349,8 +331,7 @@ namespace
             MPP_CHECK(Closed->ExitOutput.has_value() == ExpectedExit);
             if (!IsConditional && IsBreak)
             {
-                MPP_CHECK(Builder.AppendExecutionNode(Entry->Scope,
-                    *Closed->ExitOutput, SequenceId).has_value());
+                MPP_CHECK(Builder.AppendExecutionNode(Entry->Scope, *Closed->ExitOutput, SequenceId).has_value());
             }
             MPP_CHECK(Builder.EndEntry(std::move(Entry->Scope)).has_value());
             MPP_CHECK(Builder.Validate().empty());
@@ -364,18 +345,20 @@ namespace
 
             const NodeInstanceId LoopNode = Graph->GetExecutionRegions()[1U].OwnerNode.value();
             const ExecutionRegionId BodyRegion = Graph->GetExecutionRegions()[1U].Identifier;
-            const std::size_t OwnedBodyNodes = static_cast<std::size_t>(std::count_if(
-                Graph->GetNodes().begin(), Graph->GetNodes().end(), [BodyRegion](const NodeInstance& Node)
+            const std::size_t OwnedBodyNodes = static_cast<std::size_t>(std::count_if(Graph->GetNodes().begin(), Graph->GetNodes().end(),
+                [BodyRegion](const NodeInstance& Node)
                 {
                     return Node.ExecutionRegion == BodyRegion;
-                }));
+                }
+            ));
             MPP_CHECK(OwnedBodyNodes == 0U);
             const PinIndex ExpectedInput = IsBreak ? PinIndex(4U) : PinIndex(3U);
             bool FoundDirectTransfer = false;
             for (const ControlEdge& Edge : Graph->GetControlEdges())
             {
                 FoundDirectTransfer = FoundDirectTransfer ||
-                    (Edge.SourceNode == LoopNode && Edge.SourceOutputPin == PinIndex(1U) &&
+                    (Edge.SourceNode == LoopNode &&
+                        Edge.SourceOutputPin == PinIndex(1U) &&
                         Edge.DestinationNode == LoopNode &&
                         Edge.DestinationInputPin == ExpectedInput);
             }
@@ -391,14 +374,10 @@ namespace
             return Serialized;
         };
 
-        const nlohmann::json ConditionalBreak = VerifyTransferOnly(
-            ConditionalLoopId, true, true, true);
-        const nlohmann::json ConditionalContinue = VerifyTransferOnly(
-            ConditionalLoopId, true, false, true);
-        const nlohmann::json UnconditionalBreak = VerifyTransferOnly(
-            UnconditionalLoopId, false, true, true);
-        const nlohmann::json UnconditionalContinue = VerifyTransferOnly(
-            UnconditionalLoopId, false, false, false);
+        const nlohmann::json ConditionalBreak = VerifyTransferOnly(ConditionalLoopId, true, true, true);
+        const nlohmann::json ConditionalContinue = VerifyTransferOnly(ConditionalLoopId, true, false, true);
+        const nlohmann::json UnconditionalBreak = VerifyTransferOnly(UnconditionalLoopId, false, true, true);
+        const nlohmann::json UnconditionalContinue = VerifyTransferOnly(UnconditionalLoopId, false, false, false);
 
         const auto IsRejected = [&Registry](const nlohmann::json& Json)
         {
@@ -417,10 +396,12 @@ namespace
 
         nlohmann::json MissingBodyAction = ConditionalContinue;
         auto& Edges = MissingBodyAction["controlEdges"];
-        Edges.erase(std::remove_if(Edges.begin(), Edges.end(), [](const nlohmann::json& Edge)
-        {
-            return Edge["sourcePin"] == 1U;
-        }), Edges.end());
+        Edges.erase(std::remove_if(Edges.begin(), Edges.end(),
+            [](const nlohmann::json& Edge)
+            {
+                return Edge["sourcePin"] == 1U;
+            }
+        ), Edges.end());
         MPP_CHECK(IsRejected(MissingBodyAction));
     }
 
@@ -436,38 +417,31 @@ namespace
         MPP_CHECK(Builder.BindInput(*DataNode, PinIndex(0U), BooleanExpression(false)).has_value());
         auto DataOutput = Builder.GetOutput<bool>(*DataNode, PinIndex(1U));
         MPP_CHECK(DataOutput.has_value());
-        auto DataLoop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput,
-            ConditionalLoopId, ValueOrExpr<bool>(*DataOutput));
+        auto DataLoop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput, ConditionalLoopId, ValueOrExpr<bool>(*DataOutput));
         MPP_CHECK(DataLoop.has_value());
-        auto DataBody = Builder.AppendExecutionNode(DataLoop->Scope,
-            DataLoop->BodyOutput, SequenceId);
+        auto DataBody = Builder.AppendExecutionNode(DataLoop->Scope, DataLoop->BodyOutput, SequenceId);
         MPP_CHECK(DataBody.has_value());
         auto DataResult = Builder.EndLoop(std::move(DataLoop->Scope));
         MPP_CHECK(DataResult.has_value() && DataResult->ExitOutput.has_value());
-        auto VariableLoop = Builder.BeginLoop(Entry->Scope, *DataResult->ExitOutput,
-            ConditionalLoopId, Variable->AsInput());
+        auto VariableLoop = Builder.BeginLoop(Entry->Scope, *DataResult->ExitOutput, ConditionalLoopId, Variable->AsInput());
         MPP_CHECK(VariableLoop.has_value());
-        auto Branch = Builder.BeginBranch(VariableLoop->Scope,
-            VariableLoop->BodyOutput, BranchId, BooleanExpression(true));
+        auto Branch = Builder.BeginBranch(VariableLoop->Scope, VariableLoop->BodyOutput, BranchId, BooleanExpression(true));
         MPP_CHECK(Branch.has_value());
         auto TrueArm = Builder.BeginArm(Branch->Scope, BranchArm::True);
         MPP_CHECK(TrueArm.has_value());
-        auto TrueTail = Builder.AppendExecutionNode(TrueArm->Scope,
-            TrueArm->ArmOutput, SequenceId);
+        auto TrueTail = Builder.AppendExecutionNode(TrueArm->Scope, TrueArm->ArmOutput, SequenceId);
         MPP_CHECK(TrueTail.has_value());
         MPP_CHECK(Builder.Continue(VariableLoop->Scope, TrueTail->Output).has_value());
         auto TrueOutcome = Builder.EndArm(std::move(TrueArm->Scope), NoContinuation{});
         MPP_CHECK(TrueOutcome.has_value());
         auto FalseArm = Builder.BeginArm(Branch->Scope, BranchArm::False);
         MPP_CHECK(FalseArm.has_value());
-        auto FalseTail = Builder.AppendExecutionNode(FalseArm->Scope,
-            FalseArm->ArmOutput, SequenceId);
+        auto FalseTail = Builder.AppendExecutionNode(FalseArm->Scope, FalseArm->ArmOutput, SequenceId);
         MPP_CHECK(FalseTail.has_value());
         MPP_CHECK(Builder.Continue(VariableLoop->Scope, FalseTail->Output).has_value());
         auto FalseOutcome = Builder.EndArm(std::move(FalseArm->Scope), NoContinuation{});
         MPP_CHECK(FalseOutcome.has_value());
-        auto ZeroLive = Builder.EndBranch(std::move(Branch->Scope),
-            std::move(*TrueOutcome), std::move(*FalseOutcome));
+        auto ZeroLive = Builder.EndBranch(std::move(Branch->Scope), std::move(*TrueOutcome), std::move(*FalseOutcome));
         MPP_CHECK(ZeroLive.has_value() && ZeroLive->GetLiveArmCount() == 0U);
         auto VariableResult = Builder.EndLoop(std::move(VariableLoop->Scope));
         MPP_CHECK(VariableResult.has_value() && VariableResult->ExitOutput.has_value());
@@ -492,8 +466,7 @@ namespace
         GraphBuilder Builder(Registry);
         auto Entry = Builder.BeginEntry(EntryId);
         MPP_CHECK(Entry.has_value());
-        auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput,
-            ConditionalLoopId, BooleanExpression(true));
+        auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput, ConditionalLoopId, BooleanExpression(true));
         MPP_CHECK(Loop.has_value());
         auto Body = Builder.AppendExecutionNode(Loop->Scope, Loop->BodyOutput, SequenceId);
         MPP_CHECK(Body.has_value());
@@ -501,11 +474,9 @@ namespace
         MPP_CHECK(BodyValue.has_value());
         auto LoopResultValue = Builder.EndLoop(std::move(Loop->Scope));
         MPP_CHECK(LoopResultValue.has_value() && LoopResultValue->ExitOutput.has_value());
-        auto After = Builder.AppendExecutionNode(Entry->Scope,
-            *LoopResultValue->ExitOutput, SequenceId);
+        auto After = Builder.AppendExecutionNode(Entry->Scope, *LoopResultValue->ExitOutput, SequenceId);
         MPP_CHECK(After.has_value());
-        MPP_CHECK(Builder.BindInput(After->Node, PinIndex(3U),
-            ValueOrExpr<bool>(*BodyValue)).has_value());
+        MPP_CHECK(Builder.BindInput(After->Node, PinIndex(3U), ValueOrExpr<bool>(*BodyValue)).has_value());
         MPP_CHECK(Builder.EndEntry(std::move(Entry->Scope)).has_value());
         auto Graph = std::move(Builder).Finalize();
         MPP_CHECK(!Graph.has_value());
@@ -518,22 +489,18 @@ namespace
             GraphBuilder Builder(Registry);
             auto Entry = Builder.BeginEntry(EntryId);
             MPP_CHECK(Entry.has_value());
-            auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput,
-                ConditionalLoopId, BooleanExpression(true));
+            auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput, ConditionalLoopId, BooleanExpression(true));
             MPP_CHECK(Loop.has_value());
-            auto Body = Builder.AppendExecutionNode(Loop->Scope,
-                Loop->BodyOutput, SequenceId);
+            auto Body = Builder.AppendExecutionNode(Loop->Scope, Loop->BodyOutput, SequenceId);
             MPP_CHECK(Body.has_value());
             auto BodyValue = Builder.GetOutput<bool>(Body->Node, PinIndex(2U));
             MPP_CHECK(BodyValue.has_value());
             MPP_CHECK(Builder.Break(Loop->Scope, Body->Output).has_value());
             auto LoopResultValue = Builder.EndLoop(std::move(Loop->Scope));
             MPP_CHECK(LoopResultValue.has_value() && LoopResultValue->ExitOutput.has_value());
-            auto After = Builder.AppendExecutionNode(Entry->Scope,
-                *LoopResultValue->ExitOutput, SequenceId);
+            auto After = Builder.AppendExecutionNode(Entry->Scope, *LoopResultValue->ExitOutput, SequenceId);
             MPP_CHECK(After.has_value());
-            MPP_CHECK(Builder.BindInput(After->Node, PinIndex(3U),
-                ValueOrExpr<bool>(*BodyValue)).has_value());
+            MPP_CHECK(Builder.BindInput(After->Node, PinIndex(3U), ValueOrExpr<bool>(*BodyValue)).has_value());
             MPP_CHECK(Builder.EndEntry(std::move(Entry->Scope)).has_value());
             auto Graph = std::move(Builder).Finalize();
             MPP_CHECK(!Graph.has_value());
@@ -544,19 +511,15 @@ namespace
             GraphBuilder Builder(Registry);
             auto Entry = Builder.BeginEntry(EntryId);
             MPP_CHECK(Entry.has_value());
-            auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput,
-                ConditionalLoopId, BooleanExpression(true));
+            auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput, ConditionalLoopId, BooleanExpression(true));
             MPP_CHECK(Loop.has_value());
-            auto Consumer = Builder.AppendExecutionNode(Loop->Scope,
-                Loop->BodyOutput, SequenceId);
+            auto Consumer = Builder.AppendExecutionNode(Loop->Scope, Loop->BodyOutput, SequenceId);
             MPP_CHECK(Consumer.has_value());
-            auto Producer = Builder.AppendExecutionNode(Loop->Scope,
-                Consumer->Output, SequenceId);
+            auto Producer = Builder.AppendExecutionNode(Loop->Scope, Consumer->Output, SequenceId);
             MPP_CHECK(Producer.has_value());
             auto CarriedValue = Builder.GetOutput<bool>(Producer->Node, PinIndex(2U));
             MPP_CHECK(CarriedValue.has_value());
-            MPP_CHECK(Builder.BindInput(Consumer->Node, PinIndex(3U),
-                ValueOrExpr<bool>(*CarriedValue)).has_value());
+            MPP_CHECK(Builder.BindInput(Consumer->Node, PinIndex(3U), ValueOrExpr<bool>(*CarriedValue)).has_value());
             MPP_CHECK(Builder.Continue(Loop->Scope, Producer->Output).has_value());
             MPP_CHECK(Builder.EndLoop(std::move(Loop->Scope)).has_value());
             MPP_CHECK(Builder.EndEntry(std::move(Entry->Scope)).has_value());
@@ -569,29 +532,23 @@ namespace
             GraphBuilder Builder(Registry);
             auto Entry = Builder.BeginEntry(EntryId);
             MPP_CHECK(Entry.has_value());
-            auto Outer = Builder.BeginLoop(Entry->Scope, Entry->RootOutput,
-                ConditionalLoopId, BooleanExpression(true));
+            auto Outer = Builder.BeginLoop(Entry->Scope, Entry->RootOutput, ConditionalLoopId, BooleanExpression(true));
             MPP_CHECK(Outer.has_value());
-            auto OuterPrefix = Builder.AppendExecutionNode(Outer->Scope,
-                Outer->BodyOutput, SequenceId);
+            auto OuterPrefix = Builder.AppendExecutionNode(Outer->Scope, Outer->BodyOutput, SequenceId);
             MPP_CHECK(OuterPrefix.has_value());
             auto InnerCondition = Builder.GetOutput<bool>(OuterPrefix->Node, PinIndex(2U));
             MPP_CHECK(InnerCondition.has_value());
-            auto Inner = Builder.BeginLoop(Outer->Scope, OuterPrefix->Output,
-                ConditionalLoopId, ValueOrExpr<bool>(*InnerCondition));
+            auto Inner = Builder.BeginLoop(Outer->Scope, OuterPrefix->Output, ConditionalLoopId, ValueOrExpr<bool>(*InnerCondition));
             MPP_CHECK(Inner.has_value());
-            auto InnerBody = Builder.AppendExecutionNode(Inner->Scope,
-                Inner->BodyOutput, SequenceId);
+            auto InnerBody = Builder.AppendExecutionNode(Inner->Scope, Inner->BodyOutput, SequenceId);
             MPP_CHECK(InnerBody.has_value());
             auto InnerValue = Builder.GetOutput<bool>(InnerBody->Node, PinIndex(2U));
             MPP_CHECK(InnerValue.has_value());
             auto InnerResult = Builder.EndLoop(std::move(Inner->Scope));
             MPP_CHECK(InnerResult.has_value() && InnerResult->ExitOutput.has_value());
-            auto AfterInner = Builder.AppendExecutionNode(Outer->Scope,
-                *InnerResult->ExitOutput, SequenceId);
+            auto AfterInner = Builder.AppendExecutionNode(Outer->Scope, *InnerResult->ExitOutput, SequenceId);
             MPP_CHECK(AfterInner.has_value());
-            MPP_CHECK(Builder.BindInput(AfterInner->Node, PinIndex(3U),
-                ValueOrExpr<bool>(*InnerValue)).has_value());
+            MPP_CHECK(Builder.BindInput(AfterInner->Node, PinIndex(3U), ValueOrExpr<bool>(*InnerValue)).has_value());
             MPP_CHECK(Builder.EndLoop(std::move(Outer->Scope)).has_value());
             MPP_CHECK(Builder.EndEntry(std::move(Entry->Scope)).has_value());
             auto Graph = std::move(Builder).Finalize();
@@ -605,22 +562,18 @@ namespace
         GraphBuilder Builder(Registry);
         auto Entry = Builder.BeginEntry(EntryId);
         MPP_CHECK(Entry.has_value());
-        auto Outer = Builder.BeginLoop(Entry->Scope, Entry->RootOutput,
-            UnconditionalLoopId);
+        auto Outer = Builder.BeginLoop(Entry->Scope, Entry->RootOutput, UnconditionalLoopId);
         MPP_CHECK(Outer.has_value());
 
         GraphBuilder Moved(std::move(Builder));
         MPP_CHECK(!Builder.Validate().empty());
-        auto OuterPrefix = Moved.AppendExecutionNode(Outer->Scope, Outer->BodyOutput,
-            SequenceId);
+        auto OuterPrefix = Moved.AppendExecutionNode(Outer->Scope, Outer->BodyOutput, SequenceId);
         MPP_CHECK(OuterPrefix.has_value());
         auto OuterCondition = Moved.GetOutput<bool>(OuterPrefix->Node, PinIndex(2U));
         MPP_CHECK(OuterCondition.has_value());
-        auto Inner = Moved.BeginLoop(Outer->Scope, OuterPrefix->Output,
-            ConditionalLoopId, ValueOrExpr<bool>(*OuterCondition));
+        auto Inner = Moved.BeginLoop(Outer->Scope, OuterPrefix->Output, ConditionalLoopId, ValueOrExpr<bool>(*OuterCondition));
         MPP_CHECK(Inner.has_value());
-        auto InnerBody = Moved.AppendExecutionNode(Inner->Scope, Inner->BodyOutput,
-            SequenceId);
+        auto InnerBody = Moved.AppendExecutionNode(Inner->Scope, Inner->BodyOutput, SequenceId);
         MPP_CHECK(InnerBody.has_value());
 
         auto WrongOuterBreak = Moved.Break(Outer->Scope, InnerBody->Output);
@@ -634,14 +587,12 @@ namespace
         MPP_CHECK(Moved.Continue(Inner->Scope, InnerBody->Output).has_value());
         auto InnerResult = Moved.EndLoop(std::move(Inner->Scope));
         MPP_CHECK(InnerResult.has_value() && InnerResult->ExitOutput.has_value());
-        auto OuterTail = Moved.AppendExecutionNode(Outer->Scope, *InnerResult->ExitOutput,
-            SequenceId);
+        auto OuterTail = Moved.AppendExecutionNode(Outer->Scope, *InnerResult->ExitOutput, SequenceId);
         MPP_CHECK(OuterTail.has_value());
         MPP_CHECK(Moved.Break(Outer->Scope, OuterTail->Output).has_value());
         auto OuterResult = Moved.EndLoop(std::move(Outer->Scope));
         MPP_CHECK(OuterResult.has_value() && OuterResult->ExitOutput.has_value());
-        auto After = Moved.AppendExecutionNode(Entry->Scope, *OuterResult->ExitOutput,
-            SequenceId);
+        auto After = Moved.AppendExecutionNode(Entry->Scope, *OuterResult->ExitOutput, SequenceId);
         MPP_CHECK(After.has_value());
         MPP_CHECK(Moved.EndEntry(std::move(Entry->Scope)).has_value());
         auto Graph = std::move(Moved).Finalize();
@@ -659,16 +610,13 @@ namespace
         GraphBuilder Builder(Registry);
         auto Entry = Builder.BeginEntry(EntryId);
         MPP_CHECK(Entry.has_value());
-        auto Outer = Builder.BeginLoop(Entry->Scope, Entry->RootOutput,
-            ConditionalLoopId, BooleanExpression(true));
+        auto Outer = Builder.BeginLoop(Entry->Scope, Entry->RootOutput, ConditionalLoopId, BooleanExpression(true));
         MPP_CHECK(Outer.has_value());
-        auto OuterPrefix = Builder.AppendExecutionNode(Outer->Scope,
-            Outer->BodyOutput, SequenceId);
+        auto OuterPrefix = Builder.AppendExecutionNode(Outer->Scope, Outer->BodyOutput, SequenceId);
         MPP_CHECK(OuterPrefix.has_value());
         auto InnerCondition = Builder.GetOutput<bool>(OuterPrefix->Node, PinIndex(2U));
         MPP_CHECK(InnerCondition.has_value());
-        auto Inner = Builder.BeginLoop(Outer->Scope, OuterPrefix->Output,
-            ConditionalLoopId, ValueOrExpr<bool>(*InnerCondition));
+        auto Inner = Builder.BeginLoop(Outer->Scope, OuterPrefix->Output, ConditionalLoopId, ValueOrExpr<bool>(*InnerCondition));
         MPP_CHECK(Inner.has_value());
 
         GraphBuilder Moved(std::move(Builder));
@@ -676,14 +624,12 @@ namespace
         MPP_CHECK(Moved.Continue(Inner->Scope, Inner->BodyOutput).has_value());
         auto InnerResult = Moved.EndLoop(std::move(Inner->Scope));
         MPP_CHECK(InnerResult.has_value() && InnerResult->ExitOutput.has_value());
-        auto OuterTail = Moved.AppendExecutionNode(Outer->Scope,
-            *InnerResult->ExitOutput, SequenceId);
+        auto OuterTail = Moved.AppendExecutionNode(Outer->Scope, *InnerResult->ExitOutput, SequenceId);
         MPP_CHECK(OuterTail.has_value());
         MPP_CHECK(Moved.Continue(Outer->Scope, OuterTail->Output).has_value());
         auto OuterResult = Moved.EndLoop(std::move(Outer->Scope));
         MPP_CHECK(OuterResult.has_value() && OuterResult->ExitOutput.has_value());
-        auto After = Moved.AppendExecutionNode(Entry->Scope,
-            *OuterResult->ExitOutput, SequenceId);
+        auto After = Moved.AppendExecutionNode(Entry->Scope, *OuterResult->ExitOutput, SequenceId);
         MPP_CHECK(After.has_value());
         MPP_CHECK(Moved.EndEntry(std::move(Entry->Scope)).has_value());
         auto Graph = std::move(Moved).Finalize();
@@ -698,11 +644,9 @@ namespace
             GraphBuilder Builder(Registry);
             auto Entry = Builder.BeginEntry(EntryId);
             MPP_CHECK(Entry.has_value());
-            auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput,
-                UnconditionalLoopId);
+            auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput, UnconditionalLoopId);
             MPP_CHECK(Loop.has_value());
-            auto Branch = Builder.BeginBranch(Loop->Scope, Loop->BodyOutput,
-                BranchId, BooleanExpression(true));
+            auto Branch = Builder.BeginBranch(Loop->Scope, Loop->BodyOutput, BranchId, BooleanExpression(true));
             MPP_CHECK(Branch.has_value());
 
             auto TrueArm = Builder.BeginArm(Branch->Scope, BranchArm::True);
@@ -723,8 +667,7 @@ namespace
             auto FalseOutcome = Builder.EndArm(std::move(FalseArm->Scope), NoContinuation{});
             MPP_CHECK(FalseOutcome.has_value());
 
-            auto Outcome = Builder.EndBranch(std::move(Branch->Scope),
-                std::move(*TrueOutcome), std::move(*FalseOutcome));
+            auto Outcome = Builder.EndBranch(std::move(Branch->Scope), std::move(*TrueOutcome), std::move(*FalseOutcome));
             MPP_CHECK(Outcome.has_value() && Outcome->GetLiveArmCount() == 0U);
             auto LoopResultValue = Builder.EndLoop(std::move(Loop->Scope));
             MPP_CHECK(LoopResultValue.has_value());
@@ -758,21 +701,18 @@ namespace
         GraphBuilder Builder(Registry);
         auto Entry = Builder.BeginEntry(EntryId);
         MPP_CHECK(Entry.has_value());
-        auto Branch = Builder.BeginBranch(Entry->Scope, Entry->RootOutput,
-            BranchId, BooleanExpression(true));
+        auto Branch = Builder.BeginBranch(Entry->Scope, Entry->RootOutput, BranchId, BooleanExpression(true));
         MPP_CHECK(Branch.has_value());
         auto TrueArm = Builder.BeginArm(Branch->Scope, BranchArm::True);
         MPP_CHECK(TrueArm.has_value());
-        auto Loop = Builder.BeginLoop(TrueArm->Scope, TrueArm->ArmOutput,
-            ConditionalLoopId, BooleanExpression(true));
+        auto Loop = Builder.BeginLoop(TrueArm->Scope, TrueArm->ArmOutput, ConditionalLoopId, BooleanExpression(true));
         MPP_CHECK(Loop.has_value());
         auto Body = Builder.AppendExecutionNode(Loop->Scope, Loop->BodyOutput, SequenceId);
         MPP_CHECK(Body.has_value());
         MPP_CHECK(Builder.Continue(Loop->Scope, Body->Output).has_value());
         auto LoopResultValue = Builder.EndLoop(std::move(Loop->Scope));
         MPP_CHECK(LoopResultValue.has_value() && LoopResultValue->ExitOutput.has_value());
-        auto ArmTail = Builder.AppendExecutionNode(TrueArm->Scope,
-            *LoopResultValue->ExitOutput, SequenceId);
+        auto ArmTail = Builder.AppendExecutionNode(TrueArm->Scope, *LoopResultValue->ExitOutput, SequenceId);
         MPP_CHECK(ArmTail.has_value());
         auto TrueOutcome = Builder.EndArm(std::move(TrueArm->Scope), ArmTail->Output);
         MPP_CHECK(TrueOutcome.has_value());
@@ -780,12 +720,10 @@ namespace
         MPP_CHECK(FalseArm.has_value());
         auto FalseOutcome = Builder.EndArm(std::move(FalseArm->Scope), NoContinuation{});
         MPP_CHECK(FalseOutcome.has_value());
-        auto BranchOutcomeValue = Builder.EndBranch(std::move(Branch->Scope),
-            std::move(*TrueOutcome), std::move(*FalseOutcome));
+        auto BranchOutcomeValue = Builder.EndBranch(std::move(Branch->Scope), std::move(*TrueOutcome), std::move(*FalseOutcome));
         MPP_CHECK(BranchOutcomeValue.has_value());
         MPP_CHECK(BranchOutcomeValue->GetLiveArmCount() == 1U);
-        auto ParentTail = Builder.ContinueWith(Entry->Scope,
-            std::move(*BranchOutcomeValue), SequenceId);
+        auto ParentTail = Builder.ContinueWith(Entry->Scope, std::move(*BranchOutcomeValue), SequenceId);
         MPP_CHECK(ParentTail.has_value());
         MPP_CHECK(Builder.EndEntry(std::move(Entry->Scope)).has_value());
         auto Graph = std::move(Builder).Finalize();
@@ -795,28 +733,22 @@ namespace
         GraphBuilder TransferBuilder(Registry);
         auto TransferEntry = TransferBuilder.BeginEntry(EntryId);
         MPP_CHECK(TransferEntry.has_value());
-        auto Outer = TransferBuilder.BeginLoop(TransferEntry->Scope,
-            TransferEntry->RootOutput, UnconditionalLoopId);
+        auto Outer = TransferBuilder.BeginLoop(TransferEntry->Scope, TransferEntry->RootOutput, UnconditionalLoopId);
         MPP_CHECK(Outer.has_value());
-        auto InnerBranch = TransferBuilder.BeginBranch(Outer->Scope,
-            Outer->BodyOutput, BranchId, BooleanExpression(true));
+        auto InnerBranch = TransferBuilder.BeginBranch(Outer->Scope, Outer->BodyOutput, BranchId, BooleanExpression(true));
         MPP_CHECK(InnerBranch.has_value());
         auto BreakArm = TransferBuilder.BeginArm(InnerBranch->Scope, BranchArm::True);
         MPP_CHECK(BreakArm.has_value());
-        auto BreakTail = TransferBuilder.AppendExecutionNode(BreakArm->Scope,
-            BreakArm->ArmOutput, SequenceId);
+        auto BreakTail = TransferBuilder.AppendExecutionNode(BreakArm->Scope, BreakArm->ArmOutput, SequenceId);
         MPP_CHECK(BreakTail.has_value());
         MPP_CHECK(TransferBuilder.Break(Outer->Scope, BreakTail->Output).has_value());
-        auto BreakOutcome = TransferBuilder.EndArm(std::move(BreakArm->Scope),
-            NoContinuation{});
+        auto BreakOutcome = TransferBuilder.EndArm(std::move(BreakArm->Scope), NoContinuation{});
         MPP_CHECK(BreakOutcome.has_value());
         auto NaturalArm = TransferBuilder.BeginArm(InnerBranch->Scope, BranchArm::False);
         MPP_CHECK(NaturalArm.has_value());
-        auto NaturalOutcome = TransferBuilder.EndArm(std::move(NaturalArm->Scope),
-            NoContinuation{});
+        auto NaturalOutcome = TransferBuilder.EndArm(std::move(NaturalArm->Scope), NoContinuation{});
         MPP_CHECK(NaturalOutcome.has_value());
-        auto ZeroLive = TransferBuilder.EndBranch(std::move(InnerBranch->Scope),
-            std::move(*BreakOutcome), std::move(*NaturalOutcome));
+        auto ZeroLive = TransferBuilder.EndBranch(std::move(InnerBranch->Scope), std::move(*BreakOutcome), std::move(*NaturalOutcome));
         MPP_CHECK(ZeroLive.has_value() && ZeroLive->GetLiveArmCount() == 0U);
         auto TransferredLoop = TransferBuilder.EndLoop(std::move(Outer->Scope));
         MPP_CHECK(TransferredLoop.has_value() && TransferredLoop->ExitOutput.has_value());
@@ -831,11 +763,9 @@ namespace
         GraphBuilder Builder(Registry);
         auto Entry = Builder.BeginEntry(EntryId);
         MPP_CHECK(Entry.has_value());
-        auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput,
-            UnconditionalLoopId);
+        auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput, UnconditionalLoopId);
         MPP_CHECK(Loop.has_value());
-        auto Branch = Builder.BeginBranch(Loop->Scope, Loop->BodyOutput,
-            BranchId, BooleanExpression(true));
+        auto Branch = Builder.BeginBranch(Loop->Scope, Loop->BodyOutput, BranchId, BooleanExpression(true));
         MPP_CHECK(Branch.has_value());
 
         auto TrueArm = Builder.BeginArm(Branch->Scope, BranchArm::True);
@@ -848,15 +778,12 @@ namespace
         MPP_CHECK(FalseArm.has_value());
         GraphBuilder Moved(std::move(Builder));
         MPP_CHECK(!Builder.Validate().empty());
-        auto FalseOutcome = Moved.EndArm(std::move(FalseArm->Scope),
-            FalseArm->ArmOutput);
+        auto FalseOutcome = Moved.EndArm(std::move(FalseArm->Scope), FalseArm->ArmOutput);
         MPP_CHECK(FalseOutcome.has_value());
 
-        auto Outcome = Moved.EndBranch(std::move(Branch->Scope),
-            std::move(*TrueOutcome), std::move(*FalseOutcome));
+        auto Outcome = Moved.EndBranch(std::move(Branch->Scope), std::move(*TrueOutcome), std::move(*FalseOutcome));
         MPP_CHECK(Outcome.has_value() && Outcome->GetLiveArmCount() == 1U);
-        auto Continued = Moved.ContinueWith(Loop->Scope,
-            std::move(*Outcome), SequenceId);
+        auto Continued = Moved.ContinueWith(Loop->Scope, std::move(*Outcome), SequenceId);
         MPP_CHECK(Continued.has_value());
         MPP_CHECK(Moved.Break(Loop->Scope, Continued->Output).has_value());
 
@@ -873,32 +800,27 @@ namespace
         GraphBuilder Builder(Registry);
         auto Entry = Builder.BeginEntry(EntryId);
         MPP_CHECK(Entry.has_value());
-        auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput,
-            ConditionalLoopId, BooleanExpression(true));
+        auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput, ConditionalLoopId, BooleanExpression(true));
         MPP_CHECK(Loop.has_value());
         const ExecutionRegionId LoopBodyRegion = Loop->BodyOutput.GetRegion();
-        auto Branch = Builder.BeginBranch(Loop->Scope, Loop->BodyOutput,
-            BranchId, BooleanExpression(false));
+        auto Branch = Builder.BeginBranch(Loop->Scope, Loop->BodyOutput, BranchId, BooleanExpression(false));
         MPP_CHECK(Branch.has_value());
 
         auto TrueArm = Builder.BeginArm(Branch->Scope, BranchArm::True);
         MPP_CHECK(TrueArm.has_value());
-        auto TrueTail = Builder.AppendExecutionNode(TrueArm->Scope,
-            TrueArm->ArmOutput, SequenceId);
+        auto TrueTail = Builder.AppendExecutionNode(TrueArm->Scope, TrueArm->ArmOutput, SequenceId);
         MPP_CHECK(TrueTail.has_value());
         auto TrueOutcome = Builder.EndArm(std::move(TrueArm->Scope), TrueTail->Output);
         MPP_CHECK(TrueOutcome.has_value());
 
         auto FalseArm = Builder.BeginArm(Branch->Scope, BranchArm::False);
         MPP_CHECK(FalseArm.has_value());
-        auto FalseTail = Builder.AppendExecutionNode(FalseArm->Scope,
-            FalseArm->ArmOutput, SequenceId);
+        auto FalseTail = Builder.AppendExecutionNode(FalseArm->Scope, FalseArm->ArmOutput, SequenceId);
         MPP_CHECK(FalseTail.has_value());
         auto FalseOutcome = Builder.EndArm(std::move(FalseArm->Scope), FalseTail->Output);
         MPP_CHECK(FalseOutcome.has_value());
 
-        auto Outcome = Builder.EndBranch(std::move(Branch->Scope),
-            std::move(*TrueOutcome), std::move(*FalseOutcome));
+        auto Outcome = Builder.EndBranch(std::move(Branch->Scope), std::move(*TrueOutcome), std::move(*FalseOutcome));
         MPP_CHECK(Outcome.has_value() && Outcome->GetLiveArmCount() == 2U);
         auto Joined = Builder.Join(Loop->Scope, std::move(*Outcome), JoinId);
         MPP_CHECK(Joined.has_value());
@@ -927,11 +849,9 @@ namespace
         GraphBuilder Builder(Registry);
         auto Entry = Builder.BeginEntry(EntryId);
         MPP_CHECK(Entry.has_value());
-        auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput,
-            ConditionalLoopId, BooleanExpression(true));
+        auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput, ConditionalLoopId, BooleanExpression(true));
         MPP_CHECK(Loop.has_value());
-        auto Branch = Builder.BeginBranch(Loop->Scope, Loop->BodyOutput,
-            BranchId, BooleanExpression(true));
+        auto Branch = Builder.BeginBranch(Loop->Scope, Loop->BodyOutput, BranchId, BooleanExpression(true));
         MPP_CHECK(Branch.has_value());
         auto TrueArm = Builder.BeginArm(Branch->Scope, BranchArm::True);
         MPP_CHECK(TrueArm.has_value());
@@ -944,8 +864,7 @@ namespace
         MPP_CHECK(FalseArm.has_value());
         auto FalseOutcome = Builder.EndArm(std::move(FalseArm->Scope), NoContinuation{});
         MPP_CHECK(FalseOutcome.has_value());
-        auto ZeroLive = Builder.EndBranch(std::move(Branch->Scope),
-            std::move(*TrueOutcome), std::move(*FalseOutcome));
+        auto ZeroLive = Builder.EndBranch(std::move(Branch->Scope), std::move(*TrueOutcome), std::move(*FalseOutcome));
         MPP_CHECK(ZeroLive.has_value() && ZeroLive->GetLiveArmCount() == 0U);
         MPP_CHECK(Builder.EndLoop(std::move(Loop->Scope)).has_value());
         MPP_CHECK(Builder.EndEntry(std::move(Entry->Scope)).has_value());
@@ -957,8 +876,7 @@ namespace
         auto AbandonedEntry = Abandoned.BeginEntry(EntryId);
         MPP_CHECK(AbandonedEntry.has_value());
         {
-            auto AbandonedLoop = Abandoned.BeginLoop(AbandonedEntry->Scope,
-                AbandonedEntry->RootOutput, UnconditionalLoopId);
+            auto AbandonedLoop = Abandoned.BeginLoop(AbandonedEntry->Scope, AbandonedEntry->RootOutput, UnconditionalLoopId);
             MPP_CHECK(AbandonedLoop.has_value());
             LoopScope Dropped(std::move(AbandonedLoop->Scope));
             MPP_CHECK(Dropped.IsValid());
@@ -975,8 +893,7 @@ namespace
         GraphBuilder Builder(Registry);
         auto FirstEntry = Builder.BeginEntry(EntryId);
         MPP_CHECK(FirstEntry.has_value());
-        auto FirstStep = Builder.AppendExecutionNode(FirstEntry->Scope,
-            FirstEntry->RootOutput, SequenceId);
+        auto FirstStep = Builder.AppendExecutionNode(FirstEntry->Scope, FirstEntry->RootOutput, SequenceId);
         MPP_CHECK(FirstStep.has_value());
         auto FirstValue = Builder.GetOutput<bool>(FirstStep->Node, PinIndex(2U));
         MPP_CHECK(FirstValue.has_value());
@@ -984,13 +901,10 @@ namespace
 
         auto SecondEntry = Builder.BeginEntry(EntryId);
         MPP_CHECK(SecondEntry.has_value());
-        auto ForeignCondition = Builder.BeginLoop(SecondEntry->Scope,
-            SecondEntry->RootOutput, ConditionalLoopId,
-            ValueOrExpr<bool>(*FirstValue));
+        auto ForeignCondition = Builder.BeginLoop(SecondEntry->Scope, SecondEntry->RootOutput, ConditionalLoopId, ValueOrExpr<bool>(*FirstValue));
         MPP_CHECK(!ForeignCondition.has_value());
         MPP_CHECK(HasCode(ForeignCondition.error(), DiagnosticCode::ExecutionDataNotDominated));
-        auto SecondStep = Builder.AppendExecutionNode(SecondEntry->Scope,
-            SecondEntry->RootOutput, SequenceId);
+        auto SecondStep = Builder.AppendExecutionNode(SecondEntry->Scope, SecondEntry->RootOutput, SequenceId);
         MPP_CHECK(SecondStep.has_value());
         MPP_CHECK(SecondStep->Node.GetIdentifier() == NodeInstanceId(4U));
         MPP_CHECK(Builder.EndEntry(std::move(SecondEntry->Scope)).has_value());
@@ -1004,11 +918,9 @@ namespace
         GraphBuilder Builder(Registry);
         auto Entry = Builder.BeginEntry(EntryId);
         MPP_CHECK(Entry.has_value());
-        auto MissingCondition = Builder.BeginLoop(Entry->Scope, Entry->RootOutput,
-            ConditionalLoopId);
+        auto MissingCondition = Builder.BeginLoop(Entry->Scope, Entry->RootOutput, ConditionalLoopId);
         MPP_CHECK(!MissingCondition.has_value());
-        auto ForbiddenCondition = Builder.BeginLoop(Entry->Scope, Entry->RootOutput,
-            UnconditionalLoopId, BooleanExpression(true));
+        auto ForbiddenCondition = Builder.BeginLoop(Entry->Scope, Entry->RootOutput, UnconditionalLoopId, BooleanExpression(true));
         MPP_CHECK(!ForbiddenCondition.has_value());
         auto Step = Builder.AppendExecutionNode(Entry->Scope, Entry->RootOutput, SequenceId);
         MPP_CHECK(Step.has_value());
@@ -1022,20 +934,16 @@ namespace
         GraphBuilder MaximumRegion(Registry);
         auto MaximumEntry = MaximumRegion.BeginEntry(EntryId);
         MPP_CHECK(MaximumEntry.has_value());
-        GraphBuilderPhase4TestAccess::SetNextRegionIdentifier(MaximumRegion,
-            std::numeric_limits<std::uint64_t>::max());
-        auto MaximumLoop = MaximumRegion.BeginLoop(MaximumEntry->Scope,
-            MaximumEntry->RootOutput, ConditionalLoopId, BooleanExpression(true));
+        GraphBuilderPhase4TestAccess::SetNextRegionIdentifier(MaximumRegion, std::numeric_limits<std::uint64_t>::max());
+        auto MaximumLoop = MaximumRegion.BeginLoop(MaximumEntry->Scope, MaximumEntry->RootOutput, ConditionalLoopId, BooleanExpression(true));
         MPP_CHECK(MaximumLoop.has_value());
         MPP_CHECK(MaximumLoop->Scope.IsValid());
-        MPP_CHECK(MaximumRegion.AppendExecutionNode(MaximumLoop->Scope,
-            MaximumLoop->BodyOutput, SequenceId).has_value());
+        MPP_CHECK(MaximumRegion.AppendExecutionNode(MaximumLoop->Scope, MaximumLoop->BodyOutput, SequenceId).has_value());
         MPP_CHECK(MaximumRegion.EndLoop(std::move(MaximumLoop->Scope)).has_value());
         MPP_CHECK(MaximumRegion.EndEntry(std::move(MaximumEntry->Scope)).has_value());
         auto MaximumGraph = std::move(MaximumRegion).Finalize();
         MPP_CHECK(MaximumGraph.has_value());
-        MPP_CHECK(MaximumGraph->GetExecutionRegions().back().Identifier ==
-            ExecutionRegionId(std::numeric_limits<std::uint64_t>::max()));
+        MPP_CHECK(MaximumGraph->GetExecutionRegions().back().Identifier == ExecutionRegionId(std::numeric_limits<std::uint64_t>::max()));
         MPP_CHECK(GraphIRValidator::Validate(*MaximumGraph, Registry).empty());
 #endif
 
@@ -1044,11 +952,9 @@ namespace
         auto ExhaustedEntry = Exhausted.BeginEntry(EntryId);
         MPP_CHECK(ExhaustedEntry.has_value());
         GraphBuilderPhase4TestAccess::SetNextRegionIdentifier(Exhausted, 0U);
-        auto FailedRegion = Exhausted.BeginLoop(ExhaustedEntry->Scope,
-            ExhaustedEntry->RootOutput, UnconditionalLoopId);
+        auto FailedRegion = Exhausted.BeginLoop(ExhaustedEntry->Scope, ExhaustedEntry->RootOutput, UnconditionalLoopId);
         MPP_CHECK(!FailedRegion.has_value());
-        auto AfterFailure = Exhausted.AppendExecutionNode(ExhaustedEntry->Scope,
-            ExhaustedEntry->RootOutput, SequenceId);
+        auto AfterFailure = Exhausted.AppendExecutionNode(ExhaustedEntry->Scope, ExhaustedEntry->RootOutput, SequenceId);
         MPP_CHECK(AfterFailure.has_value());
         MPP_CHECK(AfterFailure->Node.GetIdentifier() == NodeInstanceId(2U));
 #endif
@@ -1066,24 +972,20 @@ namespace
             GraphBuilder Builder(Registry);
             auto Entry = Builder.BeginEntry(EntryId);
             MPP_CHECK(Entry.has_value());
-            auto Outer = Builder.BeginLoop(Entry->Scope, Entry->RootOutput,
-                ConditionalLoopId, BooleanExpression(true));
+            auto Outer = Builder.BeginLoop(Entry->Scope, Entry->RootOutput, ConditionalLoopId, BooleanExpression(true));
             MPP_CHECK(Outer.has_value());
             const NodeInstanceId OuterNode = Outer->Node.GetIdentifier();
-            auto Prefix = Builder.AppendExecutionNode(Outer->Scope,
-                Outer->BodyOutput, SequenceId);
+            auto Prefix = Builder.AppendExecutionNode(Outer->Scope, Outer->BodyOutput, SequenceId);
             MPP_CHECK(Prefix.has_value());
             auto Condition = Builder.GetOutput<bool>(Prefix->Node, PinIndex(2U));
             MPP_CHECK(Condition.has_value());
-            auto Inner = Builder.BeginLoop(Outer->Scope, Prefix->Output,
-                ConditionalLoopId, ValueOrExpr<bool>(*Condition));
+            auto Inner = Builder.BeginLoop(Outer->Scope, Prefix->Output, ConditionalLoopId, ValueOrExpr<bool>(*Condition));
             MPP_CHECK(Inner.has_value());
             const NodeInstanceId InnerNode = Inner->Node.GetIdentifier();
             MPP_CHECK(Builder.Continue(Inner->Scope, Inner->BodyOutput).has_value());
             auto InnerResult = Builder.EndLoop(std::move(Inner->Scope));
             MPP_CHECK(InnerResult.has_value() && InnerResult->ExitOutput.has_value());
-            auto OuterTail = Builder.AppendExecutionNode(Outer->Scope,
-                *InnerResult->ExitOutput, SequenceId);
+            auto OuterTail = Builder.AppendExecutionNode(Outer->Scope, *InnerResult->ExitOutput, SequenceId);
             MPP_CHECK(OuterTail.has_value());
             MPP_CHECK(Builder.Continue(Outer->Scope, OuterTail->Output).has_value());
             MPP_CHECK(Builder.EndLoop(std::move(Outer->Scope)).has_value());
@@ -1095,8 +997,7 @@ namespace
             nlohmann::json WrongNearest = Serialize(*Graph);
             for (nlohmann::json& Edge : WrongNearest["controlEdges"])
             {
-                if (Edge["sourceNode"] == InnerNode.GetValue() &&
-                    Edge["sourcePin"] == 1U && Edge["destinationPin"] == 3U)
+                if (Edge["sourceNode"] == InnerNode.GetValue() && Edge["sourcePin"] == 1U && Edge["destinationPin"] == 3U)
                 {
                     Edge["destinationNode"] = OuterNode.GetValue();
                 }
@@ -1108,17 +1009,14 @@ namespace
             GraphBuilder Builder(Registry);
             auto Entry = Builder.BeginEntry(EntryId);
             MPP_CHECK(Entry.has_value());
-            auto First = Builder.BeginLoop(Entry->Scope, Entry->RootOutput,
-                ConditionalLoopId, BooleanExpression(true));
+            auto First = Builder.BeginLoop(Entry->Scope, Entry->RootOutput, ConditionalLoopId, BooleanExpression(true));
             MPP_CHECK(First.has_value());
             const NodeInstanceId FirstNode = First->Node.GetIdentifier();
-            auto FirstBody = Builder.AppendExecutionNode(First->Scope,
-                First->BodyOutput, SequenceId);
+            auto FirstBody = Builder.AppendExecutionNode(First->Scope, First->BodyOutput, SequenceId);
             MPP_CHECK(FirstBody.has_value());
             auto FirstResult = Builder.EndLoop(std::move(First->Scope));
             MPP_CHECK(FirstResult.has_value() && FirstResult->ExitOutput.has_value());
-            auto Second = Builder.BeginLoop(Entry->Scope, *FirstResult->ExitOutput,
-                ConditionalLoopId, BooleanExpression(true));
+            auto Second = Builder.BeginLoop(Entry->Scope, *FirstResult->ExitOutput, ConditionalLoopId, BooleanExpression(true));
             MPP_CHECK(Second.has_value());
             const NodeInstanceId SecondNode = Second->Node.GetIdentifier();
             MPP_CHECK(Builder.Continue(Second->Scope, Second->BodyOutput).has_value());
@@ -1131,8 +1029,7 @@ namespace
             nlohmann::json SiblingTransfer = Serialize(*Graph);
             for (nlohmann::json& Edge : SiblingTransfer["controlEdges"])
             {
-                if (Edge["sourceNode"] == SecondNode.GetValue() &&
-                    Edge["sourcePin"] == 1U && Edge["destinationPin"] == 3U)
+                if (Edge["sourceNode"] == SecondNode.GetValue() && Edge["sourcePin"] == 1U && Edge["destinationPin"] == 3U)
                 {
                     Edge["destinationNode"] = FirstNode.GetValue();
                 }
@@ -1144,8 +1041,7 @@ namespace
             GraphBuilder Builder(Registry);
             auto FirstEntry = Builder.BeginEntry(EntryId);
             MPP_CHECK(FirstEntry.has_value());
-            auto FirstLoop = Builder.BeginLoop(FirstEntry->Scope,
-                FirstEntry->RootOutput, ConditionalLoopId, BooleanExpression(true));
+            auto FirstLoop = Builder.BeginLoop(FirstEntry->Scope, FirstEntry->RootOutput, ConditionalLoopId, BooleanExpression(true));
             MPP_CHECK(FirstLoop.has_value());
             const NodeInstanceId FirstLoopNode = FirstLoop->Node.GetIdentifier();
             MPP_CHECK(Builder.Continue(FirstLoop->Scope, FirstLoop->BodyOutput).has_value());
@@ -1153,8 +1049,7 @@ namespace
             MPP_CHECK(Builder.EndEntry(std::move(FirstEntry->Scope)).has_value());
             auto SecondEntry = Builder.BeginEntry(EntryId);
             MPP_CHECK(SecondEntry.has_value());
-            auto SecondLoop = Builder.BeginLoop(SecondEntry->Scope,
-                SecondEntry->RootOutput, ConditionalLoopId, BooleanExpression(true));
+            auto SecondLoop = Builder.BeginLoop(SecondEntry->Scope, SecondEntry->RootOutput, ConditionalLoopId, BooleanExpression(true));
             MPP_CHECK(SecondLoop.has_value());
             const NodeInstanceId SecondLoopNode = SecondLoop->Node.GetIdentifier();
             MPP_CHECK(Builder.Continue(SecondLoop->Scope, SecondLoop->BodyOutput).has_value());
@@ -1167,8 +1062,7 @@ namespace
             nlohmann::json CrossEntry = Serialize(*Graph);
             for (nlohmann::json& Edge : CrossEntry["controlEdges"])
             {
-                if (Edge["sourceNode"] == FirstLoopNode.GetValue() &&
-                    Edge["sourcePin"] == 1U && Edge["destinationPin"] == 3U)
+                if (Edge["sourceNode"] == FirstLoopNode.GetValue() && Edge["sourcePin"] == 1U && Edge["destinationPin"] == 3U)
                 {
                     Edge["destinationNode"] = SecondLoopNode.GetValue();
                 }
@@ -1180,25 +1074,20 @@ namespace
             GraphBuilder Builder(Registry);
             auto Entry = Builder.BeginEntry(EntryId);
             MPP_CHECK(Entry.has_value());
-            auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput,
-                ConditionalLoopId, BooleanExpression(true));
+            auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput, ConditionalLoopId, BooleanExpression(true));
             MPP_CHECK(Loop.has_value());
             const NodeInstanceId LoopNode = Loop->Node.GetIdentifier();
-            auto Body = Builder.AppendExecutionNode(Loop->Scope,
-                Loop->BodyOutput, SequenceId);
+            auto Body = Builder.AppendExecutionNode(Loop->Scope, Loop->BodyOutput, SequenceId);
             MPP_CHECK(Body.has_value());
             MPP_CHECK(Builder.Break(Loop->Scope, Body->Output).has_value());
             auto LoopResultValue = Builder.EndLoop(std::move(Loop->Scope));
             MPP_CHECK(LoopResultValue.has_value() && LoopResultValue->ExitOutput.has_value());
-            auto ExitTail = Builder.AppendExecutionNode(Entry->Scope,
-                *LoopResultValue->ExitOutput, SequenceId);
+            auto ExitTail = Builder.AppendExecutionNode(Entry->Scope, *LoopResultValue->ExitOutput, SequenceId);
             MPP_CHECK(ExitTail.has_value());
             MPP_CHECK(Builder.EndEntry(std::move(Entry->Scope)).has_value());
             auto Graph = std::move(Builder).Finalize();
             MPP_CHECK(Graph.has_value());
-            Graph->AddControlEdge(ControlEdge{
-                ExitTail->Node.GetIdentifier(), PinIndex(1U), LoopNode, PinIndex(4U)
-            });
+            Graph->AddControlEdge(ControlEdge{ExitTail->Node.GetIdentifier(), PinIndex(1U), LoopNode, PinIndex(4U)});
             const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(*Graph, Registry);
             MPP_CHECK(HasCode(Diagnostics, DiagnosticCode::InvalidLoopTransfer));
         }
@@ -1209,16 +1098,14 @@ namespace
         GraphBuilder Builder(Registry);
         auto Entry = Builder.BeginEntry(EntryId);
         MPP_CHECK(Entry.has_value());
-        auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput,
-            ConditionalLoopId, BooleanExpression(true));
+        auto Loop = Builder.BeginLoop(Entry->Scope, Entry->RootOutput, ConditionalLoopId, BooleanExpression(true));
         MPP_CHECK(Loop.has_value());
         auto Body = Builder.AppendExecutionNode(Loop->Scope, Loop->BodyOutput, SequenceId);
         MPP_CHECK(Body.has_value());
         auto LoopResultValue = Builder.EndLoop(std::move(Loop->Scope));
         MPP_CHECK(LoopResultValue.has_value());
         MPP_CHECK(LoopResultValue->ExitOutput.has_value());
-        auto ExitSequence = Builder.AppendExecutionNode(Entry->Scope,
-            *LoopResultValue->ExitOutput, SequenceId);
+        auto ExitSequence = Builder.AppendExecutionNode(Entry->Scope, *LoopResultValue->ExitOutput, SequenceId);
         MPP_CHECK(ExitSequence.has_value());
         MPP_CHECK(Builder.EndEntry(std::move(Entry->Scope)).has_value());
         auto Graph = std::move(Builder).Finalize();
@@ -1230,8 +1117,7 @@ namespace
         const auto IsRejectedAfterRead = [&Registry](const nlohmann::json& Json)
         {
             const auto Parsed = Deserialize(Json);
-            return !Parsed.has_value() ||
-                !GraphIRValidator::Validate(*Parsed, Registry).empty();
+            return !Parsed.has_value() || !GraphIRValidator::Validate(*Parsed, Registry).empty();
         };
 
         nlohmann::json WrongOwnerPin = Serialized;
@@ -1252,8 +1138,7 @@ namespace
         InputBindings.erase(std::remove_if(InputBindings.begin(), InputBindings.end(),
             [&LoopNode](const nlohmann::json& Binding)
             {
-                return Binding["destinationNode"] == LoopNode.GetValue() &&
-                    Binding["destinationPin"] == 5U;
+                return Binding["destinationNode"] == LoopNode.GetValue() && Binding["destinationPin"] == 5U;
             }), InputBindings.end());
         MPP_CHECK(IsRejectedAfterRead(UnconditionalExit));
         nlohmann::json MissingParent = Serialized;
@@ -1276,14 +1161,8 @@ namespace
         });
         MPP_CHECK(IsRejectedAfterRead(OutsideRepeat));
 
-        Graph->AddControlEdge(ControlEdge{
-            Body->Node.GetIdentifier(), PinIndex(1U),
-            Body->Node.GetIdentifier(), PinIndex(0U)
-        });
-        Graph->AddControlEdge(ControlEdge{
-            EntryRoot, PinIndex(0U),
-            LoopNode, PinIndex(3U)
-        });
+        Graph->AddControlEdge(ControlEdge{Body->Node.GetIdentifier(), PinIndex(1U), Body->Node.GetIdentifier(), PinIndex(0U)});
+        Graph->AddControlEdge(ControlEdge{EntryRoot, PinIndex(0U), LoopNode, PinIndex(3U)});
         const DiagnosticCollection Diagnostics = GraphIRValidator::Validate(*Graph, Registry);
         MPP_CHECK(HasCode(Diagnostics, DiagnosticCode::InvalidExecutionReachability));
         MPP_CHECK(HasCode(Diagnostics, DiagnosticCode::InvalidControlEdge));

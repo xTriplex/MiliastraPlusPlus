@@ -22,8 +22,7 @@ namespace
 {
     [[noreturn]] void Fail(const char* Expression, const std::source_location& Location)
     {
-        std::fprintf(stderr, "Check failed: %s (%s:%u)\n", Expression,
-            Location.file_name(), Location.line());
+        std::fprintf(stderr, "Check failed: %s (%s:%u)\n", Expression, Location.file_name(), Location.line());
         std::exit(EXIT_FAILURE);
     }
 
@@ -38,10 +37,7 @@ namespace
 #define MPP_CHECK(Condition) Check((Condition), #Condition, std::source_location::current())
 
     template<typename Type>
-    concept HasPublicThreeWayComparison = requires(
-        const Type& Left,
-        const Type& Right
-    )
+    concept HasPublicThreeWayComparison = requires(const Type& Left, const Type& Right)
     {
         Left <=> Right;
     };
@@ -52,18 +48,12 @@ namespace
     LiteralValue MakeLiteral(Type Value)
     {
         using ValueType = std::decay_t<Type>;
-        return LiteralValue(LiteralValue::Data(
-            std::in_place_type<ValueType>,
-            std::move(Value)
-        ));
+        return LiteralValue(LiteralValue::Data(std::in_place_type<ValueType>, std::move(Value)));
     }
 
     SourceProvenance MakeProvenance(std::string SourceDocumentIdentifier, std::string SourceRecordIdentifier)
     {
-        return SourceProvenance(
-            std::move(SourceDocumentIdentifier),
-            std::move(SourceRecordIdentifier)
-        );
+        return SourceProvenance(std::move(SourceDocumentIdentifier), std::move(SourceRecordIdentifier));
     }
 
     NormalizedPinRecord MakeDataPin(
@@ -72,29 +62,14 @@ namespace
         bool AllowsLiteral = false,
         std::optional<LiteralValue> DefaultValue = std::nullopt,
         PinCardinality Cardinality = PinCardinality::Single,
-        PinDirection Direction = PinDirection::Input
-    )
+        PinDirection Direction = PinDirection::Input)
     {
-        return NormalizedPinRecord(
-            std::move(Name),
-            std::move(Type),
-            Direction,
-            PinCategory::Data,
-            Cardinality,
-            AllowsLiteral,
-            std::move(DefaultValue)
-        );
+        return NormalizedPinRecord(std::move(Name), std::move(Type), Direction, PinCategory::Data, Cardinality, AllowsLiteral, std::move(DefaultValue));
     }
 
     NormalizedPinRecord MakeExecutionPin(std::string Name, PinDirection Direction, PinCardinality Cardinality = PinCardinality::Single)
     {
-        return NormalizedPinRecord(
-            std::move(Name),
-            TypeDesc::Flow(),
-            Direction,
-            PinCategory::Execution,
-            Cardinality
-        );
+        return NormalizedPinRecord(std::move(Name), TypeDesc::Flow(), Direction, PinCategory::Execution, Cardinality);
     }
 
     NormalizedNodeDescriptorRecord MakeRecord(
@@ -103,8 +78,7 @@ namespace
         std::vector<NodeAvailability> Availability = {},
         std::vector<NormalizedPinRecord> Pins = {},
         std::optional<ExecutionControlSchema> ControlSchema = std::nullopt,
-        std::optional<SourceProvenance> Provenance = std::nullopt
-    )
+        std::optional<SourceProvenance> Provenance = std::nullopt)
     {
         return NormalizedNodeDescriptorRecord(
             ExternalNodeIdentity(std::move(ExternalKey)),
@@ -123,26 +97,17 @@ namespace
 
     std::optional<ExecutionControlSchema> MakeSequenceControl(std::uint32_t ExecutionInput, std::uint32_t ExecutionOutput)
     {
-        return ExecutionControlSchema(SequenceControlSchema{
-            PinIndex(ExecutionInput), PinIndex(ExecutionOutput)
-        });
+        return ExecutionControlSchema(SequenceControlSchema{PinIndex(ExecutionInput), PinIndex(ExecutionOutput)});
     }
 
     std::optional<ExecutionControlSchema> MakeBranchControl(std::uint32_t ExecutionInput, std::uint32_t ConditionInput, std::uint32_t TrueOutput, std::uint32_t FalseOutput)
     {
-        return ExecutionControlSchema(BranchControlSchema{
-            PinIndex(ExecutionInput),
-            PinIndex(ConditionInput),
-            PinIndex(TrueOutput),
-            PinIndex(FalseOutput)
-        });
+        return ExecutionControlSchema(BranchControlSchema{PinIndex(ExecutionInput), PinIndex(ConditionInput), PinIndex(TrueOutput), PinIndex(FalseOutput)});
     }
 
     std::optional<ExecutionControlSchema> MakeJoinControl(std::uint32_t ExecutionInput, std::uint32_t ExecutionOutput)
     {
-        return ExecutionControlSchema(JoinControlSchema{
-            PinIndex(ExecutionInput), PinIndex(ExecutionOutput)
-        });
+        return ExecutionControlSchema(JoinControlSchema{PinIndex(ExecutionInput), PinIndex(ExecutionOutput)});
     }
 
     std::optional<ExecutionControlSchema> MakeLoopControl(bool Conditional, std::uint32_t ConditionInput = 0U)
@@ -173,29 +138,19 @@ namespace
         Pins.push_back(MakeExecutionPin("ExecutionInput", PinDirection::Input));
         Pins.push_back(MakeExecutionPin("BodyOutput", PinDirection::Output));
         Pins.push_back(MakeExecutionPin("ExitOutput", PinDirection::Output));
-        Pins.push_back(MakeExecutionPin(
-            "RepeatInput", PinDirection::Input, PinCardinality::Multiple));
-        Pins.push_back(MakeExecutionPin(
-            "BreakInput", PinDirection::Input, PinCardinality::Multiple));
+        Pins.push_back(MakeExecutionPin("RepeatInput", PinDirection::Input, PinCardinality::Multiple));
+        Pins.push_back(MakeExecutionPin("BreakInput", PinDirection::Input, PinCardinality::Multiple));
         if (Conditional)
         {
             Pins.push_back(MakeDataPin("ConditionInput", TypeDesc::Boolean()));
         }
 
-        return MakeRecord(
-            std::move(ExternalKey),
-            "DisplayName",
-            {},
-            std::move(Pins),
-            MakeLoopControl(Conditional, 5U)
-        );
+        return MakeRecord(std::move(ExternalKey), "DisplayName", {}, std::move(Pins), MakeLoopControl(Conditional, 5U));
     }
 
     bool HasDiagnosticCode(const DiagnosticCollection& Diagnostics, DiagnosticCode Code)
     {
-        return std::any_of(
-            Diagnostics.begin(),
-            Diagnostics.end(),
+        return std::any_of(Diagnostics.begin(), Diagnostics.end(),
             [Code](const Diagnostic& CurrentDiagnostic)
             {
                 return CurrentDiagnostic.Code == Code;
@@ -205,9 +160,7 @@ namespace
 
     std::size_t CountDiagnosticCode(const DiagnosticCollection& Diagnostics, DiagnosticCode Code)
     {
-        return static_cast<std::size_t>(std::count_if(
-            Diagnostics.begin(),
-            Diagnostics.end(),
+        return static_cast<std::size_t>(std::count_if(Diagnostics.begin(), Diagnostics.end(),
             [Code](const Diagnostic& CurrentDiagnostic)
             {
                 return CurrentDiagnostic.Code == Code;
@@ -273,8 +226,7 @@ namespace
         std::vector<std::uint8_t> Bytes;
         for (const char Character : Input)
         {
-            Bytes.push_back(static_cast<std::uint8_t>(
-                static_cast<unsigned char>(Character)));
+            Bytes.push_back(static_cast<std::uint8_t>(static_cast<unsigned char>(Character)));
         }
         Bytes.push_back(0x80U);
         while ((Bytes.size() + 8U) % 64U != 0U)
@@ -312,12 +264,8 @@ namespace
             {
                 const std::uint32_t First = Words[Index - 15U];
                 const std::uint32_t Second = Words[Index - 2U];
-                const std::uint32_t SmallZero =
-                    RotateRightForIndependentHash(First, 7U) ^
-                    RotateRightForIndependentHash(First, 18U) ^ (First >> 3U);
-                const std::uint32_t SmallOne =
-                    RotateRightForIndependentHash(Second, 17U) ^
-                    RotateRightForIndependentHash(Second, 19U) ^ (Second >> 10U);
+                const std::uint32_t SmallZero = RotateRightForIndependentHash(First, 7U) ^ RotateRightForIndependentHash(First, 18U) ^ (First >> 3U);
+                const std::uint32_t SmallOne = RotateRightForIndependentHash(Second, 17U) ^ RotateRightForIndependentHash(Second, 19U) ^ (Second >> 10U);
                 Words[Index] = Words[Index - 16U] + SmallZero +
                     Words[Index - 7U] + SmallOne;
             }
@@ -332,17 +280,10 @@ namespace
             std::uint32_t H = Hash[7U];
             for (std::size_t Index = 0U; Index < Words.size(); ++Index)
             {
-                const std::uint32_t BigOne =
-                    RotateRightForIndependentHash(E, 6U) ^
-                    RotateRightForIndependentHash(E, 11U) ^
-                    RotateRightForIndependentHash(E, 25U);
+                const std::uint32_t BigOne = RotateRightForIndependentHash(E, 6U) ^ RotateRightForIndependentHash(E, 11U) ^ RotateRightForIndependentHash(E, 25U);
                 const std::uint32_t Choose = (E & F) ^ ((~E) & G);
-                const std::uint32_t First = H + BigOne + Choose + Constants[Index] +
-                    Words[Index];
-                const std::uint32_t BigZero =
-                    RotateRightForIndependentHash(A, 2U) ^
-                    RotateRightForIndependentHash(A, 13U) ^
-                    RotateRightForIndependentHash(A, 22U);
+                const std::uint32_t First = H + BigOne + Choose + Constants[Index] + Words[Index];
+                const std::uint32_t BigZero = RotateRightForIndependentHash(A, 2U) ^ RotateRightForIndependentHash(A, 13U) ^ RotateRightForIndependentHash(A, 22U);
                 const std::uint32_t Majority = (A & B) ^ (A & C) ^ (B & C);
                 const std::uint32_t Second = BigZero + Majority;
 
@@ -426,14 +367,8 @@ namespace
         MPP_CHECK(Moved == Moved);
         MPP_CHECK(Moved != MakeDataPin("Other", TypeDesc::Integer()));
 
-        MPP_CHECK(Moved != NormalizedPinRecord(
-            "OwnedName", TypeDesc::Integer(), PinDirection::Input,
-            PinCategory::Data, PinCardinality::Single, true,
-            MakeLiteral(std::int64_t(7))));
-        MPP_CHECK(Moved != NormalizedPinRecord(
-            "OwnedName", TypeDesc::Float(), PinDirection::Input,
-            PinCategory::Data, PinCardinality::Optional, true,
-            MakeLiteral(std::int64_t(7))));
+        MPP_CHECK(Moved != NormalizedPinRecord("OwnedName", TypeDesc::Integer(), PinDirection::Input, PinCategory::Data, PinCardinality::Single, true, MakeLiteral(std::int64_t(7))));
+        MPP_CHECK(Moved != NormalizedPinRecord("OwnedName", TypeDesc::Float(), PinDirection::Input, PinCategory::Data, PinCardinality::Optional, true, MakeLiteral(std::int64_t(7))));
 
         const double PositiveZero = std::bit_cast<double>(std::uint64_t(0x0000000000000000ULL));
         const double NegativeZero = std::bit_cast<double>(std::uint64_t(0x8000000000000000ULL));
@@ -441,20 +376,15 @@ namespace
         const double SameNaN = std::bit_cast<double>(std::uint64_t(0x7FF8000000000001ULL));
         const double OtherNaN = std::bit_cast<double>(std::uint64_t(0xFFF8000000000001ULL));
 
-        const auto PositiveZeroPin = MakeDataPin(
-            "Value", TypeDesc::Float(), true, MakeLiteral(PositiveZero));
-        const auto NegativeZeroPin = MakeDataPin(
-            "Value", TypeDesc::Float(), true, MakeLiteral(NegativeZero));
+        const auto PositiveZeroPin = MakeDataPin("Value", TypeDesc::Float(), true, MakeLiteral(PositiveZero));
+        const auto NegativeZeroPin = MakeDataPin("Value", TypeDesc::Float(), true, MakeLiteral(NegativeZero));
         MPP_CHECK(PositiveZeroPin == PositiveZeroPin);
         MPP_CHECK(NegativeZeroPin == NegativeZeroPin);
         MPP_CHECK(PositiveZeroPin != NegativeZeroPin);
 
-        const auto FirstNaNPin = MakeDataPin(
-            "Value", TypeDesc::Float(), true, MakeLiteral(FirstNaN));
-        const auto SameNaNPin = MakeDataPin(
-            "Value", TypeDesc::Float(), true, MakeLiteral(SameNaN));
-        const auto OtherNaNPin = MakeDataPin(
-            "Value", TypeDesc::Float(), true, MakeLiteral(OtherNaN));
+        const auto FirstNaNPin = MakeDataPin("Value", TypeDesc::Float(), true, MakeLiteral(FirstNaN));
+        const auto SameNaNPin = MakeDataPin("Value", TypeDesc::Float(), true, MakeLiteral(SameNaN));
+        const auto OtherNaNPin = MakeDataPin("Value", TypeDesc::Float(), true, MakeLiteral(OtherNaN));
         MPP_CHECK(FirstNaNPin == FirstNaNPin);
         MPP_CHECK(FirstNaNPin == SameNaNPin);
         MPP_CHECK(FirstNaNPin != OtherNaNPin);
@@ -464,12 +394,9 @@ namespace
         const Vector3Value SignedZeroVector{
             std::bit_cast<float>(std::uint32_t(0x80000000U)), 1.0F, 2.0F
         };
-        const auto PositiveVectorPin = MakeDataPin(
-            "Value", TypeDesc::Vector3(), true, MakeLiteral(PositiveVector));
-        const auto SameVectorPin = MakeDataPin(
-            "Value", TypeDesc::Vector3(), true, MakeLiteral(SameVector));
-        const auto SignedZeroVectorPin = MakeDataPin(
-            "Value", TypeDesc::Vector3(), true, MakeLiteral(SignedZeroVector));
+        const auto PositiveVectorPin = MakeDataPin("Value", TypeDesc::Vector3(), true, MakeLiteral(PositiveVector));
+        const auto SameVectorPin = MakeDataPin("Value", TypeDesc::Vector3(), true, MakeLiteral(SameVector));
+        const auto SignedZeroVectorPin = MakeDataPin("Value", TypeDesc::Vector3(), true, MakeLiteral(SignedZeroVector));
         MPP_CHECK(PositiveVectorPin == SameVectorPin);
         MPP_CHECK(PositiveVectorPin != SignedZeroVectorPin);
 
@@ -588,25 +515,19 @@ namespace
         const NormalizedNodeDescriptorRecord InvalidIdentity = MakeRecord("");
         const auto InvalidIdentityResult = ValidateNormalizedDescriptorRecord(InvalidIdentity);
         MPP_CHECK(!InvalidIdentityResult.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            InvalidIdentityResult.error(), DiagnosticCode::InvalidExternalNodeIdentity));
+        MPP_CHECK(HasDiagnosticCode(InvalidIdentityResult.error(), DiagnosticCode::InvalidExternalNodeIdentity));
 
         const NormalizedNodeDescriptorRecord InvalidProvenance = MakeRecord(
             "invalid-provenance", "DisplayName", {}, {}, std::nullopt,
             MakeProvenance("", "record")
         );
-        const auto InvalidProvenanceResult =
-            ValidateNormalizedDescriptorRecord(InvalidProvenance);
+        const auto InvalidProvenanceResult = ValidateNormalizedDescriptorRecord(InvalidProvenance);
         MPP_CHECK(!InvalidProvenanceResult.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            InvalidProvenanceResult.error(), DiagnosticCode::InvalidSourceProvenance));
+        MPP_CHECK(HasDiagnosticCode(InvalidProvenanceResult.error(), DiagnosticCode::InvalidSourceProvenance));
 
-        const NormalizedNodeDescriptorRecord InvalidDisplayName = MakeRecord(
-            "invalid-display", "");
+        const NormalizedNodeDescriptorRecord InvalidDisplayName = MakeRecord("invalid-display", "");
         MPP_CHECK(!InvalidDisplayName.IsValid());
-        MPP_CHECK(HasDiagnosticCode(
-            ValidateNormalizedDescriptorRecord(InvalidDisplayName).error(),
-            DiagnosticCode::InvalidNormalizedDescriptorRecord));
+        MPP_CHECK(HasDiagnosticCode(ValidateNormalizedDescriptorRecord(InvalidDisplayName).error(), DiagnosticCode::InvalidNormalizedDescriptorRecord));
 
         const NormalizedNodeDescriptorRecord InvalidAvailability = MakeRecord(
             "invalid-availability", "DisplayName", {
@@ -710,17 +631,13 @@ namespace
                 MakeExecutionPin("Out", PinDirection::Output)
             }, MakeJoinControl(0U, 1U)
         );
-        const NormalizedNodeDescriptorRecord ConditionalLoop = MakeLoopRecord(
-            "valid-conditional-loop", true);
-        const NormalizedNodeDescriptorRecord UnconditionalLoop = MakeLoopRecord(
-            "valid-unconditional-loop", false);
+        const NormalizedNodeDescriptorRecord ConditionalLoop = MakeLoopRecord("valid-conditional-loop", true);
+        const NormalizedNodeDescriptorRecord UnconditionalLoop = MakeLoopRecord("valid-unconditional-loop", false);
         const NormalizedNodeDescriptorRecord Return = MakeRecord(
             "valid-return", "Return", {},
             {MakeExecutionPin("In", PinDirection::Input)}, MakeReturnControl(0U)
         );
-        for (const NormalizedNodeDescriptorRecord& Record : {
-            Entry, Sequence, Branch, Join, ConditionalLoop, UnconditionalLoop, Return
-        })
+        for (const NormalizedNodeDescriptorRecord& Record : { Entry, Sequence, Branch, Join, ConditionalLoop, UnconditionalLoop, Return })
         {
             MPP_CHECK(Record.IsValid());
         }
@@ -755,8 +672,7 @@ namespace
 
     void TestDescriptorCatalogueContentIdentifierVectors()
     {
-        MPP_CHECK(ComputeIndependentSha256("abc") ==
-            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+        MPP_CHECK(ComputeIndependentSha256("abc") == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
 
         CheckDigest({},
             "439b5a7bb02e2f8acc21a160fbe007d87bfb7b9fce7846a9d1bdd3258c8b97e6");
@@ -936,42 +852,20 @@ namespace
         MPP_CHECK(OtherNaNDigest.has_value());
         MPP_CHECK(*FirstNaNDigest != *OtherNaNDigest);
 
-        const auto FirstBuild = DescriptorCatalogueBuilder::Build(
-            "source-a", "revision-a", CurrentDescriptorCatalogueSemanticSchemaVersion,
-            {MakeRecord("base")}
-        );
-        const auto NamespaceBuild = DescriptorCatalogueBuilder::Build(
-            "source-b", "revision-a", CurrentDescriptorCatalogueSemanticSchemaVersion,
-            {MakeRecord("base")}
-        );
-        const auto RevisionBuild = DescriptorCatalogueBuilder::Build(
-            "source-a", "revision-b", CurrentDescriptorCatalogueSemanticSchemaVersion,
-            {MakeRecord("base")}
-        );
+        const auto FirstBuild = DescriptorCatalogueBuilder::Build("source-a", "revision-a", CurrentDescriptorCatalogueSemanticSchemaVersion, {MakeRecord("base")});
+        const auto NamespaceBuild = DescriptorCatalogueBuilder::Build("source-b", "revision-a", CurrentDescriptorCatalogueSemanticSchemaVersion, {MakeRecord("base")});
+        const auto RevisionBuild = DescriptorCatalogueBuilder::Build("source-a", "revision-b", CurrentDescriptorCatalogueSemanticSchemaVersion, {MakeRecord("base")});
         MPP_CHECK(FirstBuild.has_value());
         MPP_CHECK(NamespaceBuild.has_value());
         MPP_CHECK(RevisionBuild.has_value());
-        MPP_CHECK(FirstBuild->GetIdentity().GetCatalogueContentIdentifier() ==
-            NamespaceBuild->GetIdentity().GetCatalogueContentIdentifier());
-        MPP_CHECK(FirstBuild->GetIdentity().GetCatalogueContentIdentifier() ==
-            RevisionBuild->GetIdentity().GetCatalogueContentIdentifier());
+        MPP_CHECK(FirstBuild->GetIdentity().GetCatalogueContentIdentifier() == NamespaceBuild->GetIdentity().GetCatalogueContentIdentifier());
+        MPP_CHECK(FirstBuild->GetIdentity().GetCatalogueContentIdentifier() == RevisionBuild->GetIdentity().GetCatalogueContentIdentifier());
         MPP_CHECK(FirstBuild->GetIdentity() != NamespaceBuild->GetIdentity());
         MPP_CHECK(FirstBuild->GetIdentity() != RevisionBuild->GetIdentity());
 
-        const DescriptorCatalogueIdentity FirstSchemaIdentity(
-            "source-a",
-            "revision-a",
-            DescriptorCatalogueSemanticSchemaVersion(1U),
-            *BaseDigest
-        );
-        const DescriptorCatalogueIdentity SecondSchemaIdentity(
-            "source-a",
-            "revision-a",
-            DescriptorCatalogueSemanticSchemaVersion(2U),
-            *BaseDigest
-        );
-        MPP_CHECK(FirstSchemaIdentity.GetCatalogueContentIdentifier() ==
-            SecondSchemaIdentity.GetCatalogueContentIdentifier());
+        const DescriptorCatalogueIdentity FirstSchemaIdentity("source-a", "revision-a", DescriptorCatalogueSemanticSchemaVersion(1U), *BaseDigest);
+        const DescriptorCatalogueIdentity SecondSchemaIdentity("source-a", "revision-a", DescriptorCatalogueSemanticSchemaVersion(2U), *BaseDigest);
+        MPP_CHECK(FirstSchemaIdentity.GetCatalogueContentIdentifier() == SecondSchemaIdentity.GetCatalogueContentIdentifier());
         MPP_CHECK(FirstSchemaIdentity != SecondSchemaIdentity);
 
         const DescriptorCatalogueEntry FirstEntry(Base, NodeDescriptorId(1U));
@@ -1012,23 +906,19 @@ namespace
                 MakeProvenance("document", "first")
             )
         };
-        const auto Result = DescriptorCatalogueBuilder::Build(
-            "source", "revision", CurrentDescriptorCatalogueSemanticSchemaVersion, Records
-        );
+        const auto Result = DescriptorCatalogueBuilder::Build("source", "revision", CurrentDescriptorCatalogueSemanticSchemaVersion, Records);
         MPP_CHECK(Result.has_value());
         MPP_CHECK(Result->IsValid());
         MPP_CHECK(Result->GetIdentity().IsValid());
         MPP_CHECK(Result->GetIdentity().GetSourceNamespace() == "source");
         MPP_CHECK(Result->GetIdentity().GetSourceRevision() == "revision");
-        MPP_CHECK(Result->GetIdentity().GetSemanticSchemaVersion() ==
-            CurrentDescriptorCatalogueSemanticSchemaVersion);
+        MPP_CHECK(Result->GetIdentity().GetSemanticSchemaVersion() == CurrentDescriptorCatalogueSemanticSchemaVersion);
         MPP_CHECK(Result->GetEntryCount() == 2U);
         MPP_CHECK(Result->GetEntries()[0U].GetExternalIdentity().GetKey() == "first");
         MPP_CHECK(Result->GetEntries()[1U].GetExternalIdentity().GetKey() == "second");
         MPP_CHECK(Result->GetEntries()[0U].GetDescriptorIdentifier() == NodeDescriptorId(1U));
         MPP_CHECK(Result->GetEntries()[1U].GetDescriptorIdentifier() == NodeDescriptorId(2U));
-        MPP_CHECK(Result->GetEntries()[0U].GetSourceProvenance()->GetSourceRecordIdentifier() ==
-            "first");
+        MPP_CHECK(Result->GetEntries()[0U].GetSourceProvenance()->GetSourceRecordIdentifier() == "first");
         MPP_CHECK(Result->GetEntries()[0U].GetRecord().GetDisplayName() == "First");
 
         const DescriptorCatalogue Copy = *Result;
@@ -1041,23 +931,18 @@ namespace
 
     void TestDescriptorCatalogueOrderingAndLookup()
     {
-        const auto Result = DescriptorCatalogueBuilder::Build(
-            "source", "revision", CurrentDescriptorCatalogueSemanticSchemaVersion,
-            {MakeRecord("charlie"), MakeRecord("alpha"), MakeRecord("bravo")}
-        );
+        const auto Result = DescriptorCatalogueBuilder::Build("source", "revision", CurrentDescriptorCatalogueSemanticSchemaVersion, {MakeRecord("charlie"), MakeRecord("alpha"), MakeRecord("bravo")});
         MPP_CHECK(Result.has_value());
         MPP_CHECK(Result->GetEntries()[0U].GetExternalIdentity().GetKey() == "alpha");
         MPP_CHECK(Result->GetEntries()[1U].GetExternalIdentity().GetKey() == "bravo");
         MPP_CHECK(Result->GetEntries()[2U].GetExternalIdentity().GetKey() == "charlie");
 
-        const DescriptorCatalogueEntry* Alpha = Result->FindByExternalIdentity(
-            ExternalNodeIdentity("alpha"));
+        const DescriptorCatalogueEntry* Alpha = Result->FindByExternalIdentity(ExternalNodeIdentity("alpha"));
         MPP_CHECK(Alpha != nullptr);
         MPP_CHECK(Alpha->GetDescriptorIdentifier() == NodeDescriptorId(1U));
         MPP_CHECK(Result->FindByExternalIdentity(ExternalNodeIdentity("missing")) == nullptr);
         MPP_CHECK(Result->FindByDescriptorIdentifier(NodeDescriptorId(2U)) != nullptr);
-        MPP_CHECK(Result->FindByDescriptorIdentifier(NodeDescriptorId(2U))
-            ->GetExternalIdentity().GetKey() == "bravo");
+        MPP_CHECK(Result->FindByDescriptorIdentifier(NodeDescriptorId(2U))->GetExternalIdentity().GetKey() == "bravo");
         MPP_CHECK(Result->FindByDescriptorIdentifier(NodeDescriptorId()) == nullptr);
         MPP_CHECK(Result->FindByDescriptorIdentifier(NodeDescriptorId(99U)) == nullptr);
     }
@@ -1100,12 +985,10 @@ namespace
             }
         );
         MPP_CHECK(WithProvenance.has_value());
-        MPP_CHECK(WithProvenance->GetIdentity().GetCatalogueContentIdentifier() ==
-            First->GetIdentity().GetCatalogueContentIdentifier());
+        MPP_CHECK(WithProvenance->GetIdentity().GetCatalogueContentIdentifier() == First->GetIdentity().GetCatalogueContentIdentifier());
         for (std::size_t Index = 0U; Index < First->GetEntryCount(); ++Index)
         {
-            MPP_CHECK(First->GetEntries()[Index].GetDescriptorIdentifier() ==
-                WithProvenance->GetEntries()[Index].GetDescriptorIdentifier());
+            MPP_CHECK(First->GetEntries()[Index].GetDescriptorIdentifier() == WithProvenance->GetEntries()[Index].GetDescriptorIdentifier());
         }
 
         MPP_CHECK(!NodeDescriptorId().IsValid());
@@ -1113,13 +996,10 @@ namespace
         MPP_CHECK(First->GetEntries()[2U].GetDescriptorIdentifier() == NodeDescriptorId(3U));
 
         MPP_CHECK(DescriptorCatalogueDetail::IsDescriptorIdentifierCountWithinDomain(0U));
-        MPP_CHECK(DescriptorCatalogueDetail::IsDescriptorIdentifierCountWithinDomain(
-            std::numeric_limits<std::uint32_t>::max()));
-        if (std::numeric_limits<std::size_t>::max() >
-            std::numeric_limits<std::uint32_t>::max())
+        MPP_CHECK(DescriptorCatalogueDetail::IsDescriptorIdentifierCountWithinDomain(std::numeric_limits<std::uint32_t>::max()));
+        if (std::numeric_limits<std::size_t>::max() > std::numeric_limits<std::uint32_t>::max())
         {
-            MPP_CHECK(!DescriptorCatalogueDetail::IsDescriptorIdentifierCountWithinDomain(
-                static_cast<std::size_t>(std::numeric_limits<std::uint32_t>::max()) + 1U));
+            MPP_CHECK(!DescriptorCatalogueDetail::IsDescriptorIdentifierCountWithinDomain(static_cast<std::size_t>(std::numeric_limits<std::uint32_t>::max()) + 1U));
         }
     }
 
@@ -1130,8 +1010,7 @@ namespace
             {MakeRecord("duplicate"), MakeRecord("duplicate")}
         );
         MPP_CHECK(!TwoDuplicates.has_value());
-        MPP_CHECK(CountDiagnosticCode(
-            TwoDuplicates.error(), DiagnosticCode::DuplicateExternalNodeIdentity) == 1U);
+        MPP_CHECK(CountDiagnosticCode(TwoDuplicates.error(), DiagnosticCode::DuplicateExternalNodeIdentity) == 1U);
 
         const auto ThreeDuplicates = DescriptorCatalogueBuilder::Build(
             "source", "revision", CurrentDescriptorCatalogueSemanticSchemaVersion,
@@ -1145,16 +1024,14 @@ namespace
             }
         );
         MPP_CHECK(!ThreeDuplicates.has_value());
-        MPP_CHECK(CountDiagnosticCode(
-            ThreeDuplicates.error(), DiagnosticCode::DuplicateExternalNodeIdentity) == 2U);
+        MPP_CHECK(CountDiagnosticCode(ThreeDuplicates.error(), DiagnosticCode::DuplicateExternalNodeIdentity) == 2U);
         for (const Diagnostic& CurrentDiagnostic : ThreeDuplicates.error())
         {
             if (CurrentDiagnostic.Code == DiagnosticCode::DuplicateExternalNodeIdentity)
             {
                 MPP_CHECK(CurrentDiagnostic.PrimarySourceProvenance.has_value());
                 MPP_CHECK(CurrentDiagnostic.RelatedSourceProvenance.has_value());
-                MPP_CHECK(CurrentDiagnostic.PrimarySourceProvenance->GetSourceRecordIdentifier() ==
-                    "one");
+                MPP_CHECK(CurrentDiagnostic.PrimarySourceProvenance->GetSourceRecordIdentifier() == "one");
             }
         }
 
@@ -1195,10 +1072,8 @@ namespace
             }
         );
         MPP_CHECK(!InvalidDuplicate.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            InvalidDuplicate.error(), DiagnosticCode::InvalidNormalizedDescriptorRecord));
-        MPP_CHECK(HasDiagnosticCode(
-            InvalidDuplicate.error(), DiagnosticCode::DuplicateExternalNodeIdentity));
+        MPP_CHECK(HasDiagnosticCode(InvalidDuplicate.error(), DiagnosticCode::InvalidNormalizedDescriptorRecord));
+        MPP_CHECK(HasDiagnosticCode(InvalidDuplicate.error(), DiagnosticCode::DuplicateExternalNodeIdentity));
     }
 
     void TestDescriptorCatalogueFailureAtomicity()
@@ -1207,14 +1082,11 @@ namespace
             MakeRecord("valid"), MakeRecord("invalid", "")
         };
         const std::vector<NormalizedNodeDescriptorRecord> Original = Records;
-        const auto InvalidResult = DescriptorCatalogueBuilder::Build(
-            "source", "revision", CurrentDescriptorCatalogueSemanticSchemaVersion, Records
-        );
+        const auto InvalidResult = DescriptorCatalogueBuilder::Build("source", "revision", CurrentDescriptorCatalogueSemanticSchemaVersion, Records);
         MPP_CHECK(!InvalidResult.has_value());
         MPP_CHECK(Records == Original);
         MPP_CHECK(InvalidResult.error().size() == 1U);
-        MPP_CHECK(InvalidResult.error()[0U].Code ==
-            DiagnosticCode::InvalidNormalizedDescriptorRecord);
+        MPP_CHECK(InvalidResult.error()[0U].Code == DiagnosticCode::InvalidNormalizedDescriptorRecord);
 
         const std::vector<NormalizedNodeDescriptorRecord> DuplicateRecords = {
             MakeRecord("same"), MakeRecord("same")
@@ -1224,15 +1096,13 @@ namespace
             DuplicateRecords
         );
         MPP_CHECK(!DuplicateResult.has_value());
-        MPP_CHECK(CountDiagnosticCode(
-            DuplicateResult.error(), DiagnosticCode::DuplicateExternalNodeIdentity) == 1U);
+        MPP_CHECK(CountDiagnosticCode(DuplicateResult.error(), DiagnosticCode::DuplicateExternalNodeIdentity) == 1U);
 
         const auto InvalidContext = DescriptorCatalogueBuilder::Build(
             "", "", DescriptorCatalogueSemanticSchemaVersion(), {MakeRecord("valid")}
         );
         MPP_CHECK(!InvalidContext.has_value());
-        MPP_CHECK(CountDiagnosticCode(
-            InvalidContext.error(), DiagnosticCode::InvalidDescriptorCatalogueIdentity) == 3U);
+        MPP_CHECK(CountDiagnosticCode(InvalidContext.error(), DiagnosticCode::InvalidDescriptorCatalogueIdentity) == 3U);
         MPP_CHECK(InvalidContext.error()[0U].Message.find("version") != std::string::npos);
         MPP_CHECK(InvalidContext.error()[1U].Message.find("namespace") != std::string::npos);
         MPP_CHECK(InvalidContext.error()[2U].Message.find("revision") != std::string::npos);
@@ -1249,8 +1119,7 @@ namespace
         MPP_CHECK(Result->GetEntries().empty());
         MPP_CHECK(Result->FindByExternalIdentity(ExternalNodeIdentity("missing")) == nullptr);
         MPP_CHECK(Result->FindByDescriptorIdentifier(NodeDescriptorId(1U)) == nullptr);
-        MPP_CHECK(Result->GetIdentity().GetCatalogueContentIdentifier().GetValue() ==
-            "439b5a7bb02e2f8acc21a160fbe007d87bfb7b9fce7846a9d1bdd3258c8b97e6");
+        MPP_CHECK(Result->GetIdentity().GetCatalogueContentIdentifier().GetValue() == "439b5a7bb02e2f8acc21a160fbe007d87bfb7b9fce7846a9d1bdd3258c8b97e6");
     }
 
     void TestUnsupportedDescriptorCatalogueSemanticSchemaVersion()
@@ -1260,8 +1129,7 @@ namespace
         );
         MPP_CHECK(!Unsupported.has_value());
         MPP_CHECK(Unsupported.error().size() == 1U);
-        MPP_CHECK(Unsupported.error()[0U].Code ==
-            DiagnosticCode::UnsupportedDescriptorCatalogueSemanticSchemaVersion);
+        MPP_CHECK(Unsupported.error()[0U].Code == DiagnosticCode::UnsupportedDescriptorCatalogueSemanticSchemaVersion);
         MPP_CHECK(!DescriptorCatalogueBuilder::Build(
             "source", "revision", DescriptorCatalogueSemanticSchemaVersion(), {}
         ).has_value());
@@ -1291,12 +1159,10 @@ namespace
         );
         MPP_CHECK(WithoutBuild.has_value());
         MPP_CHECK(WithBuild.has_value());
-        MPP_CHECK(WithoutBuild->GetIdentity().GetCatalogueContentIdentifier() ==
-            WithBuild->GetIdentity().GetCatalogueContentIdentifier());
+        MPP_CHECK(WithoutBuild->GetIdentity().GetCatalogueContentIdentifier() == WithBuild->GetIdentity().GetCatalogueContentIdentifier());
         MPP_CHECK(!WithoutBuild->GetEntries()[0U].GetSourceProvenance().has_value());
         MPP_CHECK(WithBuild->GetEntries()[0U].GetSourceProvenance().has_value());
-        MPP_CHECK(WithBuild->GetEntries()[0U].GetSourceProvenance()->GetSourceDocumentIdentifier() ==
-            "logical-document");
+        MPP_CHECK(WithBuild->GetEntries()[0U].GetSourceProvenance()->GetSourceDocumentIdentifier() == "logical-document");
 
         const auto Invalid = DescriptorCatalogueBuilder::Build(
             "source", "revision", CurrentDescriptorCatalogueSemanticSchemaVersion,
@@ -1320,15 +1186,11 @@ namespace
 
         const DescriptorCatalogueBinding InvalidBinding;
         const DescriptorCatalogueIdentity InvalidIdentity;
-        const auto Compatibility = ValidateDescriptorCatalogueCompatibility(
-            InvalidBinding, InvalidIdentity
-        );
+        const auto Compatibility = ValidateDescriptorCatalogueCompatibility(InvalidBinding, InvalidIdentity);
         MPP_CHECK(!Compatibility.has_value());
         MPP_CHECK(Compatibility.error().size() == 2U);
-        MPP_CHECK(Compatibility.error()[0U].Message ==
-            "Available catalogue identity is invalid.");
-        MPP_CHECK(Compatibility.error()[1U].Message ==
-            "Graph binding contains an invalid descriptor catalogue identity.");
+        MPP_CHECK(Compatibility.error()[0U].Message == "Available catalogue identity is invalid.");
+        MPP_CHECK(Compatibility.error()[1U].Message == "Graph binding contains an invalid descriptor catalogue identity.");
 
         const auto Assignments = DescriptorIdentifierAllocator::Allocate({
             DescriptorIdentifierAllocationCandidate(ExternalNodeIdentity("b")),
@@ -1350,27 +1212,17 @@ namespace
         );
         MPP_CHECK(FirstCatalogue.has_value());
         MPP_CHECK(SecondCatalogue.has_value());
-        MPP_CHECK(FirstCatalogue->GetEntries()[0U].GetDescriptorIdentifier() ==
-            NodeDescriptorId(1U));
-        MPP_CHECK(SecondCatalogue->GetEntries()[0U].GetDescriptorIdentifier() ==
-            NodeDescriptorId(1U));
-        MPP_CHECK(FirstCatalogue->GetEntries()[0U].GetDescriptorIdentifier() ==
-            SecondCatalogue->GetEntries()[0U].GetDescriptorIdentifier());
+        MPP_CHECK(FirstCatalogue->GetEntries()[0U].GetDescriptorIdentifier() == NodeDescriptorId(1U));
+        MPP_CHECK(SecondCatalogue->GetEntries()[0U].GetDescriptorIdentifier() == NodeDescriptorId(1U));
+        MPP_CHECK(FirstCatalogue->GetEntries()[0U].GetDescriptorIdentifier() == SecondCatalogue->GetEntries()[0U].GetDescriptorIdentifier());
         MPP_CHECK(FirstCatalogue->GetIdentity() != SecondCatalogue->GetIdentity());
 
         const DescriptorCatalogueBinding FirstBinding(FirstCatalogue->GetIdentity());
-        const auto Mismatch = ValidateDescriptorCatalogueCompatibility(
-            FirstBinding,
-            SecondCatalogue->GetIdentity()
-        );
+        const auto Mismatch = ValidateDescriptorCatalogueCompatibility(FirstBinding, SecondCatalogue->GetIdentity());
         MPP_CHECK(!Mismatch.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            Mismatch.error(), DiagnosticCode::DescriptorCatalogueMismatch));
+        MPP_CHECK(HasDiagnosticCode(Mismatch.error(), DiagnosticCode::DescriptorCatalogueMismatch));
 
-        const auto MatchingCompatibility = ValidateDescriptorCatalogueCompatibility(
-            FirstBinding,
-            FirstCatalogue->GetIdentity()
-        );
+        const auto MatchingCompatibility = ValidateDescriptorCatalogueCompatibility(FirstBinding, FirstCatalogue->GetIdentity());
         MPP_CHECK(MatchingCompatibility.has_value());
     }
 }

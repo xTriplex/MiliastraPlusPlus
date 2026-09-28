@@ -140,8 +140,7 @@ namespace MiliastraPlusPlus
             PinCategory Category,
             PinCardinality Cardinality = PinCardinality::Single,
             bool AllowsLiteral = false,
-            std::optional<LiteralValue> DefaultValue = std::nullopt
-        )
+            std::optional<LiteralValue> DefaultValue = std::nullopt)
             : m_Name(std::move(Name))
             , m_Type(std::move(Type))
             , m_Direction(Direction)
@@ -206,8 +205,7 @@ namespace MiliastraPlusPlus
             std::string Name,
             std::vector<NodeAvailability> Availability,
             std::vector<PinSchema> Pins,
-            std::optional<ExecutionControlSchema> ControlSchema = std::nullopt
-        )
+            std::optional<ExecutionControlSchema> ControlSchema = std::nullopt)
             : m_Identifier(Identifier)
             , m_Name(std::move(Name))
             , m_Availability(std::move(Availability))
@@ -296,8 +294,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] bool IsAvailableOn(NodeAvailability Domain) const
         {
-            return std::find(m_Availability.begin(), m_Availability.end(), Domain) !=
-                m_Availability.end();
+            return std::find(m_Availability.begin(), m_Availability.end(), Domain) != m_Availability.end();
         }
 
         [[nodiscard]] const std::vector<PinSchema>& GetPins() const
@@ -386,9 +383,7 @@ namespace MiliastraPlusPlus
             case TypeDesc::Kind::ConfigId: return Literal.Is<ConfigIdValue>();
             case TypeDesc::Kind::Faction: return Literal.Is<FactionValue>();
             case TypeDesc::Kind::Enum:
-                return Literal.Is<EnumLiteralValue>() &&
-                    Literal.TryGet<EnumLiteralValue>()->GetEnumTypeIdentity() ==
-                    Type.GetEnumTypeIdentity();
+                return Literal.Is<EnumLiteralValue>() && Literal.TryGet<EnumLiteralValue>()->GetEnumTypeIdentity() == Type.GetEnumTypeIdentity();
             default: return false;
             }
         }
@@ -415,8 +410,10 @@ namespace MiliastraPlusPlus
                     }
                 }
                 const PinSchema& Pin = m_Pins[Index.GetValue()];
-                if (Pin.GetDirection() != Direction || Pin.GetCategory() != Category ||
-                    Pin.GetType() != Type || Pin.GetCardinality() != Cardinality)
+                if (Pin.GetDirection() != Direction ||
+                    Pin.GetCategory() != Category ||
+                    Pin.GetType() != Type ||
+                    Pin.GetCardinality() != Cardinality)
                 {
                     return false;
                 }
@@ -425,8 +422,7 @@ namespace MiliastraPlusPlus
             };
             const auto AddFlowRole = [&AddRole](PinIndex Index, PinDirection Direction, PinCardinality Cardinality = PinCardinality::Single) -> bool
             {
-                return AddRole(Index, Direction, PinCategory::Execution,
-                    TypeDesc::Flow(), Cardinality);
+                return AddRole(Index, Direction, PinCategory::Execution, TypeDesc::Flow(), Cardinality);
             };
 
             bool RolesValid = std::visit([&](const auto& Control)
@@ -438,28 +434,22 @@ namespace MiliastraPlusPlus
                 }
                 else if constexpr (std::is_same_v<Schema, SequenceControlSchema>)
                 {
-                    return AddFlowRole(Control.ExecutionInput, PinDirection::Input) &&
-                        AddFlowRole(Control.ExecutionOutput, PinDirection::Output);
+                    return AddFlowRole(Control.ExecutionInput, PinDirection::Input) && AddFlowRole(Control.ExecutionOutput, PinDirection::Output);
                 }
                 else if constexpr (std::is_same_v<Schema, BranchControlSchema>)
                 {
                     return AddFlowRole(Control.ExecutionInput, PinDirection::Input) &&
-                        AddRole(Control.ConditionInput, PinDirection::Input,
-                            PinCategory::Data, TypeDesc::Boolean(), PinCardinality::Single) &&
+                        AddRole(Control.ConditionInput, PinDirection::Input, PinCategory::Data, TypeDesc::Boolean(), PinCardinality::Single) &&
                         AddFlowRole(Control.TrueOutput, PinDirection::Output) &&
                         AddFlowRole(Control.FalseOutput, PinDirection::Output);
                 }
                 else if constexpr (std::is_same_v<Schema, JoinControlSchema>)
                 {
-                    return AddFlowRole(Control.ExecutionInput, PinDirection::Input,
-                            PinCardinality::Multiple) &&
-                        AddFlowRole(Control.ExecutionOutput, PinDirection::Output);
+                    return AddFlowRole(Control.ExecutionInput, PinDirection::Input, PinCardinality::Multiple) && AddFlowRole(Control.ExecutionOutput, PinDirection::Output);
                 }
                 else if constexpr (std::is_same_v<Schema, LoopControlSchema>)
                 {
-                    const bool PolicyValid =
-                        Control.ExitPolicy == LoopExitPolicy::Conditional ||
-                        Control.ExitPolicy == LoopExitPolicy::Unconditional;
+                    const bool PolicyValid = Control.ExitPolicy == LoopExitPolicy::Conditional || Control.ExitPolicy == LoopExitPolicy::Unconditional;
                     if (!PolicyValid)
                     {
                         return false;
@@ -468,10 +458,8 @@ namespace MiliastraPlusPlus
                         AddFlowRole(Control.ExecutionInput, PinDirection::Input) &&
                         AddFlowRole(Control.BodyOutput, PinDirection::Output) &&
                         AddFlowRole(Control.ExitOutput, PinDirection::Output) &&
-                        AddFlowRole(Control.RepeatInput, PinDirection::Input,
-                            PinCardinality::Multiple) &&
-                        AddFlowRole(Control.BreakInput, PinDirection::Input,
-                            PinCardinality::Multiple);
+                        AddFlowRole(Control.RepeatInput, PinDirection::Input, PinCardinality::Multiple) &&
+                        AddFlowRole(Control.BreakInput, PinDirection::Input, PinCardinality::Multiple);
                     if (!FlowRolesValid)
                     {
                         return false;
@@ -479,9 +467,7 @@ namespace MiliastraPlusPlus
                     if (Control.ExitPolicy == LoopExitPolicy::Conditional)
                     {
                         return Control.ConditionInput.has_value() &&
-                            AddRole(*Control.ConditionInput, PinDirection::Input,
-                                PinCategory::Data, TypeDesc::Boolean(),
-                                PinCardinality::Single);
+                            AddRole(*Control.ConditionInput, PinDirection::Input, PinCategory::Data, TypeDesc::Boolean(), PinCardinality::Single);
                     }
                     return !Control.ConditionInput.has_value();
                 }
@@ -541,8 +527,7 @@ namespace MiliastraPlusPlus
             case TypeDesc::Kind::List:
                 return ContainsFlowType(*Type.GetElementType());
             case TypeDesc::Kind::Dictionary:
-                return ContainsFlowType(*Type.GetKeyType()) ||
-                    ContainsFlowType(*Type.GetValueType());
+                return ContainsFlowType(*Type.GetKeyType()) || ContainsFlowType(*Type.GetValueType());
             default:
                 return false;
             }

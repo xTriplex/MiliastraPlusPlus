@@ -24,13 +24,7 @@ namespace
 
     [[noreturn]] void Fail(const char* Expression, const std::source_location& Location)
     {
-        std::fprintf(
-            stderr,
-            "Check failed: %s (%s:%u)\n",
-            Expression,
-            Location.file_name(),
-            Location.line()
-        );
+        std::fprintf(stderr, "Check failed: %s (%s:%u)\n", Expression, Location.file_name(), Location.line());
         std::exit(EXIT_FAILURE);
     }
 
@@ -2360,10 +2354,7 @@ namespace
         return nullptr;
     }
 
-    const NormalizedNodeDescriptorRecord* FindNormalizedRecord(
-        const std::vector<NormalizedNodeDescriptorRecord>& Records,
-        std::string_view ExternalKey
-    )
+    const NormalizedNodeDescriptorRecord* FindNormalizedRecord(const std::vector<NormalizedNodeDescriptorRecord>& Records, std::string_view ExternalKey)
     {
         for (const NormalizedNodeDescriptorRecord& Record : Records)
         {
@@ -2378,9 +2369,7 @@ namespace
 
     bool HasDiagnosticCode(const DiagnosticCollection& Diagnostics, DiagnosticCode Code)
     {
-        return std::any_of(
-            Diagnostics.begin(),
-            Diagnostics.end(),
+        return std::any_of(Diagnostics.begin(), Diagnostics.end(),
             [Code](const Diagnostic& Diagnostic)
             {
                 return Diagnostic.Code == Code;
@@ -2390,9 +2379,7 @@ namespace
 
     std::size_t CountDiagnosticCode(const DiagnosticCollection& Diagnostics, DiagnosticCode Code)
     {
-        return static_cast<std::size_t>(std::count_if(
-            Diagnostics.begin(),
-            Diagnostics.end(),
+        return static_cast<std::size_t>(std::count_if(Diagnostics.begin(), Diagnostics.end(),
             [Code](const Diagnostic& Diagnostic)
             {
                 return Diagnostic.Code == Code;
@@ -2412,10 +2399,8 @@ namespace
             if (Left[Index].Severity != Right[Index].Severity ||
                 Left[Index].Code != Right[Index].Code ||
                 Left[Index].Message != Right[Index].Message ||
-                Left[Index].PrimarySourceProvenance !=
-                    Right[Index].PrimarySourceProvenance ||
-                Left[Index].RelatedSourceProvenance !=
-                    Right[Index].RelatedSourceProvenance)
+                Left[Index].PrimarySourceProvenance != Right[Index].PrimarySourceProvenance ||
+                Left[Index].RelatedSourceProvenance != Right[Index].RelatedSourceProvenance)
             {
                 return false;
             }
@@ -2441,28 +2426,16 @@ namespace
     }
 
     template<typename Mutation>
-    void CheckRejectedMutation(
-        Mutation MutationFunction,
-        DiagnosticCode ExpectedCode =
-            DiagnosticCode::UnsupportedGenshinClientBooleanFilterDescriptorSourceForm
-    )
+    void CheckRejectedMutation(Mutation MutationFunction, DiagnosticCode ExpectedCode = DiagnosticCode::UnsupportedGenshinClientBooleanFilterDescriptorSourceForm)
     {
-        const auto Result =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                MakeMutatedNodeMetadata(MutationFunction),
-                GetAuthenticModeMetadataJson()
-            );
+        const auto Result = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(MakeMutatedNodeMetadata(MutationFunction), GetAuthenticModeMetadataJson());
         MPP_CHECK(!Result.has_value());
         MPP_CHECK(HasDiagnosticCode(Result.error(), ExpectedCode));
     }
 
     std::vector<NormalizedNodeDescriptorRecord> AdaptAuthenticFixture()
     {
-        const auto Result =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                GetAuthenticNodeMetadataJson(),
-                GetAuthenticModeMetadataJson()
-            );
+        const auto Result = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(GetAuthenticNodeMetadataJson(), GetAuthenticModeMetadataJson());
         MPP_CHECK(Result.has_value());
         return *Result;
     }
@@ -2471,10 +2444,7 @@ namespace
     {
         for (std::size_t Index = 1U; Index < Records.size(); ++Index)
         {
-            MPP_CHECK(
-                Records[Index - 1U].GetExternalIdentity() <
-                Records[Index].GetExternalIdentity()
-            );
+            MPP_CHECK(Records[Index - 1U].GetExternalIdentity() < Records[Index].GetExternalIdentity());
         }
     }
 
@@ -2502,12 +2472,8 @@ namespace
     void TestGenshinClientBooleanFilterDescriptorSourceAdapterSuccess()
     {
         static_assert(!HasDescriptorIdentifierGetter<NormalizedNodeDescriptorRecord>);
-        static_assert(!HasNodeDescriptorRegistryGetter<
-            GenshinClientBooleanFilterDescriptorSourceAdapter
-        >);
-        static_assert(!std::is_default_constructible_v<
-            GenshinClientBooleanFilterDescriptorSourceAdapter
-        >);
+        static_assert(!HasNodeDescriptorRegistryGetter<GenshinClientBooleanFilterDescriptorSourceAdapter>);
+        static_assert(!std::is_default_constructible_v<GenshinClientBooleanFilterDescriptorSourceAdapter>);
 
         const auto Records = AdaptAuthenticFixture();
         MPP_CHECK(Records.size() == 25U);
@@ -2543,21 +2509,17 @@ namespace
         MPP_CHECK(SourceRecord != nullptr);
 
         const auto Records = AdaptAuthenticFixture();
-        const NormalizedNodeDescriptorRecord* Record =
-            FindNormalizedRecord(Records, "200001");
+        const NormalizedNodeDescriptorRecord* Record = FindNormalizedRecord(Records, "200001");
         MPP_CHECK(Record != nullptr);
         MPP_CHECK(Record->GetExternalIdentity().GetKey() == "200001");
         MPP_CHECK(Record->GetDisplayName() == GetAuthenticDisplayName(*SourceRecord));
         MPP_CHECK(Record->GetSourceProvenance().has_value());
-        MPP_CHECK(Record->GetSourceProvenance()->GetSourceDocumentIdentifier() ==
-            SourceRecord->at("sampleFile").get<std::string>());
+        MPP_CHECK(Record->GetSourceProvenance()->GetSourceDocumentIdentifier() == SourceRecord->at("sampleFile").get<std::string>());
         MPP_CHECK(Record->GetSourceProvenance()->GetSourceRecordIdentifier() == "200001");
 
         MPP_CHECK(Record->GetPins().size() == 2U);
-        MPP_CHECK(Record->GetPins()[0U].GetName() ==
-            SourceRecord->at("inputs")[0U].at("name").get<std::string>());
-        MPP_CHECK(Record->GetPins()[1U].GetName() ==
-            SourceRecord->at("inputs")[1U].at("name").get<std::string>());
+        MPP_CHECK(Record->GetPins()[0U].GetName() == SourceRecord->at("inputs")[0U].at("name").get<std::string>());
+        MPP_CHECK(Record->GetPins()[1U].GetName() == SourceRecord->at("inputs")[1U].at("name").get<std::string>());
         for (const NormalizedPinRecord& Pin : Record->GetPins())
         {
             MPP_CHECK(Pin.GetDirection() == PinDirection::Input);
@@ -2567,8 +2529,7 @@ namespace
             MPP_CHECK(Pin.GetDefaultValue().has_value());
         }
 
-        const NormalizedNodeDescriptorRecord* OutputRecord =
-            FindNormalizedRecord(Records, "200255");
+        const NormalizedNodeDescriptorRecord* OutputRecord = FindNormalizedRecord(Records, "200255");
         MPP_CHECK(OutputRecord != nullptr);
         MPP_CHECK(OutputRecord->GetPins().size() == 2U);
         for (const NormalizedPinRecord& Pin : OutputRecord->GetPins())
@@ -2580,8 +2541,7 @@ namespace
             MPP_CHECK(!Pin.GetDefaultValue().has_value());
         }
 
-        const NormalizedNodeDescriptorRecord* MixedRecord =
-            FindNormalizedRecord(Records, "200259");
+        const NormalizedNodeDescriptorRecord* MixedRecord = FindNormalizedRecord(Records, "200259");
         MPP_CHECK(MixedRecord != nullptr);
         MPP_CHECK(MixedRecord->GetPins().size() == 2U);
         MPP_CHECK(MixedRecord->GetPins()[0U].GetDirection() == PinDirection::Input);
@@ -2592,55 +2552,44 @@ namespace
     {
         const auto Records = AdaptAuthenticFixture();
 
-        const NormalizedPinRecord* BooleanPin =
-            &FindNormalizedRecord(Records, "200001")->GetPins()[0U];
+        const NormalizedPinRecord* BooleanPin = &FindNormalizedRecord(Records, "200001")->GetPins()[0U];
         MPP_CHECK(BooleanPin->GetType() == TypeDesc::Boolean());
         MPP_CHECK(BooleanPin->GetDefaultValue()->Is<bool>());
         MPP_CHECK(!*BooleanPin->GetDefaultValue()->TryGet<bool>());
 
-        const NormalizedPinRecord* FloatPin =
-            &FindNormalizedRecord(Records, "200066")->GetPins()[0U];
+        const NormalizedPinRecord* FloatPin = &FindNormalizedRecord(Records, "200066")->GetPins()[0U];
         MPP_CHECK(FloatPin != nullptr);
         MPP_CHECK(FloatPin->GetType() == TypeDesc::Float());
         MPP_CHECK(FloatPin->GetDefaultValue()->Is<double>());
         MPP_CHECK(*FloatPin->GetDefaultValue()->TryGet<double>() == 0.0);
 
-        const NormalizedPinRecord* VectorPin =
-            &FindNormalizedRecord(Records, "200063")->GetPins()[0U];
+        const NormalizedPinRecord* VectorPin = &FindNormalizedRecord(Records, "200063")->GetPins()[0U];
         MPP_CHECK(VectorPin->GetType() == TypeDesc::Vector3());
         MPP_CHECK(VectorPin->GetDefaultValue()->Is<Vector3Value>());
         MPP_CHECK(VectorPin->GetDefaultValue()->TryGet<Vector3Value>()->X == 0.0F);
         MPP_CHECK(VectorPin->GetDefaultValue()->TryGet<Vector3Value>()->Y == 0.0F);
         MPP_CHECK(VectorPin->GetDefaultValue()->TryGet<Vector3Value>()->Z == 0.0F);
 
-        const NormalizedPinRecord* GuidPin =
-            &FindNormalizedRecord(Records, "200023")->GetPins()[0U];
+        const NormalizedPinRecord* GuidPin = &FindNormalizedRecord(Records, "200023")->GetPins()[0U];
         MPP_CHECK(GuidPin->GetType() == TypeDesc::GUID());
         MPP_CHECK(GuidPin->GetDefaultValue()->Is<GuidValue>());
 
-        const NormalizedPinRecord* ConfigPin =
-            &FindNormalizedRecord(Records, "200259")->GetPins()[0U];
+        const NormalizedPinRecord* ConfigPin = &FindNormalizedRecord(Records, "200259")->GetPins()[0U];
         MPP_CHECK(ConfigPin->GetType() == TypeDesc::ConfigId());
         MPP_CHECK(ConfigPin->AllowsLiteral());
         MPP_CHECK(ConfigPin->GetDefaultValue()->Is<ConfigIdValue>());
         MPP_CHECK(!ConfigPin->GetDefaultValue()->TryGet<ConfigIdValue>()->Value);
 
-        const NormalizedPinRecord* FactionPin =
-            &FindNormalizedRecord(Records, "200093")->GetPins()[0U];
+        const NormalizedPinRecord* FactionPin = &FindNormalizedRecord(Records, "200093")->GetPins()[0U];
         MPP_CHECK(FactionPin->GetType() == TypeDesc::Faction());
         MPP_CHECK(FactionPin->GetDefaultValue()->Is<FactionValue>());
 
         JsonValue BooleanOneDocument = GetAuthenticNodeDocument();
         FindJsonRecord(BooleanOneDocument, 200001U)->at("inputs")[0U]["defaultValue"] = 1;
-        const auto BooleanOneResult =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                BooleanOneDocument.dump(),
-                GetAuthenticModeMetadataJson()
-            );
+        const auto BooleanOneResult = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(BooleanOneDocument.dump(), GetAuthenticModeMetadataJson());
         MPP_CHECK(BooleanOneResult.has_value());
         MPP_CHECK(BooleanOneResult->front().GetPins()[0U].GetDefaultValue()->Is<bool>());
-        MPP_CHECK(*BooleanOneResult->front().GetPins()[0U]
-            .GetDefaultValue()->TryGet<bool>());
+        MPP_CHECK(*BooleanOneResult->front().GetPins()[0U].GetDefaultValue()->TryGet<bool>());
     }
 
     void TestGenshinClientBooleanFilterDescriptorSourceUnsupportedForms()
@@ -2655,16 +2604,14 @@ namespace
         });
         CheckRejectedMutation([](JsonValue& Document)
         {
-            JsonValue& DefaultValue =
-                FindJsonRecord(Document, 200063U)->at("inputs")[0U]["defaultValue"];
+            JsonValue& DefaultValue = FindJsonRecord(Document, 200063U)->at("inputs")[0U]["defaultValue"];
             DefaultValue = JsonValue::array();
             DefaultValue.push_back(0);
             DefaultValue.push_back(0);
         });
         CheckRejectedMutation([](JsonValue& Document)
         {
-            FindJsonRecord(Document, 200063U)->at("inputs")[0U]
-                .at("defaultValue")[1U] = "invalid";
+            FindJsonRecord(Document, 200063U)->at("inputs")[0U].at("defaultValue")[1U] = "invalid";
         });
         CheckRejectedMutation([](JsonValue& Document)
         {
@@ -2676,13 +2623,11 @@ namespace
         });
         CheckRejectedMutation([](JsonValue& Document)
         {
-            FindJsonRecord(Document, 200259U)->at("inputs")[0U]["defaultValue"] =
-                JsonValue::parse("18446744073709551616");
+            FindJsonRecord(Document, 200259U)->at("inputs")[0U]["defaultValue"] = JsonValue::parse("18446744073709551616");
         });
         CheckRejectedMutation([](JsonValue& Document)
         {
-            FindJsonRecord(Document, 200066U)->at("inputs")[0U]["defaultValue"] =
-                JsonValue::parse("3.4028236e38");
+            FindJsonRecord(Document, 200066U)->at("inputs")[0U]["defaultValue"] = JsonValue::parse("3.4028236e38");
         });
         CheckRejectedMutation([](JsonValue& Document)
         {
@@ -2742,8 +2687,7 @@ namespace
         });
         CheckRejectedMutation([](JsonValue& Document)
         {
-            FindJsonRecord(Document, 200001U)->at("genericId") =
-                JsonValue::parse("18446744073709551616");
+            FindJsonRecord(Document, 200001U)->at("genericId") = JsonValue::parse("18446744073709551616");
         });
         CheckRejectedMutation([](JsonValue& Document)
         {
@@ -2805,44 +2749,22 @@ namespace
 
     void TestGenshinClientBooleanFilterDescriptorSourceDeterminism()
     {
-        const auto First =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                GetAuthenticNodeMetadataJson(),
-                GetAuthenticModeMetadataJson()
-            );
-        const auto Repeated =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                GetAuthenticNodeMetadataJson(),
-                GetAuthenticModeMetadataJson()
-            );
+        const auto First = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(GetAuthenticNodeMetadataJson(), GetAuthenticModeMetadataJson());
+        const auto Repeated = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(GetAuthenticNodeMetadataJson(), GetAuthenticModeMetadataJson());
         MPP_CHECK(First.has_value());
         MPP_CHECK(Repeated.has_value());
         MPP_CHECK(*First == *Repeated);
 
         JsonValue PermutedNodes = GetAuthenticNodeDocument();
         std::reverse(PermutedNodes.begin(), PermutedNodes.end());
-        const auto Permuted =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                PermutedNodes.dump(),
-                GetAuthenticModeMetadataJson()
-            );
+        const auto Permuted = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(PermutedNodes.dump(), GetAuthenticModeMetadataJson());
         MPP_CHECK(Permuted.has_value());
         MPP_CHECK(*First == *Permuted);
 
         JsonValue PermutedModes = GetAuthenticModeDocument();
-        std::reverse(
-            PermutedModes["graphs"]["bool_filter"]["beyond"]["genericIds"].begin(),
-            PermutedModes["graphs"]["bool_filter"]["beyond"]["genericIds"].end()
-        );
-        std::reverse(
-            PermutedModes["graphs"]["bool_filter"]["classic"]["genericIds"].begin(),
-            PermutedModes["graphs"]["bool_filter"]["classic"]["genericIds"].end()
-        );
-        const auto PermutedModeResult =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                GetAuthenticNodeMetadataJson(),
-                PermutedModes.dump()
-            );
+        std::reverse(PermutedModes["graphs"]["bool_filter"]["beyond"]["genericIds"].begin(), PermutedModes["graphs"]["bool_filter"]["beyond"]["genericIds"].end());
+        std::reverse(PermutedModes["graphs"]["bool_filter"]["classic"]["genericIds"].begin(), PermutedModes["graphs"]["bool_filter"]["classic"]["genericIds"].end());
+        const auto PermutedModeResult = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(GetAuthenticNodeMetadataJson(), PermutedModes.dump());
         MPP_CHECK(PermutedModeResult.has_value());
         MPP_CHECK(*First == *PermutedModeResult);
 
@@ -2851,16 +2773,8 @@ namespace
         FailingNodesA[1U]["inputs"][0U]["type"] = "int";
         JsonValue FailingNodesB = FailingNodesA;
         std::reverse(FailingNodesB.begin(), FailingNodesB.end());
-        const auto DiagnosticsA =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                FailingNodesA.dump(),
-                GetAuthenticModeMetadataJson()
-            );
-        const auto DiagnosticsB =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                FailingNodesB.dump(),
-                GetAuthenticModeMetadataJson()
-            );
+        const auto DiagnosticsA = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(FailingNodesA.dump(), GetAuthenticModeMetadataJson());
+        const auto DiagnosticsB = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(FailingNodesB.dump(), GetAuthenticModeMetadataJson());
         MPP_CHECK(!DiagnosticsA.has_value());
         MPP_CHECK(!DiagnosticsB.has_value());
         MPP_CHECK(SameDiagnostics(DiagnosticsA.error(), DiagnosticsB.error()));
@@ -2868,98 +2782,59 @@ namespace
 
     void TestGenshinClientBooleanFilterDescriptorSourceDiagnostics()
     {
-        const auto Malformed =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                "[",
-                GetAuthenticModeMetadataJson()
-            );
+        const auto Malformed = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt("[", GetAuthenticModeMetadataJson());
         MPP_CHECK(!Malformed.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            Malformed.error(),
-            DiagnosticCode::MalformedGenshinClientBooleanFilterDescriptorSource
-        ));
+        MPP_CHECK(HasDiagnosticCode(Malformed.error(), DiagnosticCode::MalformedGenshinClientBooleanFilterDescriptorSource));
 
-        const auto WrongRoot =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                "{}",
-                GetAuthenticModeMetadataJson()
-            );
+        const auto WrongRoot = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt("{}", GetAuthenticModeMetadataJson());
         MPP_CHECK(!WrongRoot.has_value());
-        MPP_CHECK(CountDiagnosticCode(
-            WrongRoot.error(),
-            DiagnosticCode::MalformedGenshinClientBooleanFilterDescriptorSource
-        ) == 1U);
+        MPP_CHECK(CountDiagnosticCode(WrongRoot.error(), DiagnosticCode::MalformedGenshinClientBooleanFilterDescriptorSource) == 1U);
 
-        const auto MissingRecordField =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                MakeMutatedNodeMetadata([](JsonValue& Document)
-                {
-                    FindJsonRecord(Document, 200001U)->erase("displayName");
-                }),
-                GetAuthenticModeMetadataJson()
-            );
+        const auto MissingRecordField = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(MakeMutatedNodeMetadata(
+            [](JsonValue& Document)
+            {
+                FindJsonRecord(Document, 200001U)->erase("displayName");
+            }
+        ), GetAuthenticModeMetadataJson());
         MPP_CHECK(!MissingRecordField.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            MissingRecordField.error(),
-            DiagnosticCode::MissingGenshinClientBooleanFilterDescriptorSourceField
-        ));
+        MPP_CHECK(HasDiagnosticCode(MissingRecordField.error(), DiagnosticCode::MissingGenshinClientBooleanFilterDescriptorSourceField));
         MPP_CHECK(MissingRecordField.error()[0U].PrimarySourceProvenance.has_value());
 
-        const auto MissingPinField =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                MakeMutatedNodeMetadata([](JsonValue& Document)
-                {
-                    FindJsonRecord(Document, 200001U)->at("inputs")[0U].erase("name");
-                }),
-                GetAuthenticModeMetadataJson()
-            );
+        const auto MissingPinField = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(MakeMutatedNodeMetadata(
+            [](JsonValue& Document)
+            {
+                FindJsonRecord(Document, 200001U)->at("inputs")[0U].erase("name");
+            }
+        ), GetAuthenticModeMetadataJson());
         MPP_CHECK(!MissingPinField.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            MissingPinField.error(),
-            DiagnosticCode::MissingGenshinClientBooleanFilterDescriptorSourceField
-        ));
+        MPP_CHECK(HasDiagnosticCode(MissingPinField.error(), DiagnosticCode::MissingGenshinClientBooleanFilterDescriptorSourceField));
 
-        const auto MissingModeField =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                GetAuthenticNodeMetadataJson(),
-                MakeMutatedModeMetadata([](JsonValue& Document)
-                {
-                    Document["graphs"]["bool_filter"]["beyond"].erase("status");
-                })
-            );
+        const auto MissingModeField = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(GetAuthenticNodeMetadataJson(), MakeMutatedModeMetadata(
+            [](JsonValue& Document)
+            {
+                Document["graphs"]["bool_filter"]["beyond"].erase("status");
+            }
+        ));
         MPP_CHECK(!MissingModeField.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            MissingModeField.error(),
-            DiagnosticCode::MissingGenshinClientBooleanFilterDescriptorSourceField
-        ));
+        MPP_CHECK(HasDiagnosticCode(MissingModeField.error(), DiagnosticCode::MissingGenshinClientBooleanFilterDescriptorSourceField));
 
-        const auto Unsupported =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                MakeMutatedNodeMetadata([](JsonValue& Document)
-                {
-                    FindJsonRecord(Document, 200001U)->at("inputs")[0U]["type"] = "int";
-                }),
-                GetAuthenticModeMetadataJson()
-            );
+        const auto Unsupported = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(MakeMutatedNodeMetadata(
+            [](JsonValue& Document)
+            {
+                FindJsonRecord(Document, 200001U)->at("inputs")[0U]["type"] = "int";
+            }
+        ), GetAuthenticModeMetadataJson());
         MPP_CHECK(!Unsupported.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            Unsupported.error(),
-            DiagnosticCode::UnsupportedGenshinClientBooleanFilterDescriptorSourceForm
-        ));
+        MPP_CHECK(HasDiagnosticCode(Unsupported.error(), DiagnosticCode::UnsupportedGenshinClientBooleanFilterDescriptorSourceForm));
 
-        const auto Duplicate =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                MakeMutatedNodeMetadata([](JsonValue& Document)
-                {
-                    Document.push_back(Document[0U]);
-                }),
-                GetAuthenticModeMetadataJson()
-            );
+        const auto Duplicate = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(MakeMutatedNodeMetadata(
+            [](JsonValue& Document)
+            {
+                Document.push_back(Document[0U]);
+            }
+        ), GetAuthenticModeMetadataJson());
         MPP_CHECK(!Duplicate.has_value());
-        MPP_CHECK(CountDiagnosticCode(
-            Duplicate.error(),
-            DiagnosticCode::DuplicateExternalNodeIdentity
-        ) == 1U);
+        MPP_CHECK(CountDiagnosticCode(Duplicate.error(), DiagnosticCode::DuplicateExternalNodeIdentity) == 1U);
         MPP_CHECK(Duplicate.error()[0U].PrimarySourceProvenance.has_value());
         MPP_CHECK(Duplicate.error()[0U].RelatedSourceProvenance.has_value());
     }
@@ -2970,40 +2845,28 @@ namespace
         const std::string OriginalNodeMetadata = NodeMetadata;
         std::string ModeMetadata = GetAuthenticModeMetadataJson();
         const std::string OriginalModeMetadata = ModeMetadata;
-        const auto Invalid =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                MakeMutatedNodeMetadata([](JsonValue& Document)
-                {
-                    FindJsonRecord(Document, 200001U)->at("inputs")[0U]["type"] = "int";
-                }),
-                ModeMetadata
-            );
+        const auto Invalid = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(MakeMutatedNodeMetadata(
+            [](JsonValue& Document)
+            {
+                FindJsonRecord(Document, 200001U)->at("inputs")[0U]["type"] = "int";
+            }
+        ), ModeMetadata);
         MPP_CHECK(!Invalid.has_value());
         MPP_CHECK(NodeMetadata == OriginalNodeMetadata);
         MPP_CHECK(ModeMetadata == OriginalModeMetadata);
 
-        const auto Duplicate =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                MakeMutatedNodeMetadata([](JsonValue& Document)
-                {
-                    Document.push_back(Document[0U]);
-                }),
-                ModeMetadata
-            );
+        const auto Duplicate = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(MakeMutatedNodeMetadata(
+            [](JsonValue& Document)
+            {
+                Document.push_back(Document[0U]);
+            }
+        ), ModeMetadata);
         MPP_CHECK(!Duplicate.has_value());
 
-        const auto Malformed =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                "not-json",
-                ModeMetadata
-            );
+        const auto Malformed = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt("not-json", ModeMetadata);
         MPP_CHECK(!Malformed.has_value());
 
-        const auto ValidAfterFailures =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                NodeMetadata,
-                ModeMetadata
-            );
+        const auto ValidAfterFailures = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(NodeMetadata, ModeMetadata);
         MPP_CHECK(ValidAfterFailures.has_value());
         MPP_CHECK(ValidAfterFailures->size() == 25U);
     }
@@ -3011,19 +2874,12 @@ namespace
     void TestGenshinClientBooleanFilterDescriptorSourceCatalogueIntegration()
     {
         const auto Records = AdaptAuthenticFixture();
-        const std::string SourceNamespace =
-            "genshin.client-bool-filter-descriptor-source";
-        const std::string SourceRevision =
-            "genshin-ts@26bdf2a9a3fadba934423940489236f0b53eb3ea;"
+        const std::string SourceNamespace = "genshin.client-bool-filter-descriptor-source";
+        const std::string SourceRevision = "genshin-ts@26bdf2a9a3fadba934423940489236f0b53eb3ea;"
             "client_node_metadata.json@93237c724f6453650ae9394077620c6e0fddb3d3;"
             "client_node_modes.json@b7e14a0dd7102ccd682235cf958a2d3d36378033";
 
-        const auto Catalogue = DescriptorCatalogueBuilder::Build(
-            SourceNamespace,
-            SourceRevision,
-            CurrentDescriptorCatalogueSemanticSchemaVersion,
-            Records
-        );
+        const auto Catalogue = DescriptorCatalogueBuilder::Build(SourceNamespace, SourceRevision, CurrentDescriptorCatalogueSemanticSchemaVersion, Records);
         MPP_CHECK(Catalogue.has_value());
         MPP_CHECK(Catalogue->IsValid());
         MPP_CHECK(Catalogue->GetEntryCount() == 25U);
@@ -3031,16 +2887,10 @@ namespace
         MPP_CHECK(Catalogue->GetIdentity().GetSourceRevision() == SourceRevision);
         for (std::size_t Index = 0U; Index < Catalogue->GetEntryCount(); ++Index)
         {
-            MPP_CHECK(Catalogue->GetEntries()[Index].GetDescriptorIdentifier() ==
-                NodeDescriptorId(static_cast<std::uint32_t>(Index + 1U)));
+            MPP_CHECK(Catalogue->GetEntries()[Index].GetDescriptorIdentifier() == NodeDescriptorId(static_cast<std::uint32_t>(Index + 1U)));
         }
 
-        const auto RepeatedCatalogue = DescriptorCatalogueBuilder::Build(
-            SourceNamespace,
-            SourceRevision,
-            CurrentDescriptorCatalogueSemanticSchemaVersion,
-            AdaptAuthenticFixture()
-        );
+        const auto RepeatedCatalogue = DescriptorCatalogueBuilder::Build(SourceNamespace, SourceRevision, CurrentDescriptorCatalogueSemanticSchemaVersion, AdaptAuthenticFixture());
         MPP_CHECK(RepeatedCatalogue.has_value());
         MPP_CHECK(*Catalogue == *RepeatedCatalogue);
         MPP_CHECK(!HasDescriptorIdentifierGetter<NormalizedNodeDescriptorRecord>);
@@ -3061,35 +2911,23 @@ namespace
         MPP_CHECK(SourceRecord != nullptr);
 
         const auto Records = AdaptAuthenticFixture();
-        const NormalizedNodeDescriptorRecord* Record =
-            FindNormalizedRecord(Records, "200259");
+        const NormalizedNodeDescriptorRecord* Record = FindNormalizedRecord(Records, "200259");
         MPP_CHECK(Record != nullptr);
         MPP_CHECK(Record->GetSourceProvenance().has_value());
-        MPP_CHECK(Record->GetSourceProvenance()->GetSourceDocumentIdentifier() ==
-            SourceRecord->at("sampleFile").get<std::string>());
+        MPP_CHECK(Record->GetSourceProvenance()->GetSourceDocumentIdentifier() == SourceRecord->at("sampleFile").get<std::string>());
         MPP_CHECK(Record->GetSourceProvenance()->GetSourceRecordIdentifier() == "200259");
-        MPP_CHECK(Record->GetSourceProvenance()->GetSourceDocumentIdentifier().find(':') ==
-            std::string::npos);
-        MPP_CHECK(Record->GetSourceProvenance()->GetSourceDocumentIdentifier().find('/') ==
-            std::string::npos);
+        MPP_CHECK(Record->GetSourceProvenance()->GetSourceDocumentIdentifier().find(':') == std::string::npos);
+        MPP_CHECK(Record->GetSourceProvenance()->GetSourceDocumentIdentifier().find('/') == std::string::npos);
 
         JsonValue ChangedSourceDocument = GetAuthenticNodeDocument();
-        FindJsonRecord(ChangedSourceDocument, 200259U)->at("sampleFile") =
-            "another-logical-source.gia";
-        const auto ChangedRecords =
-            GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                ChangedSourceDocument.dump(),
-                GetAuthenticModeMetadataJson()
-            );
+        FindJsonRecord(ChangedSourceDocument, 200259U)->at("sampleFile") = "another-logical-source.gia";
+        const auto ChangedRecords = GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(ChangedSourceDocument.dump(), GetAuthenticModeMetadataJson());
         MPP_CHECK(ChangedRecords.has_value());
-        MPP_CHECK(FindNormalizedRecord(ChangedRecords.value(), "200259")
-            ->GetExternalIdentity() == Record->GetExternalIdentity());
-        MPP_CHECK(FindNormalizedRecord(ChangedRecords.value(), "200259")
-            ->GetSourceProvenance() != Record->GetSourceProvenance());
+        MPP_CHECK(FindNormalizedRecord(ChangedRecords.value(), "200259")->GetExternalIdentity() == Record->GetExternalIdentity());
+        MPP_CHECK(FindNormalizedRecord(ChangedRecords.value(), "200259")->GetSourceProvenance() != Record->GetSourceProvenance());
 
         const auto OriginalContent = DeriveDescriptorCatalogueContentIdentifier(Records);
-        const auto ChangedContent = DeriveDescriptorCatalogueContentIdentifier(
-            ChangedRecords.value());
+        const auto ChangedContent = DeriveDescriptorCatalogueContentIdentifier(ChangedRecords.value());
         MPP_CHECK(OriginalContent.has_value());
         MPP_CHECK(ChangedContent.has_value());
         MPP_CHECK(*OriginalContent == *ChangedContent);
@@ -3097,27 +2935,15 @@ namespace
 
     void TestGenshinClientBooleanFilterDescriptorSourceScopeBoundaries()
     {
-        using ExpectedAdaptation = std::expected<
-            std::vector<NormalizedNodeDescriptorRecord>,
-            DiagnosticCollection
-        >;
-        static_assert(std::is_same_v<
-            decltype(GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(
-                std::string(), std::string())),
-            ExpectedAdaptation
-        >);
+        using ExpectedAdaptation = std::expected<std::vector<NormalizedNodeDescriptorRecord>, DiagnosticCollection>;
+        static_assert(std::is_same_v<decltype(GenshinClientBooleanFilterDescriptorSourceAdapter::Adapt(std::string(), std::string())), ExpectedAdaptation>);
         static_assert(!HasDescriptorIdentifierGetter<NormalizedNodeDescriptorRecord>);
-        static_assert(!HasNodeDescriptorRegistryGetter<
-            GenshinClientBooleanFilterDescriptorSourceAdapter
-        >);
-        static_assert(!HasFutureAdapterSurface<
-            GenshinClientBooleanFilterDescriptorSourceAdapter
-        >);
+        static_assert(!HasNodeDescriptorRegistryGetter<GenshinClientBooleanFilterDescriptorSourceAdapter>);
+        static_assert(!HasFutureAdapterSurface<GenshinClientBooleanFilterDescriptorSourceAdapter>);
 
         const auto Records = AdaptAuthenticFixture();
         MPP_CHECK(Records.front().GetSourceProvenance().has_value());
-        MPP_CHECK(Records.front().GetSourceProvenance()
-            ->GetSourceDocumentIdentifier().find(':') == std::string::npos);
+        MPP_CHECK(Records.front().GetSourceProvenance()->GetSourceDocumentIdentifier().find(':') == std::string::npos);
     }
 }
 

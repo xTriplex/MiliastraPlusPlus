@@ -93,11 +93,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
 
         [[nodiscard]] std::size_t FindIndex(const GenericConstraintKey& Key) const
         {
-            const auto Iterator = std::lower_bound(
-                m_Keys.begin(),
-                m_Keys.end(),
-                Key
-            );
+            const auto Iterator = std::lower_bound(m_Keys.begin(), m_Keys.end(), Key);
             if (Iterator == m_Keys.end() || *Iterator != Key)
             {
                 return m_Keys.size();
@@ -209,8 +205,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
     [[nodiscard]] inline const PinSchema* FindPin(const NodeInstance* Node, PinIndex Index, const NodeDescriptorRegistry& Descriptors)
     {
         const NodeDescriptor* Descriptor = FindDescriptor(Node, Descriptors);
-        if (Descriptor == nullptr || !Index.IsValid() ||
-            Index.GetValue() >= Descriptor->GetPins().size())
+        if (Descriptor == nullptr || !Index.IsValid() || Index.GetValue() >= Descriptor->GetPins().size())
         {
             return nullptr;
         }
@@ -258,8 +253,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
         case TypeDesc::Kind::List:
             return ContainsGeneric(*Type.GetElementType());
         case TypeDesc::Kind::Dictionary:
-            return ContainsGeneric(*Type.GetKeyType()) ||
-                ContainsGeneric(*Type.GetValueType());
+            return ContainsGeneric(*Type.GetKeyType()) || ContainsGeneric(*Type.GetValueType());
         default:
             return false;
         }
@@ -278,8 +272,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
         case TypeDesc::Kind::List:
             return ContainsFlow(*Type.GetElementType());
         case TypeDesc::Kind::Dictionary:
-            return ContainsFlow(*Type.GetKeyType()) ||
-                ContainsFlow(*Type.GetValueType());
+            return ContainsFlow(*Type.GetKeyType()) || ContainsFlow(*Type.GetValueType());
         default:
             return false;
         }
@@ -310,8 +303,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
 
     [[nodiscard]] inline bool IsConcreteCompatible(const TypeDesc& Left, const TypeDesc& Right)
     {
-        return !ContainsGeneric(Left) && !ContainsGeneric(Right) &&
-            Left.IsCompatibleWith(Right);
+        return !ContainsGeneric(Left) && !ContainsGeneric(Right) && Left.IsCompatibleWith(Right);
     }
 
     [[nodiscard]] inline std::string DescribeKey(const GenericConstraintKey& Key)
@@ -322,8 +314,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
         const std::uint32_t OwnerId = Key.Owner.Kind == GenericOwnerKind::NodeInstance
             ? Key.Owner.Node.GetValue()
             : Key.Owner.Variable.GetValue();
-        return std::string(OwnerName) + " " + std::to_string(OwnerId) +
-            ", parameter " + std::to_string(Key.Parameter.GetValue());
+        return std::string(OwnerName) + " " + std::to_string(OwnerId) + ", parameter " + std::to_string(Key.Parameter.GetValue());
     }
 
     [[nodiscard]] inline std::string DescribeType(const TypeDesc& Type)
@@ -353,8 +344,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
         case TypeDesc::Kind::List:
             return "List<" + DescribeType(*Type.GetElementType()) + ">";
         case TypeDesc::Kind::Dictionary:
-            return "Dictionary<" + DescribeType(*Type.GetKeyType()) + ", " +
-                DescribeType(*Type.GetValueType()) + ">";
+            return "Dictionary<" + DescribeType(*Type.GetKeyType()) + ", " + DescribeType(*Type.GetValueType()) + ">";
         case TypeDesc::Kind::StructObject:
             return "StructObject<" + std::to_string(Type.GetStructType().GetValue()) + ">";
         }
@@ -385,13 +375,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
             m_Environment = &EnvironmentValue;
             for (const TypeRelation& Relation : Relations)
             {
-                Relate(
-                    Relation.Left,
-                    Relation.LeftScope,
-                    Relation.Right,
-                    Relation.RightScope,
-                    std::nullopt
-                );
+                Relate(Relation.Left, Relation.LeftScope, Relation.Right, Relation.RightScope, std::nullopt);
             }
 
             ValidateResolvedTypes();
@@ -445,12 +429,9 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
             for (const InputBindingRecord& Record : m_Graph.GetInputBindings())
             {
                 const NodeInstance* DestinationNode = m_Graph.FindNode(Record.DestinationNode);
-                const PinSchema* DestinationPin = FindPin(
-                    DestinationNode,
-                    Record.DestinationInputPin,
-                    m_Descriptors
-                );
-                if (DestinationNode == nullptr || DestinationPin == nullptr ||
+                const PinSchema* DestinationPin = FindPin(DestinationNode, Record.DestinationInputPin, m_Descriptors);
+                if (DestinationNode == nullptr ||
+                    DestinationPin == nullptr ||
                     DestinationPin->GetDirection() != PinDirection::Input ||
                     DestinationPin->GetCategory() != PinCategory::Data)
                 {
@@ -460,11 +441,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
                 if (const OutputReference* Output = std::get_if<OutputReference>(&Record.Binding))
                 {
                     const NodeInstance* SourceNode = m_Graph.FindNode(Output->SourceNode);
-                    const PinSchema* SourcePin = FindPin(
-                        SourceNode,
-                        Output->SourceOutputPin,
-                        m_Descriptors
-                    );
+                    const PinSchema* SourcePin = FindPin(SourceNode, Output->SourceOutputPin, m_Descriptors);
                     if (SourceNode == nullptr || SourcePin == nullptr ||
                         SourcePin->GetDirection() != PinDirection::Output ||
                         SourcePin->GetCategory() != PinCategory::Data ||
@@ -486,21 +463,16 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
                         Record.OutputTypeConstraint->IsValid() &&
                         !ContainsGeneric(*Record.OutputTypeConstraint) &&
                         !ContainsFlow(*Record.OutputTypeConstraint) &&
-                        SourcePin->GetType().IsCompatibleWith(
-                            *Record.OutputTypeConstraint))
+                        SourcePin->GetType().IsCompatibleWith(*Record.OutputTypeConstraint))
                     {
-                        const GenericOwnerScope SourceScope =
-                            GenericOwnerScope::ForNode(SourceNode->Identifier);
+                        const GenericOwnerScope SourceScope = GenericOwnerScope::ForNode(SourceNode->Identifier);
                         AddRelation(SourcePin->GetType(), SourceScope, *Record.OutputTypeConstraint, SourceScope, Keys, Relations);
                     }
                 }
-                else if (const GraphVariableReference* Variable =
-                    std::get_if<GraphVariableReference>(&Record.Binding))
+                else if (const GraphVariableReference* Variable = std::get_if<GraphVariableReference>(&Record.Binding))
                 {
                     const GraphVariable* SourceVariable = m_Graph.FindVariable(Variable->Variable);
-                    if (SourceVariable == nullptr ||
-                        ContainsFlow(SourceVariable->Type) ||
-                        ContainsFlow(DestinationPin->GetType()))
+                    if (SourceVariable == nullptr || ContainsFlow(SourceVariable->Type) || ContainsFlow(DestinationPin->GetType()))
                     {
                         continue;
                     }
@@ -522,8 +494,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
             const TypeDesc& Right,
             const GenericOwnerScope& RightScope,
             std::vector<GenericConstraintKey>& Keys,
-            std::vector<TypeRelation>& Relations
-        )
+            std::vector<TypeRelation>& Relations)
         {
             if (!ContainsGeneric(Left) && !ContainsGeneric(Right))
             {
@@ -538,8 +509,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
         {
             return std::any_of(Active.begin(), Active.end(), [this, Root](const auto& Key)
             {
-                return m_Environment->Contains(Key) &&
-                    m_Environment->FindRoot(Key) == Root;
+                return m_Environment->Contains(Key) && m_Environment->FindRoot(Key) == Root;
             });
         }
 
@@ -549,9 +519,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
             {
                 std::swap(LeftRoot, RightRoot);
             }
-            return std::any_of(
-                m_ActiveBindingPairs.begin(),
-                m_ActiveBindingPairs.end(),
+            return std::any_of(m_ActiveBindingPairs.begin(), m_ActiveBindingPairs.end(),
                 [this, LeftRoot, RightRoot](const auto& Pair)
                 {
                     std::size_t ActiveLeftRoot = m_Environment->FindRoot(Pair.first);
@@ -560,8 +528,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
                     {
                         std::swap(ActiveLeftRoot, ActiveRightRoot);
                     }
-                    return ActiveLeftRoot != ActiveRightRoot &&
-                        ActiveLeftRoot == LeftRoot && ActiveRightRoot == RightRoot;
+                    return ActiveLeftRoot != ActiveRightRoot && ActiveLeftRoot == LeftRoot && ActiveRightRoot == RightRoot;
                 }
             );
         }
@@ -601,10 +568,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
             }
             if (Type.GetKind() == TypeDesc::Kind::Dictionary)
             {
-                return TypeDesc::Dictionary(
-                    Resolve(*Type.GetKeyType(), Scope, Active),
-                    Resolve(*Type.GetValueType(), Scope, Active)
-                );
+                return TypeDesc::Dictionary(Resolve(*Type.GetKeyType(), Scope, Active), Resolve(*Type.GetValueType(), Scope, Active));
             }
             return Type;
         }
@@ -614,8 +578,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
             const GenericOwnerScope& LeftScope,
             const TypeDesc& Right,
             const GenericOwnerScope& RightScope,
-            std::optional<GenericConstraintKey> FallbackKey
-        )
+            std::optional<GenericConstraintKey> FallbackKey)
         {
             const auto LeftGeneric = FirstGeneric(Left, LeftScope);
             const auto RightGeneric = FirstGeneric(Right, RightScope);
@@ -624,17 +587,10 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
                 FallbackKey = LeftGeneric.has_value() ? LeftGeneric : RightGeneric;
             }
 
-            if (Left.GetKind() == TypeDesc::Kind::Generic &&
-                Right.GetKind() == TypeDesc::Kind::Generic)
+            if (Left.GetKind() == TypeDesc::Kind::Generic && Right.GetKind() == TypeDesc::Kind::Generic)
             {
-                const GenericConstraintKey LeftKey = MakeKey(
-                    LeftScope,
-                    Left.GetGenericParameter()
-                );
-                const GenericConstraintKey RightKey = MakeKey(
-                    RightScope,
-                    Right.GetGenericParameter()
-                );
+                const GenericConstraintKey LeftKey = MakeKey(LeftScope, Left.GetGenericParameter());
+                const GenericConstraintKey RightKey = MakeKey(RightScope, Right.GetGenericParameter());
                 if (m_Environment->Contains(LeftKey) && m_Environment->Contains(RightKey))
                 {
                     const std::size_t LeftRoot = m_Environment->FindRoot(LeftKey);
@@ -659,13 +615,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
                             const Binding RightBindingValue = *RightBinding;
                             m_ActiveBindingPairs.push_back(ActivePair);
                             // Nested generic parameters retain the scope of their binding.
-                            Relate(
-                                LeftBindingValue.Type,
-                                LeftBindingValue.Scope,
-                                RightBindingValue.Type,
-                                RightBindingValue.Scope,
-                                FallbackKey
-                            );
+                            Relate(LeftBindingValue.Type, LeftBindingValue.Scope, RightBindingValue.Type, RightBindingValue.Scope, FallbackKey);
                             m_ActiveBindingPairs.pop_back();
                         }
                     }
@@ -676,8 +626,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
 
             if (Left.GetKind() == TypeDesc::Kind::Generic)
             {
-                const GenericConstraintKey Key =
-                    MakeKey(LeftScope, Left.GetGenericParameter());
+                const GenericConstraintKey Key = MakeKey(LeftScope, Left.GetGenericParameter());
                 if (!m_Environment->Contains(Key))
                 {
                     return;
@@ -694,13 +643,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
                     const Binding ExistingValue = *Existing;
                     m_ActiveKeys.push_back(*RootKey);
                     // Expand the binding in its owner scope, not the reference's scope.
-                    Relate(
-                        ExistingValue.Type,
-                        ExistingValue.Scope,
-                        Right,
-                        RightScope,
-                        FallbackKey
-                    );
+                    Relate(ExistingValue.Type, ExistingValue.Scope, Right, RightScope, FallbackKey);
                     m_ActiveKeys.pop_back();
                 }
                 else
@@ -711,8 +654,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
             }
             if (Right.GetKind() == TypeDesc::Kind::Generic)
             {
-                const GenericConstraintKey Key =
-                    MakeKey(RightScope, Right.GetGenericParameter());
+                const GenericConstraintKey Key = MakeKey(RightScope, Right.GetGenericParameter());
                 if (!m_Environment->Contains(Key))
                 {
                     return;
@@ -728,13 +670,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
                     }
                     const Binding ExistingValue = *Existing;
                     m_ActiveKeys.push_back(*RootKey);
-                    Relate(
-                        Left,
-                        LeftScope,
-                        ExistingValue.Type,
-                        ExistingValue.Scope,
-                        FallbackKey
-                    );
+                    Relate(Left, LeftScope, ExistingValue.Type, ExistingValue.Scope, FallbackKey);
                     m_ActiveKeys.pop_back();
                 }
                 else
@@ -756,23 +692,11 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
             switch (Left.GetKind())
             {
             case TypeDesc::Kind::List:
-                Relate(
-                    *Left.GetElementType(), LeftScope,
-                    *Right.GetElementType(), RightScope,
-                    FallbackKey
-                );
+                Relate(*Left.GetElementType(), LeftScope, *Right.GetElementType(), RightScope, FallbackKey);
                 return;
             case TypeDesc::Kind::Dictionary:
-                Relate(
-                    *Left.GetKeyType(), LeftScope,
-                    *Right.GetKeyType(), RightScope,
-                    FallbackKey
-                );
-                Relate(
-                    *Left.GetValueType(), LeftScope,
-                    *Right.GetValueType(), RightScope,
-                    FallbackKey
-                );
+                Relate(*Left.GetKeyType(), LeftScope, *Right.GetKeyType(), RightScope, FallbackKey);
+                Relate(*Left.GetValueType(), LeftScope, *Right.GetValueType(), RightScope, FallbackKey);
                 return;
             default:
                 if (!IsConcreteCompatible(Left, Right) && FallbackKey.has_value())
@@ -808,8 +732,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
                 return;
             }
 
-            if (const auto Generic = FirstGeneric(Type, Scope); Generic.has_value() &&
-                m_Environment->FindRoot(*Generic) == Root)
+            if (const auto Generic = FirstGeneric(Type, Scope); Generic.has_value() && m_Environment->FindRoot(*Generic) == Root)
             {
                 return;
             }
@@ -821,11 +744,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
             std::vector<GenericConstraintKey> Unresolved;
             for (const GenericConstraintKey& Key : m_Environment->GetKeys())
             {
-                const TypeDesc Resolved = Resolve(
-                    TypeDesc::Generic(Key.Parameter),
-                    Key.Owner,
-                    m_ActiveKeys
-                );
+                const TypeDesc Resolved = Resolve(TypeDesc::Generic(Key.Parameter), Key.Owner, m_ActiveKeys);
                 if (ContainsGeneric(Resolved))
                 {
                     Unresolved.push_back(Key);
@@ -842,8 +761,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
             {
                 return;
             }
-            const GenericConstraintKey* RootKey =
-                m_Environment->GetKey(m_Environment->FindRoot(Key));
+            const GenericConstraintKey* RootKey = m_Environment->GetKey(m_Environment->FindRoot(Key));
             if (RootKey == nullptr)
             {
                 return;
@@ -865,8 +783,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
             std::vector<Conflict> Conflicts;
             for (Conflict Candidate : m_Conflicts)
             {
-                const GenericConstraintKey* RootKey =
-                    m_Environment->GetKey(m_Environment->FindRoot(Candidate.Key));
+                const GenericConstraintKey* RootKey = m_Environment->GetKey(m_Environment->FindRoot(Candidate.Key));
                 if (RootKey == nullptr)
                 {
                     continue;
@@ -888,9 +805,7 @@ namespace MiliastraPlusPlus::GraphIRGenericValidationDetail
                     .Severity = DiagnosticSeverity::Error,
                     .Code = DiagnosticCode::GenericConstraintConflict,
                     .Message = "Generic parameter (" + DescribeKey(ConflictValue.Key) +
-                        ") has conflicting concrete constraints (" +
-                        DescribeType(ConflictValue.Left) + " vs " +
-                        DescribeType(ConflictValue.Right) + ")."
+                    ") has conflicting concrete constraints (" + DescribeType(ConflictValue.Left) + " vs " + DescribeType(ConflictValue.Right) + ")."
                 });
             }
 

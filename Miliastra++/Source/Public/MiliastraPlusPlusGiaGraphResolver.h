@@ -80,19 +80,12 @@ namespace MiliastraPlusPlus
                     .DestinationNodeIdentifier = std::nullopt,
                     .SourcePinReference = std::nullopt,
                     .DestinationPinReference = std::nullopt,
-                    .PrimarySourceProvenance = std::move(
-                        Pending.PrimaryProvenance
-                    ),
-                    .RelatedSourceProvenance = std::move(
-                        Pending.RelatedProvenance
-                    ),
+                    .PrimarySourceProvenance = std::move(Pending.PrimaryProvenance),
+                    .RelatedSourceProvenance = std::move(Pending.RelatedProvenance),
                     .ExternalIdentityKey = std::move(
                         Pending.ExternalIdentityKey.empty()
                             ? std::optional<std::string>{}
-                            : std::optional<std::string>(
-                                std::move(Pending.ExternalIdentityKey)
-                            )
-                    )
+                            : std::optional<std::string>(std::move(Pending.ExternalIdentityKey)))
                 });
             }
             return Result;
@@ -107,8 +100,7 @@ namespace MiliastraPlusPlus
             std::optional<PinIndex> Pin = std::nullopt,
             std::string ExternalIdentityKey = {},
             std::optional<SourceProvenance> PrimaryProvenance = std::nullopt,
-            std::optional<SourceProvenance> RelatedProvenance = std::nullopt
-        )
+            std::optional<SourceProvenance> RelatedProvenance = std::nullopt)
         {
             Diagnostics.push_back(PendingDiagnostic{
                 Stage,
@@ -124,8 +116,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] inline const GiaBackendPinMapping* FindMapping(const GiaBackendNode& Node, PinIndex SemanticPin)
         {
-            for (const GiaBackendPinMapping& Mapping :
-                Node.Mapping.GetPinMappings())
+            for (const GiaBackendPinMapping& Mapping : Node.Mapping.GetPinMappings())
             {
                 if (Mapping.GetSemanticPinIndex() == SemanticPin)
                 {
@@ -198,9 +189,7 @@ namespace MiliastraPlusPlus
         {
             if (!std::isfinite(EvaluationInterval) ||
                 EvaluationInterval < 0.0 ||
-                EvaluationInterval > static_cast<double>(
-                    std::numeric_limits<float>::max()
-                ))
+                EvaluationInterval > static_cast<double>(std::numeric_limits<float>::max()))
             {
                 return false;
             }
@@ -211,10 +200,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] inline std::optional<GiaResolvedNodeIndex> ResolveNodeIndex(NodeInstanceId GraphNode)
         {
-            if (!GraphNode.IsValid() ||
-                GraphNode.GetValue() > static_cast<std::uint64_t>(
-                    std::numeric_limits<std::int32_t>::max()
-                ))
+            if (!GraphNode.IsValid() || GraphNode.GetValue() > static_cast<std::uint64_t>(std::numeric_limits<std::int32_t>::max()))
             {
                 return std::nullopt;
             }
@@ -234,20 +220,17 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] inline bool IsPinCanonical(const GiaResolvedPin& Left, const GiaResolvedPin& Right)
         {
-            return GiaResolvedBackendGraphDetail::PinOrderKey(Left) <
-                GiaResolvedBackendGraphDetail::PinOrderKey(Right);
+            return GiaResolvedBackendGraphDetail::PinOrderKey(Left) < GiaResolvedBackendGraphDetail::PinOrderKey(Right);
         }
 
         [[nodiscard]] inline bool IsDataCanonical(const GiaResolvedDataConnection& Left, const GiaResolvedDataConnection& Right)
         {
-            return GiaResolvedBackendGraphDetail::DataConnectionOrderKey(Left) <
-                GiaResolvedBackendGraphDetail::DataConnectionOrderKey(Right);
+            return GiaResolvedBackendGraphDetail::DataConnectionOrderKey(Left) < GiaResolvedBackendGraphDetail::DataConnectionOrderKey(Right);
         }
 
         [[nodiscard]] inline bool IsControlCanonical(const GiaResolvedControlConnection& Left, const GiaResolvedControlConnection& Right)
         {
-            return GiaResolvedBackendGraphDetail::ControlConnectionOrderKey(Left) <
-                GiaResolvedBackendGraphDetail::ControlConnectionOrderKey(Right);
+            return GiaResolvedBackendGraphDetail::ControlConnectionOrderKey(Left) < GiaResolvedBackendGraphDetail::ControlConnectionOrderKey(Right);
         }
 
         [[nodiscard]] inline std::size_t FindWorkingNodeIndex(const std::vector<WorkingNode>& Nodes, GiaResolvedNodeIndex NodeIndex)
@@ -270,35 +253,18 @@ namespace MiliastraPlusPlus
             const std::size_t NodeCount = Nodes.size();
             if (NodeCount == 0U)
             {
-                Add(
-                    Diagnostics,
-                    ValidationStage::LayoutResolution,
-                    DiagnosticCode::InvalidGiaResolvedLayout,
-                    "The resolved graph has no nodes to place."
-                );
+                Add(Diagnostics, ValidationStage::LayoutResolution, DiagnosticCode::InvalidGiaResolvedLayout, "The resolved graph has no nodes to place.");
                 return false;
             }
 
             std::vector<std::vector<std::size_t>> Adjacency(NodeCount);
-            for (const GiaResolvedControlConnection& Connection :
-                ControlConnections)
+            for (const GiaResolvedControlConnection& Connection : ControlConnections)
             {
-                const std::size_t SourceIndex = FindWorkingNodeIndex(
-                    Nodes,
-                    Connection.Source.Node
-                );
-                const std::size_t DestinationIndex = FindWorkingNodeIndex(
-                    Nodes,
-                    Connection.Destination.Node
-                );
+                const std::size_t SourceIndex = FindWorkingNodeIndex(Nodes, Connection.Source.Node);
+                const std::size_t DestinationIndex = FindWorkingNodeIndex(Nodes, Connection.Destination.Node);
                 if (SourceIndex == NodeCount || DestinationIndex == NodeCount)
                 {
-                    Add(
-                        Diagnostics,
-                        ValidationStage::LayoutResolution,
-                        DiagnosticCode::InvalidGiaResolvedLayout,
-                        "A control connection references a node absent from layout."
-                    );
+                    Add(Diagnostics, ValidationStage::LayoutResolution, DiagnosticCode::InvalidGiaResolvedLayout, "A control connection references a node absent from layout.");
                     return false;
                 }
                 Adjacency[SourceIndex].push_back(DestinationIndex);
@@ -306,19 +272,13 @@ namespace MiliastraPlusPlus
 
             for (std::vector<std::size_t>& Destinations : Adjacency)
             {
-                std::sort(
-                    Destinations.begin(),
-                    Destinations.end(),
+                std::sort(Destinations.begin(), Destinations.end(),
                     [&Nodes](std::size_t Left, std::size_t Right)
                     {
-                        return Nodes[Left].Node.GraphNode <
-                            Nodes[Right].Node.GraphNode;
+                        return Nodes[Left].Node.GraphNode < Nodes[Right].Node.GraphNode;
                     }
                 );
-                Destinations.erase(
-                    std::unique(Destinations.begin(), Destinations.end()),
-                    Destinations.end()
-                );
+                Destinations.erase(std::unique(Destinations.begin(), Destinations.end()), Destinations.end());
             }
 
             std::vector<int> DiscoveryIndex(NodeCount, -1);
@@ -328,8 +288,7 @@ namespace MiliastraPlusPlus
             std::vector<std::vector<std::size_t>> Components;
             int NextDiscoveryIndex = 0;
 
-            std::function<void(std::size_t)> Visit =
-                [&](std::size_t NodeIndex)
+            std::function<void(std::size_t)> Visit = [&](std::size_t NodeIndex)
                 {
                     DiscoveryIndex[NodeIndex] = NextDiscoveryIndex;
                     LowLink[NodeIndex] = NextDiscoveryIndex;
@@ -342,17 +301,11 @@ namespace MiliastraPlusPlus
                         if (DiscoveryIndex[Destination] == -1)
                         {
                             Visit(Destination);
-                            LowLink[NodeIndex] = std::min(
-                                LowLink[NodeIndex],
-                                LowLink[Destination]
-                            );
+                            LowLink[NodeIndex] = std::min(LowLink[NodeIndex], LowLink[Destination]);
                         }
                         else if (OnStack[Destination])
                         {
-                            LowLink[NodeIndex] = std::min(
-                                LowLink[NodeIndex],
-                                DiscoveryIndex[Destination]
-                            );
+                            LowLink[NodeIndex] = std::min(LowLink[NodeIndex], DiscoveryIndex[Destination]);
                         }
                     }
 
@@ -370,13 +323,10 @@ namespace MiliastraPlusPlus
                                 break;
                             }
                         }
-                        std::sort(
-                            Component.begin(),
-                            Component.end(),
+                        std::sort(Component.begin(), Component.end(),
                             [&Nodes](std::size_t Left, std::size_t Right)
                             {
-                                return Nodes[Left].Node.GraphNode <
-                                    Nodes[Right].Node.GraphNode;
+                                return Nodes[Left].Node.GraphNode < Nodes[Right].Node.GraphNode;
                             }
                         );
                         Components.push_back(std::move(Component));
@@ -392,9 +342,7 @@ namespace MiliastraPlusPlus
             }
 
             std::vector<std::size_t> ComponentForNode(NodeCount);
-            for (std::size_t ComponentIndex = 0U;
-                ComponentIndex < Components.size();
-                ++ComponentIndex)
+            for (std::size_t ComponentIndex = 0U; ComponentIndex < Components.size(); ++ComponentIndex)
             {
                 for (const std::size_t Member : Components[ComponentIndex])
                 {
@@ -402,48 +350,35 @@ namespace MiliastraPlusPlus
                 }
             }
 
-            std::vector<std::vector<std::size_t>> ComponentEdges(
-                Components.size()
-            );
+            std::vector<std::vector<std::size_t>> ComponentEdges(Components.size());
             std::vector<std::size_t> InDegree(Components.size(), 0U);
             for (std::size_t Source = 0U; Source < NodeCount; ++Source)
             {
                 for (const std::size_t Destination : Adjacency[Source])
                 {
-                    const std::size_t SourceComponent =
-                        ComponentForNode[Source];
-                    const std::size_t DestinationComponent =
-                        ComponentForNode[Destination];
+                    const std::size_t SourceComponent = ComponentForNode[Source];
+                    const std::size_t DestinationComponent = ComponentForNode[Destination];
                     if (SourceComponent != DestinationComponent)
                     {
-                        ComponentEdges[SourceComponent].push_back(
-                            DestinationComponent
-                        );
+                        ComponentEdges[SourceComponent].push_back(DestinationComponent);
                     }
                 }
             }
 
-            auto ComponentMinimumNode =
-                [&Components, &Nodes](std::size_t ComponentIndex)
+            auto ComponentMinimumNode = [&Components, &Nodes](std::size_t ComponentIndex)
                 {
                     return Nodes[Components[ComponentIndex].front()].Node.GraphNode;
                 };
 
             for (std::vector<std::size_t>& Destinations : ComponentEdges)
             {
-                std::sort(
-                    Destinations.begin(),
-                    Destinations.end(),
+                std::sort(Destinations.begin(), Destinations.end(),
                     [&ComponentMinimumNode](std::size_t Left, std::size_t Right)
                     {
-                        return ComponentMinimumNode(Left) <
-                            ComponentMinimumNode(Right);
+                        return ComponentMinimumNode(Left) < ComponentMinimumNode(Right);
                     }
                 );
-                Destinations.erase(
-                    std::unique(Destinations.begin(), Destinations.end()),
-                    Destinations.end()
-                );
+                Destinations.erase(std::unique(Destinations.begin(), Destinations.end()), Destinations.end());
             }
 
             for (const std::vector<std::size_t>& Destinations : ComponentEdges)
@@ -456,14 +391,10 @@ namespace MiliastraPlusPlus
 
             std::vector<std::size_t> ComponentRank(Components.size(), 0U);
             std::vector<bool> Processed(Components.size(), false);
-            for (std::size_t ProcessedCount = 0U;
-                ProcessedCount < Components.size();
-                ++ProcessedCount)
+            for (std::size_t ProcessedCount = 0U; ProcessedCount < Components.size(); ++ProcessedCount)
             {
                 std::vector<std::size_t> Ready;
-                for (std::size_t Component = 0U;
-                    Component < Components.size();
-                    ++Component)
+                for (std::size_t Component = 0U; Component < Components.size(); ++Component)
                 {
                     if (!Processed[Component] && InDegree[Component] == 0U)
                     {
@@ -473,32 +404,21 @@ namespace MiliastraPlusPlus
 
                 if (Ready.empty())
                 {
-                    Add(
-                        Diagnostics,
-                        ValidationStage::LayoutResolution,
-                        DiagnosticCode::InvalidGiaResolvedLayout,
-                        "The condensed control topology is not acyclic."
-                    );
+                    Add(Diagnostics, ValidationStage::LayoutResolution, DiagnosticCode::InvalidGiaResolvedLayout, "The condensed control topology is not acyclic.");
                     return false;
                 }
 
-                std::sort(
-                    Ready.begin(),
-                    Ready.end(),
+                std::sort(Ready.begin(), Ready.end(),
                     [&ComponentMinimumNode](std::size_t Left, std::size_t Right)
                     {
-                        return ComponentMinimumNode(Left) <
-                            ComponentMinimumNode(Right);
+                        return ComponentMinimumNode(Left) < ComponentMinimumNode(Right);
                     }
                 );
                 const std::size_t Current = Ready.front();
                 Processed[Current] = true;
                 for (const std::size_t Destination : ComponentEdges[Current])
                 {
-                    ComponentRank[Destination] = std::max(
-                        ComponentRank[Destination],
-                        ComponentRank[Current] + 1U
-                    );
+                    ComponentRank[Destination] = std::max(ComponentRank[Destination], ComponentRank[Current] + 1U);
                     --InDegree[Destination];
                 }
             }
@@ -510,22 +430,17 @@ namespace MiliastraPlusPlus
             }
 
             std::vector<std::vector<std::size_t>> RankBuckets(MaximumRank + 1U);
-            for (std::size_t Component = 0U;
-                Component < Components.size();
-                ++Component)
+            for (std::size_t Component = 0U; Component < Components.size(); ++Component)
             {
                 RankBuckets[ComponentRank[Component]].push_back(Component);
             }
 
             for (std::vector<std::size_t>& Bucket : RankBuckets)
             {
-                std::sort(
-                    Bucket.begin(),
-                    Bucket.end(),
+                std::sort(Bucket.begin(), Bucket.end(),
                     [&ComponentMinimumNode](std::size_t Left, std::size_t Right)
                     {
-                        return ComponentMinimumNode(Left) <
-                            ComponentMinimumNode(Right);
+                        return ComponentMinimumNode(Left) < ComponentMinimumNode(Right);
                     }
                 );
             }
@@ -537,23 +452,12 @@ namespace MiliastraPlusPlus
                 {
                     for (const std::size_t Member : Components[Component])
                     {
-                        const long double X = static_cast<long double>(Rank) *
-                            800.0L;
-                        const long double Y = static_cast<long double>(Slot) *
-                            600.0L;
-                        if (X > static_cast<long double>(
-                                std::numeric_limits<float>::max()
-                            ) ||
-                            Y > static_cast<long double>(
-                                std::numeric_limits<float>::max()
-                            ))
+                        const long double X = static_cast<long double>(Rank) * 800.0L;
+                        const long double Y = static_cast<long double>(Slot) * 600.0L;
+                        if (X > static_cast<long double>(std::numeric_limits<float>::max()) ||
+                            Y > static_cast<long double>(std::numeric_limits<float>::max()))
                         {
-                            Add(
-                                Diagnostics,
-                                ValidationStage::LayoutResolution,
-                                DiagnosticCode::InvalidGiaResolvedLayout,
-                                "Resolved node layout exceeds the finite float domain."
-                            );
+                            Add(Diagnostics, ValidationStage::LayoutResolution, DiagnosticCode::InvalidGiaResolvedLayout, "Resolved node layout exceeds the finite float domain.");
                             return false;
                         }
 
@@ -580,12 +484,7 @@ namespace MiliastraPlusPlus
             std::vector<PendingDiagnostic> Diagnostics;
             if (!Graph.IsValid())
             {
-                Add(
-                    Diagnostics,
-                    ValidationStage::InputModelValidation,
-                    DiagnosticCode::InvalidGiaResolutionInput,
-                    "The P6.2 semantic backend graph is invalid."
-                );
+                Add(Diagnostics, ValidationStage::InputModelValidation, DiagnosticCode::InvalidGiaResolutionInput, "The P6.2 semantic backend graph is invalid.");
                 return std::unexpected(Materialize(std::move(Diagnostics)));
             }
 
@@ -608,10 +507,7 @@ namespace MiliastraPlusPlus
                 .RootModeFlag = std::nullopt
             };
 
-            if (!ResolveEvaluationInterval(
-                    Graph.GetHeader().EvaluationInterval,
-                    Header.EvaluationInterval
-                ))
+            if (!ResolveEvaluationInterval(Graph.GetHeader().EvaluationInterval, Header.EvaluationInterval))
             {
                 Add(
                     Diagnostics,
@@ -627,9 +523,7 @@ namespace MiliastraPlusPlus
             {
                 OrderedNodes.push_back(&Node);
             }
-            std::sort(
-                OrderedNodes.begin(),
-                OrderedNodes.end(),
+            std::sort(OrderedNodes.begin(), OrderedNodes.end(),
                 [](const GiaBackendNode* Left, const GiaBackendNode* Right)
                 {
                     return Left->Trace.GraphNode < Right->Trace.GraphNode;
@@ -640,8 +534,7 @@ namespace MiliastraPlusPlus
             Nodes.reserve(OrderedNodes.size());
             for (const GiaBackendNode* BackendNode : OrderedNodes)
             {
-                const std::optional<GiaResolvedNodeIndex> NodeIndex =
-                    ResolveNodeIndex(BackendNode->Trace.GraphNode);
+                const std::optional<GiaResolvedNodeIndex> NodeIndex = ResolveNodeIndex(BackendNode->Trace.GraphNode);
                 if (!NodeIndex.has_value())
                 {
                     Add(
@@ -685,11 +578,9 @@ namespace MiliastraPlusPlus
             for (WorkingNode& Working : Nodes)
             {
                 const GiaBackendNode& BackendNode = *Working.BackendNode;
-                for (const GiaBackendPinMapping& Mapping :
-                    BackendNode.Mapping.GetPinMappings())
+                for (const GiaBackendPinMapping& Mapping : BackendNode.Mapping.GetPinMappings())
                 {
-                    const std::string ExternalKey =
-                        BackendNode.Trace.ExternalIdentity.GetKey();
+                    const std::string ExternalKey = BackendNode.Trace.ExternalIdentity.GetKey();
                     if (!IsSupportedPinKind(Mapping.GetPinKind()))
                     {
                         Add(
@@ -709,9 +600,7 @@ namespace MiliastraPlusPlus
                         .SemanticPin = Mapping.GetSemanticPinIndex(),
                         .Kind = Mapping.GetPinKind(),
                         .PrimaryIndex = Mapping.GetBackendIndex(),
-                        .SecondaryIndex = Mapping.GetSecondaryIndex().value_or(
-                            Mapping.GetBackendIndex()
-                        ),
+                        .SecondaryIndex = Mapping.GetSecondaryIndex().value_or(Mapping.GetBackendIndex()),
                         .BackendTypeCode = Mapping.GetBackendTypeCode(),
                         .LiteralEncoding = Mapping.GetLiteralEncoding(),
                         .EmissionPolicy = Mapping.GetEmissionPolicy(),
@@ -719,14 +608,10 @@ namespace MiliastraPlusPlus
                         .InputValue = std::nullopt
                     };
 
-                    const GiaBackendInputValue* Input = GiaGraphResolverDetail::FindInput(
-                        BackendNode,
-                        Mapping.GetSemanticPinIndex()
-                    );
+                    const GiaBackendInputValue* Input = GiaGraphResolverDetail::FindInput(BackendNode, Mapping.GetSemanticPinIndex());
                     if (Input != nullptr)
                     {
-                        if (Mapping.GetPinKind() != GiaPinKind::InputParameter ||
-                            Mapping.GetEmissionPolicy() == GiaPinEmissionPolicy::Omit)
+                        if (Mapping.GetPinKind() != GiaPinKind::InputParameter || Mapping.GetEmissionPolicy() == GiaPinEmissionPolicy::Omit)
                         {
                             Add(
                                 Diagnostics,
@@ -750,8 +635,7 @@ namespace MiliastraPlusPlus
                             };
                         }
                     }
-                    else if (Mapping.GetPinKind() == GiaPinKind::InputParameter &&
-                        Mapping.GetEmissionPolicy() == GiaPinEmissionPolicy::Emit)
+                    else if (Mapping.GetPinKind() == GiaPinKind::InputParameter && Mapping.GetEmissionPolicy() == GiaPinEmissionPolicy::Emit)
                     {
                         Add(
                             Diagnostics,
@@ -768,11 +652,7 @@ namespace MiliastraPlusPlus
                     Working.Node.Pins.push_back(std::move(Pin));
                 }
 
-                std::sort(
-                    Working.Node.Pins.begin(),
-                    Working.Node.Pins.end(),
-                    IsPinCanonical
-                );
+                std::sort(Working.Node.Pins.begin(), Working.Node.Pins.end(), IsPinCanonical);
                 if (!Working.Node.IsValid())
                 {
                     Add(
@@ -790,26 +670,16 @@ namespace MiliastraPlusPlus
 
             std::vector<GiaResolvedDataConnection> DataConnections;
             DataConnections.reserve(Graph.GetDataConnections().size());
-            for (const GiaBackendDataConnection& Connection :
-                Graph.GetDataConnections())
+            for (const GiaBackendDataConnection& Connection : Graph.GetDataConnections())
             {
                 WorkingNode* Source = FindNode(Nodes, Connection.SourceNode);
-                WorkingNode* Destination = FindNode(
-                    Nodes,
-                    Connection.DestinationNode
-                );
+                WorkingNode* Destination = FindNode(Nodes, Connection.DestinationNode);
                 const GiaResolvedPin* SourcePin = Source == nullptr
                     ? nullptr
-                    : FindResolvedPin(
-                        Source->Node,
-                        Connection.SourcePin
-                    );
+                    : FindResolvedPin(Source->Node, Connection.SourcePin);
                 const GiaResolvedPin* DestinationPin = Destination == nullptr
                     ? nullptr
-                    : FindResolvedPin(
-                        Destination->Node,
-                        Connection.DestinationPin
-                    );
+                    : FindResolvedPin(Destination->Node, Connection.DestinationPin);
 
                 const bool Valid =
                     Source != nullptr && Destination != nullptr &&
@@ -820,8 +690,7 @@ namespace MiliastraPlusPlus
                     DestinationPin->EmissionPolicy == GiaPinEmissionPolicy::Emit &&
                     DestinationPin->IsConnectable &&
                     DestinationPin->InputValue.has_value() &&
-                    DestinationPin->InputValue->SourceKind ==
-                        GiaBackendInputValueSourceKind::DataConnection &&
+                    DestinationPin->InputValue->SourceKind == GiaBackendInputValueSourceKind::DataConnection &&
                     !DestinationPin->InputValue->Literal.has_value() &&
                     DestinationPin->InputValue->SemanticType == Connection.ValueType;
                 if (!Valid)
@@ -844,14 +713,8 @@ namespace MiliastraPlusPlus
                 }
 
                 DataConnections.push_back(GiaResolvedDataConnection{
-                    GiaResolvedBackendGraphDetail::MakeEndpoint(
-                        Source->Node,
-                        *SourcePin
-                    ),
-                    GiaResolvedBackendGraphDetail::MakeEndpoint(
-                        Destination->Node,
-                        *DestinationPin
-                    ),
+                    GiaResolvedBackendGraphDetail::MakeEndpoint(Source->Node, *SourcePin),
+                    GiaResolvedBackendGraphDetail::MakeEndpoint(Destination->Node, *DestinationPin),
                     Connection.ValueType
                 });
             }
@@ -859,12 +722,8 @@ namespace MiliastraPlusPlus
             std::sort(DataConnections.begin(), DataConnections.end(), IsDataCanonical);
             for (std::size_t Index = 1U; Index < DataConnections.size(); ++Index)
             {
-                if (!IsDataCanonical(
-                        DataConnections[Index - 1U],
-                        DataConnections[Index]
-                    ) ||
-                    DataConnections[Index - 1U].Destination ==
-                        DataConnections[Index].Destination)
+                if (!IsDataCanonical(DataConnections[Index - 1U], DataConnections[Index]) ||
+                    DataConnections[Index - 1U].Destination == DataConnections[Index].Destination)
                 {
                     Add(
                         Diagnostics,
@@ -879,25 +738,15 @@ namespace MiliastraPlusPlus
             {
                 for (const GiaResolvedPin& Pin : Working.Node.Pins)
                 {
-                    if (Pin.InputValue.has_value() &&
-                        Pin.InputValue->SourceKind ==
-                            GiaBackendInputValueSourceKind::DataConnection)
+                    if (Pin.InputValue.has_value() && Pin.InputValue->SourceKind == GiaBackendInputValueSourceKind::DataConnection)
                     {
-                        const GiaResolvedPinEndpoint Endpoint =
-                            GiaResolvedBackendGraphDetail::MakeEndpoint(
-                                Working.Node,
-                                Pin
-                            );
-                        const std::size_t Count = static_cast<std::size_t>(
-                            std::count_if(
-                                DataConnections.begin(),
-                                DataConnections.end(),
-                                [&Endpoint](const GiaResolvedDataConnection& Candidate)
-                                {
-                                    return Candidate.Destination == Endpoint;
-                                }
-                            )
-                        );
+                        const GiaResolvedPinEndpoint Endpoint = GiaResolvedBackendGraphDetail::MakeEndpoint(Working.Node, Pin);
+                        const std::size_t Count = static_cast<std::size_t>(std::count_if(DataConnections.begin(), DataConnections.end(),
+                            [&Endpoint](const GiaResolvedDataConnection& Candidate)
+                            {
+                                return Candidate.Destination == Endpoint;
+                            }
+                        ));
                         if (Count != 1U)
                         {
                             Add(
@@ -917,14 +766,10 @@ namespace MiliastraPlusPlus
 
             std::vector<GiaResolvedControlConnection> ControlConnections;
             ControlConnections.reserve(Graph.GetControlConnections().size());
-            for (const GiaBackendControlConnection& Connection :
-                Graph.GetControlConnections())
+            for (const GiaBackendControlConnection& Connection : Graph.GetControlConnections())
             {
                 WorkingNode* Source = FindNode(Nodes, Connection.SourceNode);
-                WorkingNode* Destination = FindNode(
-                    Nodes,
-                    Connection.DestinationNode
-                );
+                WorkingNode* Destination = FindNode(Nodes, Connection.DestinationNode);
                 const GiaResolvedPin* SourcePin = Source == nullptr
                     ? nullptr
                     : FindResolvedPin(Source->Node, Connection.SourcePin);
@@ -966,28 +811,15 @@ namespace MiliastraPlusPlus
                 }
 
                 ControlConnections.push_back(GiaResolvedControlConnection{
-                    GiaResolvedBackendGraphDetail::MakeEndpoint(
-                        Source->Node,
-                        *SourcePin
-                    ),
-                    GiaResolvedBackendGraphDetail::MakeEndpoint(
-                        Destination->Node,
-                        *DestinationPin
-                    )
+                    GiaResolvedBackendGraphDetail::MakeEndpoint(Source->Node, *SourcePin),
+                    GiaResolvedBackendGraphDetail::MakeEndpoint(Destination->Node, *DestinationPin)
                 });
             }
 
-            std::sort(
-                ControlConnections.begin(),
-                ControlConnections.end(),
-                IsControlCanonical
-            );
+            std::sort(ControlConnections.begin(), ControlConnections.end(), IsControlCanonical);
             for (std::size_t Index = 1U; Index < ControlConnections.size(); ++Index)
             {
-                if (!IsControlCanonical(
-                        ControlConnections[Index - 1U],
-                        ControlConnections[Index]
-                    ))
+                if (!IsControlCanonical(ControlConnections[Index - 1U], ControlConnections[Index]))
                 {
                     Add(
                         Diagnostics,
@@ -1002,27 +834,18 @@ namespace MiliastraPlusPlus
             {
                 for (const GiaResolvedPin& Pin : Working.Node.Pins)
                 {
-                    if (Pin.Kind != GiaPinKind::InputFlow ||
-                        Pin.EmissionPolicy != GiaPinEmissionPolicy::Emit)
+                    if (Pin.Kind != GiaPinKind::InputFlow || Pin.EmissionPolicy != GiaPinEmissionPolicy::Emit)
                     {
                         continue;
                     }
 
-                    const GiaResolvedPinEndpoint Endpoint =
-                        GiaResolvedBackendGraphDetail::MakeEndpoint(
-                            Working.Node,
-                            Pin
-                        );
-                    const std::size_t Count = static_cast<std::size_t>(
-                        std::count_if(
-                            ControlConnections.begin(),
-                            ControlConnections.end(),
-                            [&Endpoint](const GiaResolvedControlConnection& Candidate)
-                            {
-                                return Candidate.Destination == Endpoint;
-                            }
-                        )
-                    );
+                    const GiaResolvedPinEndpoint Endpoint = GiaResolvedBackendGraphDetail::MakeEndpoint(Working.Node, Pin);
+                    const std::size_t Count = static_cast<std::size_t>(std::count_if(ControlConnections.begin(), ControlConnections.end(),
+                        [&Endpoint](const GiaResolvedControlConnection& Candidate)
+                        {
+                            return Candidate.Destination == Endpoint;
+                        }
+                    ));
                     if (Count > 1U)
                     {
                         Add(
@@ -1055,29 +878,17 @@ namespace MiliastraPlusPlus
             {
                 ResolvedNodes.push_back(std::move(Working.Node));
             }
-            std::sort(
-                ResolvedNodes.begin(),
-                ResolvedNodes.end(),
+            std::sort(ResolvedNodes.begin(), ResolvedNodes.end(),
                 [](const GiaResolvedNode& Left, const GiaResolvedNode& Right)
                 {
                     return Left.GraphNode < Right.GraphNode;
                 }
             );
 
-            GiaResolvedBackendGraph Result(
-                std::move(Header),
-                std::move(ResolvedNodes),
-                std::move(DataConnections),
-                std::move(ControlConnections)
-            );
+            GiaResolvedBackendGraph Result(std::move(Header), std::move(ResolvedNodes), std::move(DataConnections), std::move(ControlConnections));
             if (!Result.IsValid())
             {
-                Add(
-                    Diagnostics,
-                    ValidationStage::ModelValidation,
-                    DiagnosticCode::InvalidGiaResolvedBackendModel,
-                    "The complete resolved GIA backend model violates its invariants."
-                );
+                Add(Diagnostics, ValidationStage::ModelValidation, DiagnosticCode::InvalidGiaResolvedBackendModel, "The complete resolved GIA backend model violates its invariants.");
                 return std::unexpected(Materialize(std::move(Diagnostics)));
             }
 

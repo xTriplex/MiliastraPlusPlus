@@ -163,7 +163,13 @@ namespace MiliastraPlusPlus
         InvalidGiaResolvedPinEmission,
         InvalidGiaResolvedConnection,
         InvalidGiaResolvedLayout,
-        InvalidGiaResolvedBackendModel
+        InvalidGiaResolvedBackendModel,
+        InvalidGiaEncodingInput,
+        InvalidGiaProtobufConstruction,
+        GiaProtobufSerializationFailure,
+        GiaProtobufDecodeFailure,
+        InvalidGiaDecodedProtobuf,
+        GiaProtobufModelMismatch
     };
 
     /// Callers can branch on Code; Message carries human-readable context.

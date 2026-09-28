@@ -54,9 +54,7 @@ namespace
         Check(IntegerList != FloatList, 10);
         Check(!TypeDesc::List(TypeDesc()).IsValid(), 11);
 
-        const TypeDesc StringFloatDictionary = TypeDesc::Dictionary(
-            TypeDesc::String(), TypeDesc::Float()
-        );
+        const TypeDesc StringFloatDictionary = TypeDesc::Dictionary(TypeDesc::String(), TypeDesc::Float());
         Check(StringFloatDictionary.IsValid(), 12);
         Check(StringFloatDictionary.GetKeyType()->GetKind() == TypeDesc::Kind::String, 13);
         Check(StringFloatDictionary.GetValueType()->GetKind() == TypeDesc::Kind::Float, 14);
@@ -81,21 +79,14 @@ namespace
         Check(TypeDesc::Integer().IsCompatibleWith(GenericType), 24);
         Check(IntegerList.IsCompatibleWith(AnotherIntegerList), 25);
         Check(!IntegerList.IsCompatibleWith(FloatList), 26);
-        Check(StringFloatDictionary.IsCompatibleWith(
-            TypeDesc::Dictionary(TypeDesc::String(), TypeDesc::Float())), 27);
-        Check(!StringFloatDictionary.IsCompatibleWith(
-            TypeDesc::Dictionary(TypeDesc::String(), TypeDesc::Integer())), 28);
+        Check(StringFloatDictionary.IsCompatibleWith(TypeDesc::Dictionary(TypeDesc::String(), TypeDesc::Float())), 27);
+        Check(!StringFloatDictionary.IsCompatibleWith(TypeDesc::Dictionary(TypeDesc::String(), TypeDesc::Integer())), 28);
 
         CheckUnifies(GenericType, TypeDesc::Integer(), TypeDesc::Integer(), 29);
         CheckUnifies(GenericType, TypeDesc::Float(), TypeDesc::Float(), 30);
         CheckUnifies(GenericType, GenericType, GenericType, 31);
         CheckUnifies(IntegerList, TypeDesc::List(GenericType), IntegerList, 32);
-        CheckUnifies(
-            StringFloatDictionary,
-            TypeDesc::Dictionary(TypeDesc::String(), GenericType),
-            StringFloatDictionary,
-            33
-        );
+        CheckUnifies(StringFloatDictionary, TypeDesc::Dictionary(TypeDesc::String(), GenericType), StringFloatDictionary, 33);
         Check(!GenericType.Unify(OtherGenericType).has_value(), 34);
         Check(!TypeDesc::Integer().Unify(TypeDesc::Float()).has_value(), 35);
         Check(!IntegerList.Unify(FloatList).has_value(), 36);

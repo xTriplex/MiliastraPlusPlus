@@ -17,8 +17,7 @@ namespace
 {
     [[noreturn]] void Fail(const char* Expression, const std::source_location& Location)
     {
-        std::fprintf(stderr, "Check failed: %s (%s:%u)\n", Expression,
-            Location.file_name(), Location.line());
+        std::fprintf(stderr, "Check failed: %s (%s:%u)\n", Expression, Location.file_name(), Location.line());
         std::exit(EXIT_FAILURE);
     }
 
@@ -36,41 +35,24 @@ namespace
         std::string SourceNamespace = "source",
         std::string SourceRevision = "build-1",
         std::uint32_t SemanticSchemaVersion = 1U,
-        std::string CatalogueContentIdentifier = "content-a"
-    )
+        std::string CatalogueContentIdentifier = "content-a")
     {
-        return DescriptorCatalogueIdentity(
-            std::move(SourceNamespace),
-            std::move(SourceRevision),
-            DescriptorCatalogueSemanticSchemaVersion(SemanticSchemaVersion),
-            DescriptorCatalogueContentIdentifier(std::move(CatalogueContentIdentifier))
-        );
+        return DescriptorCatalogueIdentity(std::move(SourceNamespace), std::move(SourceRevision), DescriptorCatalogueSemanticSchemaVersion(SemanticSchemaVersion), DescriptorCatalogueContentIdentifier(std::move(CatalogueContentIdentifier)));
     }
 
     SourceProvenance MakeSourceProvenance(std::string SourceDocumentIdentifier, std::string SourceRecordIdentifier)
     {
-        return SourceProvenance(
-            std::move(SourceDocumentIdentifier),
-            std::move(SourceRecordIdentifier)
-        );
+        return SourceProvenance(std::move(SourceDocumentIdentifier), std::move(SourceRecordIdentifier));
     }
 
-    DescriptorIdentifierAllocationCandidate MakeAllocationCandidate(
-        std::string Key,
-        std::optional<SourceProvenance> Provenance = std::nullopt
-    )
+    DescriptorIdentifierAllocationCandidate MakeAllocationCandidate(std::string Key, std::optional<SourceProvenance> Provenance = std::nullopt)
     {
-        return DescriptorIdentifierAllocationCandidate(
-            ExternalNodeIdentity(std::move(Key)),
-            std::move(Provenance)
-        );
+        return DescriptorIdentifierAllocationCandidate(ExternalNodeIdentity(std::move(Key)), std::move(Provenance));
     }
 
     bool HasDiagnosticCode(const DiagnosticCollection& Diagnostics, DiagnosticCode Code)
     {
-        return std::any_of(
-            Diagnostics.begin(),
-            Diagnostics.end(),
+        return std::any_of(Diagnostics.begin(), Diagnostics.end(),
             [Code](const Diagnostic& CurrentDiagnostic)
             {
                 return CurrentDiagnostic.Code == Code;
@@ -80,9 +62,7 @@ namespace
 
     std::size_t CountDiagnosticCode(const DiagnosticCollection& Diagnostics, DiagnosticCode Code)
     {
-        return static_cast<std::size_t>(std::count_if(
-            Diagnostics.begin(),
-            Diagnostics.end(),
+        return static_cast<std::size_t>(std::count_if(Diagnostics.begin(), Diagnostics.end(),
             [Code](const Diagnostic& CurrentDiagnostic)
             {
                 return CurrentDiagnostic.Code == Code;
@@ -118,9 +98,7 @@ namespace
 
     const Diagnostic* FindDiagnostic(const DiagnosticCollection& Diagnostics, DiagnosticCode Code)
     {
-        const auto Iterator = std::find_if(
-            Diagnostics.begin(),
-            Diagnostics.end(),
+        const auto Iterator = std::find_if(Diagnostics.begin(), Diagnostics.end(),
             [Code](const Diagnostic& CurrentDiagnostic)
             {
                 return CurrentDiagnostic.Code == Code;
@@ -181,23 +159,13 @@ namespace
         MPP_CHECK(Valid.IsValid());
         MPP_CHECK(Valid.GetSourceNamespace() == "source");
         MPP_CHECK(Valid.GetSourceRevision() == "build-1");
-        MPP_CHECK(Valid.GetSemanticSchemaVersion() ==
-            DescriptorCatalogueSemanticSchemaVersion(1U));
-        MPP_CHECK(Valid.GetCatalogueContentIdentifier() ==
-            DescriptorCatalogueContentIdentifier("content-a"));
+        MPP_CHECK(Valid.GetSemanticSchemaVersion() == DescriptorCatalogueSemanticSchemaVersion(1U));
+        MPP_CHECK(Valid.GetCatalogueContentIdentifier() == DescriptorCatalogueContentIdentifier("content-a"));
 
-        MPP_CHECK(!DescriptorCatalogueIdentity(
-            "", "build-1", DescriptorCatalogueSemanticSchemaVersion(1U),
-            DescriptorCatalogueContentIdentifier("content-a")).IsValid());
-        MPP_CHECK(!DescriptorCatalogueIdentity(
-            "source", "", DescriptorCatalogueSemanticSchemaVersion(1U),
-            DescriptorCatalogueContentIdentifier("content-a")).IsValid());
-        MPP_CHECK(!DescriptorCatalogueIdentity(
-            "source", "build-1", DescriptorCatalogueSemanticSchemaVersion(),
-            DescriptorCatalogueContentIdentifier("content-a")).IsValid());
-        MPP_CHECK(!DescriptorCatalogueIdentity(
-            "source", "build-1", DescriptorCatalogueSemanticSchemaVersion(1U),
-            DescriptorCatalogueContentIdentifier()).IsValid());
+        MPP_CHECK(!DescriptorCatalogueIdentity("", "build-1", DescriptorCatalogueSemanticSchemaVersion(1U), DescriptorCatalogueContentIdentifier("content-a")).IsValid());
+        MPP_CHECK(!DescriptorCatalogueIdentity("source", "", DescriptorCatalogueSemanticSchemaVersion(1U), DescriptorCatalogueContentIdentifier("content-a")).IsValid());
+        MPP_CHECK(!DescriptorCatalogueIdentity("source", "build-1", DescriptorCatalogueSemanticSchemaVersion(), DescriptorCatalogueContentIdentifier("content-a")).IsValid());
+        MPP_CHECK(!DescriptorCatalogueIdentity("source", "build-1", DescriptorCatalogueSemanticSchemaVersion(1U), DescriptorCatalogueContentIdentifier()).IsValid());
 
         MPP_CHECK(Valid != MakeCatalogueIdentity("other-source"));
         MPP_CHECK(Valid != MakeCatalogueIdentity("source", "build-2"));
@@ -301,10 +269,7 @@ namespace
     {
         const DescriptorCatalogueIdentity AvailableIdentity = MakeCatalogueIdentity();
         const DescriptorCatalogueBinding MatchingBinding(AvailableIdentity);
-        const auto Matching = ValidateDescriptorCatalogueCompatibility(
-            MatchingBinding,
-            AvailableIdentity
-        );
+        const auto Matching = ValidateDescriptorCatalogueCompatibility(MatchingBinding, AvailableIdentity);
         MPP_CHECK(Matching.has_value());
 
         const std::vector<DescriptorCatalogueIdentity> Mismatches = {
@@ -315,48 +280,29 @@ namespace
         };
         for (const DescriptorCatalogueIdentity& MismatchIdentity : Mismatches)
         {
-            const auto Mismatch = ValidateDescriptorCatalogueCompatibility(
-                MatchingBinding,
-                MismatchIdentity
-            );
+            const auto Mismatch = ValidateDescriptorCatalogueCompatibility(MatchingBinding, MismatchIdentity);
             MPP_CHECK(!Mismatch.has_value());
             MPP_CHECK(Mismatch.error().size() == 1U);
-            MPP_CHECK(HasDiagnosticCode(
-                Mismatch.error(), DiagnosticCode::DescriptorCatalogueMismatch));
+            MPP_CHECK(HasDiagnosticCode(Mismatch.error(), DiagnosticCode::DescriptorCatalogueMismatch));
         }
 
-        const auto InvalidBinding = ValidateDescriptorCatalogueCompatibility(
-            DescriptorCatalogueBinding(),
-            AvailableIdentity
-        );
+        const auto InvalidBinding = ValidateDescriptorCatalogueCompatibility(DescriptorCatalogueBinding(), AvailableIdentity);
         MPP_CHECK(!InvalidBinding.has_value());
         MPP_CHECK(InvalidBinding.error().size() == 1U);
-        MPP_CHECK(HasDiagnosticCode(
-            InvalidBinding.error(), DiagnosticCode::InvalidDescriptorCatalogueIdentity));
+        MPP_CHECK(HasDiagnosticCode(InvalidBinding.error(), DiagnosticCode::InvalidDescriptorCatalogueIdentity));
 
-        const auto InvalidAvailable = ValidateDescriptorCatalogueCompatibility(
-            MatchingBinding,
-            DescriptorCatalogueIdentity()
-        );
+        const auto InvalidAvailable = ValidateDescriptorCatalogueCompatibility(MatchingBinding, DescriptorCatalogueIdentity());
         MPP_CHECK(!InvalidAvailable.has_value());
         MPP_CHECK(InvalidAvailable.error().size() == 1U);
-        MPP_CHECK(HasDiagnosticCode(
-            InvalidAvailable.error(), DiagnosticCode::InvalidDescriptorCatalogueIdentity));
+        MPP_CHECK(HasDiagnosticCode(InvalidAvailable.error(), DiagnosticCode::InvalidDescriptorCatalogueIdentity));
 
-        const auto BothInvalid = ValidateDescriptorCatalogueCompatibility(
-            DescriptorCatalogueBinding(),
-            DescriptorCatalogueIdentity()
-        );
+        const auto BothInvalid = ValidateDescriptorCatalogueCompatibility(DescriptorCatalogueBinding(), DescriptorCatalogueIdentity());
         MPP_CHECK(!BothInvalid.has_value());
         MPP_CHECK(BothInvalid.error().size() == 2U);
-        MPP_CHECK(BothInvalid.error()[0U].Code ==
-            DiagnosticCode::InvalidDescriptorCatalogueIdentity);
-        MPP_CHECK(BothInvalid.error()[0U].Message ==
-            "Available catalogue identity is invalid.");
-        MPP_CHECK(BothInvalid.error()[1U].Code ==
-            DiagnosticCode::InvalidDescriptorCatalogueIdentity);
-        MPP_CHECK(BothInvalid.error()[1U].Message ==
-            "Graph binding contains an invalid descriptor catalogue identity.");
+        MPP_CHECK(BothInvalid.error()[0U].Code == DiagnosticCode::InvalidDescriptorCatalogueIdentity);
+        MPP_CHECK(BothInvalid.error()[0U].Message == "Available catalogue identity is invalid.");
+        MPP_CHECK(BothInvalid.error()[1U].Code == DiagnosticCode::InvalidDescriptorCatalogueIdentity);
+        MPP_CHECK(BothInvalid.error()[1U].Message == "Graph binding contains an invalid descriptor catalogue identity.");
     }
 
     void TestDescriptorIdentifierAllocationCandidate()
@@ -372,49 +318,32 @@ namespace
         };
         MPP_CHECK(!InvalidIdentity.IsValid());
 
-        const DescriptorIdentifierAllocationCandidate WithoutProvenance(
-            ExternalNodeIdentity("node")
-        );
+        const DescriptorIdentifierAllocationCandidate WithoutProvenance(ExternalNodeIdentity("node"));
         MPP_CHECK(WithoutProvenance.IsValid());
         MPP_CHECK(!WithoutProvenance.GetSourceProvenance().has_value());
 
         const SourceProvenance Provenance = MakeSourceProvenance("document", "record");
-        const DescriptorIdentifierAllocationCandidate WithProvenance(
-            ExternalNodeIdentity("node"),
-            Provenance
-        );
+        const DescriptorIdentifierAllocationCandidate WithProvenance(ExternalNodeIdentity("node"), Provenance);
         MPP_CHECK(WithProvenance.IsValid());
         MPP_CHECK(WithProvenance.GetSourceProvenance() == Provenance);
 
-        const DescriptorIdentifierAllocationCandidate InvalidProvenance(
-            ExternalNodeIdentity("node"),
-            SourceProvenance()
-        );
+        const DescriptorIdentifierAllocationCandidate InvalidProvenance(ExternalNodeIdentity("node"), SourceProvenance());
         MPP_CHECK(!InvalidProvenance.IsValid());
         MPP_CHECK(WithProvenance != WithoutProvenance);
         MPP_CHECK(WithoutProvenance < WithProvenance);
-        MPP_CHECK(MakeAllocationCandidate(
-            "a", MakeSourceProvenance("document-z", "record-z")) <
-            MakeAllocationCandidate("b", MakeSourceProvenance("document-a", "record-a")));
-        MPP_CHECK(MakeAllocationCandidate(
-            "node", MakeSourceProvenance("document-a", "record-a")) <
-            MakeAllocationCandidate("node", MakeSourceProvenance("document-a", "record-b")));
+        MPP_CHECK(MakeAllocationCandidate("a", MakeSourceProvenance("document-z", "record-z")) < MakeAllocationCandidate("b", MakeSourceProvenance("document-a", "record-a")));
+        MPP_CHECK(MakeAllocationCandidate("node", MakeSourceProvenance("document-a", "record-a")) < MakeAllocationCandidate("node", MakeSourceProvenance("document-a", "record-b")));
 
         std::string Key = "owned-node";
         std::string Document = "owned-document";
         std::string Record = "owned-record";
-        const DescriptorIdentifierAllocationCandidate Owned(
-            ExternalNodeIdentity(Key),
-            MakeSourceProvenance(Document, Record)
-        );
+        const DescriptorIdentifierAllocationCandidate Owned(ExternalNodeIdentity(Key), MakeSourceProvenance(Document, Record));
         Key[0U] = 'X';
         Document[0U] = 'X';
         Record[0U] = 'X';
         MPP_CHECK(Owned.GetExternalIdentity().GetKey() == "owned-node");
-        MPP_CHECK(Owned.GetSourceProvenance()->GetSourceDocumentIdentifier() ==
-            "owned-document");
-        MPP_CHECK(Owned.GetSourceProvenance()->GetSourceRecordIdentifier() ==
-            "owned-record");
+        MPP_CHECK(Owned.GetSourceProvenance()->GetSourceDocumentIdentifier() == "owned-document");
+        MPP_CHECK(Owned.GetSourceProvenance()->GetSourceRecordIdentifier() == "owned-record");
     }
 
     void TestDescriptorIdentifierAssignment()
@@ -425,31 +354,19 @@ namespace
         const DescriptorIdentifierAssignment Invalid;
         MPP_CHECK(!Invalid.IsValid());
 
-        const DescriptorIdentifierAssignment InvalidIdentity(
-            ExternalNodeIdentity(),
-            NodeDescriptorId(1U)
-        );
+        const DescriptorIdentifierAssignment InvalidIdentity(ExternalNodeIdentity(), NodeDescriptorId(1U));
         MPP_CHECK(!InvalidIdentity.IsValid());
 
-        const DescriptorIdentifierAssignment InvalidDescriptorIdentifier(
-            ExternalNodeIdentity("node"),
-            NodeDescriptorId()
-        );
+        const DescriptorIdentifierAssignment InvalidDescriptorIdentifier(ExternalNodeIdentity("node"), NodeDescriptorId());
         MPP_CHECK(!InvalidDescriptorIdentifier.IsValid());
 
-        const DescriptorIdentifierAssignment Valid(
-            ExternalNodeIdentity("node"),
-            NodeDescriptorId(1U)
-        );
+        const DescriptorIdentifierAssignment Valid(ExternalNodeIdentity("node"), NodeDescriptorId(1U));
         MPP_CHECK(Valid.IsValid());
         MPP_CHECK(Valid.GetExternalIdentity() == ExternalNodeIdentity("node"));
         MPP_CHECK(Valid.GetDescriptorIdentifier() == NodeDescriptorId(1U));
-        MPP_CHECK(Valid == DescriptorIdentifierAssignment(
-            ExternalNodeIdentity("node"), NodeDescriptorId(1U)));
-        MPP_CHECK(DescriptorIdentifierAssignment(
-            ExternalNodeIdentity("a"), NodeDescriptorId(99U)) < Valid);
-        MPP_CHECK(Valid < DescriptorIdentifierAssignment(
-            ExternalNodeIdentity("node"), NodeDescriptorId(2U)));
+        MPP_CHECK(Valid == DescriptorIdentifierAssignment(ExternalNodeIdentity("node"), NodeDescriptorId(1U)));
+        MPP_CHECK(DescriptorIdentifierAssignment(ExternalNodeIdentity("a"), NodeDescriptorId(99U)) < Valid);
+        MPP_CHECK(Valid < DescriptorIdentifierAssignment(ExternalNodeIdentity("node"), NodeDescriptorId(2U)));
     }
 
     void TestDeterministicDescriptorIdentifierAllocation()
@@ -472,9 +389,7 @@ namespace
         MPP_CHECK((*First)[0U].GetDescriptorIdentifier() == NodeDescriptorId(1U));
         MPP_CHECK((*First)[1U].GetDescriptorIdentifier() == NodeDescriptorId(2U));
         MPP_CHECK((*First)[2U].GetDescriptorIdentifier() == NodeDescriptorId(3U));
-        MPP_CHECK(std::all_of(
-            First->begin(),
-            First->end(),
+        MPP_CHECK(std::all_of(First->begin(), First->end(),
             [](const DescriptorIdentifierAssignment& Assignment)
             {
                 return Assignment.GetDescriptorIdentifier().IsValid();
@@ -513,10 +428,8 @@ namespace
         });
         MPP_CHECK(FirstIndependentCall.has_value());
         MPP_CHECK(SecondIndependentCall.has_value());
-        MPP_CHECK((*FirstIndependentCall)[0U].GetDescriptorIdentifier() ==
-            NodeDescriptorId(1U));
-        MPP_CHECK((*SecondIndependentCall)[0U].GetDescriptorIdentifier() ==
-            NodeDescriptorId(1U));
+        MPP_CHECK((*FirstIndependentCall)[0U].GetDescriptorIdentifier() == NodeDescriptorId(1U));
+        MPP_CHECK((*SecondIndependentCall)[0U].GetDescriptorIdentifier() == NodeDescriptorId(1U));
 
         const std::vector<DescriptorIdentifierAllocationCandidate> Original = Candidates;
         const auto CopyInputResult = DescriptorIdentifierAllocator::Allocate(Original);
@@ -525,38 +438,31 @@ namespace
 
         MPP_CHECK(DescriptorCatalogueDetail::IsDescriptorIdentifierCountWithinDomain(0U));
         MPP_CHECK(DescriptorCatalogueDetail::IsDescriptorIdentifierCountWithinDomain(1U));
-        MPP_CHECK(DescriptorCatalogueDetail::IsDescriptorIdentifierCountWithinDomain(
-            std::numeric_limits<std::uint32_t>::max()));
+        MPP_CHECK(DescriptorCatalogueDetail::IsDescriptorIdentifierCountWithinDomain(std::numeric_limits<std::uint32_t>::max()));
         if constexpr (sizeof(std::size_t) > sizeof(std::uint32_t))
         {
-            MPP_CHECK(!DescriptorCatalogueDetail::IsDescriptorIdentifierCountWithinDomain(
-                static_cast<std::size_t>(std::numeric_limits<std::uint32_t>::max()) + 1U));
+            MPP_CHECK(!DescriptorCatalogueDetail::IsDescriptorIdentifierCountWithinDomain(static_cast<std::size_t>(std::numeric_limits<std::uint32_t>::max()) + 1U));
         }
     }
 
     void TestInvalidAndDuplicateAllocation()
     {
-        const SourceProvenance InvalidIdentityProvenance =
-            MakeSourceProvenance("identity-document", "identity-record");
+        const SourceProvenance InvalidIdentityProvenance = MakeSourceProvenance("identity-document", "identity-record");
         const auto InvalidIdentity = DescriptorIdentifierAllocator::Allocate({
             MakeAllocationCandidate("", InvalidIdentityProvenance)
         });
         MPP_CHECK(!InvalidIdentity.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            InvalidIdentity.error(), DiagnosticCode::InvalidExternalNodeIdentity));
-        const Diagnostic* InvalidIdentityDiagnostic = FindDiagnostic(
-            InvalidIdentity.error(), DiagnosticCode::InvalidExternalNodeIdentity);
+        MPP_CHECK(HasDiagnosticCode(InvalidIdentity.error(), DiagnosticCode::InvalidExternalNodeIdentity));
+        const Diagnostic* InvalidIdentityDiagnostic = FindDiagnostic(InvalidIdentity.error(), DiagnosticCode::InvalidExternalNodeIdentity);
         MPP_CHECK(InvalidIdentityDiagnostic != nullptr);
-        MPP_CHECK(InvalidIdentityDiagnostic->PrimarySourceProvenance ==
-            InvalidIdentityProvenance);
+        MPP_CHECK(InvalidIdentityDiagnostic->PrimarySourceProvenance == InvalidIdentityProvenance);
 
         const auto InvalidProvenance = DescriptorIdentifierAllocator::Allocate({
             MakeAllocationCandidate("node", SourceProvenance())
         });
         MPP_CHECK(!InvalidProvenance.has_value());
         MPP_CHECK(InvalidProvenance.error().size() == 1U);
-        MPP_CHECK(HasDiagnosticCode(
-            InvalidProvenance.error(), DiagnosticCode::InvalidSourceProvenance));
+        MPP_CHECK(HasDiagnosticCode(InvalidProvenance.error(), DiagnosticCode::InvalidSourceProvenance));
         MPP_CHECK(!InvalidProvenance.error()[0U].PrimarySourceProvenance.has_value());
 
         const SourceProvenance FirstProvenance = MakeSourceProvenance("document", "first");
@@ -568,8 +474,7 @@ namespace
         });
         MPP_CHECK(!Duplicate.has_value());
         MPP_CHECK(Duplicate.error().size() == 1U);
-        const Diagnostic* DuplicateDiagnostic = FindDiagnostic(
-            Duplicate.error(), DiagnosticCode::DuplicateExternalNodeIdentity);
+        const Diagnostic* DuplicateDiagnostic = FindDiagnostic(Duplicate.error(), DiagnosticCode::DuplicateExternalNodeIdentity);
         MPP_CHECK(DuplicateDiagnostic != nullptr);
         MPP_CHECK(DuplicateDiagnostic->PrimarySourceProvenance == FirstProvenance);
         MPP_CHECK(DuplicateDiagnostic->RelatedSourceProvenance == SecondProvenance);
@@ -597,16 +502,12 @@ namespace
             DuplicatePermutationA[1U],
             DuplicatePermutationA[0U]
         };
-        const auto DuplicateDiagnosticsA = DescriptorIdentifierAllocator::Allocate(
-            DuplicatePermutationA);
-        const auto DuplicateDiagnosticsB = DescriptorIdentifierAllocator::Allocate(
-            DuplicatePermutationB);
+        const auto DuplicateDiagnosticsA = DescriptorIdentifierAllocator::Allocate(DuplicatePermutationA);
+        const auto DuplicateDiagnosticsB = DescriptorIdentifierAllocator::Allocate(DuplicatePermutationB);
         MPP_CHECK(!DuplicateDiagnosticsA.has_value());
         MPP_CHECK(!DuplicateDiagnosticsB.has_value());
-        MPP_CHECK(SameDiagnostics(
-            DuplicateDiagnosticsA.error(), DuplicateDiagnosticsB.error()));
-        MPP_CHECK(CountDiagnosticCode(
-            DuplicateDiagnosticsA.error(), DiagnosticCode::DuplicateExternalNodeIdentity) == 2U);
+        MPP_CHECK(SameDiagnostics(DuplicateDiagnosticsA.error(), DuplicateDiagnosticsB.error()));
+        MPP_CHECK(CountDiagnosticCode(DuplicateDiagnosticsA.error(), DiagnosticCode::DuplicateExternalNodeIdentity) == 2U);
 
         const auto ThreeDuplicates = DescriptorIdentifierAllocator::Allocate({
             MakeAllocationCandidate("three", MakeSourceProvenance("document", "three-3")),
@@ -614,14 +515,12 @@ namespace
             MakeAllocationCandidate("three", MakeSourceProvenance("document", "three-2"))
         });
         MPP_CHECK(!ThreeDuplicates.has_value());
-        MPP_CHECK(CountDiagnosticCode(
-            ThreeDuplicates.error(), DiagnosticCode::DuplicateExternalNodeIdentity) == 2U);
+        MPP_CHECK(CountDiagnosticCode(ThreeDuplicates.error(), DiagnosticCode::DuplicateExternalNodeIdentity) == 2U);
         for (const Diagnostic& Diagnostic : ThreeDuplicates.error())
         {
             MPP_CHECK(Diagnostic.PrimarySourceProvenance.has_value());
             MPP_CHECK(Diagnostic.RelatedSourceProvenance.has_value());
-            MPP_CHECK(Diagnostic.PrimarySourceProvenance->GetSourceRecordIdentifier() ==
-                "three-1");
+            MPP_CHECK(Diagnostic.PrimarySourceProvenance->GetSourceRecordIdentifier() == "three-1");
         }
     }
 
@@ -651,8 +550,7 @@ namespace
         MPP_CHECK(GraphDiagnostic.SourceNodeIdentifier == NodeIdentifier(1U));
         MPP_CHECK(GraphDiagnostic.DestinationNodeIdentifier == NodeIdentifier(2U));
         MPP_CHECK(GraphDiagnostic.SourcePinReference->LocalPinIdentifier == PinIdentifier(3U));
-        MPP_CHECK(GraphDiagnostic.DestinationPinReference->LocalPinIdentifier ==
-            PinIdentifier(4U));
+        MPP_CHECK(GraphDiagnostic.DestinationPinReference->LocalPinIdentifier == PinIdentifier(4U));
         MPP_CHECK(!GraphDiagnostic.PrimarySourceProvenance.has_value());
         MPP_CHECK(!GraphDiagnostic.RelatedSourceProvenance.has_value());
     }
@@ -667,22 +565,14 @@ namespace
         });
         MPP_CHECK(FirstCatalogueAssignment.has_value());
         MPP_CHECK(SecondCatalogueAssignment.has_value());
-        MPP_CHECK((*FirstCatalogueAssignment)[0U].GetDescriptorIdentifier() ==
-            (*SecondCatalogueAssignment)[0U].GetDescriptorIdentifier());
-        MPP_CHECK((*FirstCatalogueAssignment)[0U].GetExternalIdentity() !=
-            (*SecondCatalogueAssignment)[0U].GetExternalIdentity());
+        MPP_CHECK((*FirstCatalogueAssignment)[0U].GetDescriptorIdentifier() == (*SecondCatalogueAssignment)[0U].GetDescriptorIdentifier());
+        MPP_CHECK((*FirstCatalogueAssignment)[0U].GetExternalIdentity() != (*SecondCatalogueAssignment)[0U].GetExternalIdentity());
 
-        const DescriptorCatalogueIdentity FirstIdentity = MakeCatalogueIdentity(
-            "source", "build-1", 1U, "content-a");
-        const DescriptorCatalogueIdentity SecondIdentity = MakeCatalogueIdentity(
-            "source", "build-2", 1U, "content-b");
-        const auto Compatibility = ValidateDescriptorCatalogueCompatibility(
-            DescriptorCatalogueBinding(FirstIdentity),
-            SecondIdentity
-        );
+        const DescriptorCatalogueIdentity FirstIdentity = MakeCatalogueIdentity("source", "build-1", 1U, "content-a");
+        const DescriptorCatalogueIdentity SecondIdentity = MakeCatalogueIdentity("source", "build-2", 1U, "content-b");
+        const auto Compatibility = ValidateDescriptorCatalogueCompatibility(DescriptorCatalogueBinding(FirstIdentity), SecondIdentity);
         MPP_CHECK(!Compatibility.has_value());
-        MPP_CHECK(HasDiagnosticCode(
-            Compatibility.error(), DiagnosticCode::DescriptorCatalogueMismatch));
+        MPP_CHECK(HasDiagnosticCode(Compatibility.error(), DiagnosticCode::DescriptorCatalogueMismatch));
     }
 }
 

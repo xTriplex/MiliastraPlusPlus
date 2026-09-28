@@ -107,9 +107,7 @@ namespace
 
     bool HasCode(const DiagnosticCollection& Diagnostics, DiagnosticCode Code)
     {
-        return std::any_of(
-            Diagnostics.begin(),
-            Diagnostics.end(),
+        return std::any_of(Diagnostics.begin(), Diagnostics.end(),
             [Code](const Diagnostic& DiagnosticValue)
             {
                 return DiagnosticValue.Code == Code;
@@ -117,11 +115,7 @@ namespace
         );
     }
 
-    NormalizedNodeDescriptorRecord MakeRecord(
-        std::string Identity,
-        std::vector<NormalizedPinRecord> Pins,
-        std::optional<ExecutionControlSchema> ControlSchema = std::nullopt
-    )
+    NormalizedNodeDescriptorRecord MakeRecord(std::string Identity, std::vector<NormalizedPinRecord> Pins, std::optional<ExecutionControlSchema> ControlSchema = std::nullopt)
     {
         return NormalizedNodeDescriptorRecord(
             ExternalNodeIdentity(std::move(Identity)),
@@ -138,14 +132,7 @@ namespace
         return MakeRecord(
             std::move(Identity),
             {
-                NormalizedPinRecord(
-                    "Input",
-                    TypeDesc::Boolean(),
-                    PinDirection::Input,
-                    PinCategory::Data,
-                    PinCardinality::Single,
-                    true
-                )
+                NormalizedPinRecord("Input", TypeDesc::Boolean(), PinDirection::Input, PinCategory::Data, PinCardinality::Single, true)
             }
         );
     }
@@ -182,12 +169,7 @@ namespace
         return MakeRecord(
             std::move(Identity),
             {
-                NormalizedPinRecord(
-                    "Output",
-                    TypeDesc::Boolean(),
-                    PinDirection::Output,
-                    PinCategory::Data
-                )
+                NormalizedPinRecord("Output", TypeDesc::Boolean(), PinDirection::Output, PinCategory::Data)
             }
         );
     }
@@ -197,20 +179,8 @@ namespace
         return MakeRecord(
             std::move(Identity),
             {
-                NormalizedPinRecord(
-                    "Input",
-                    TypeDesc::Boolean(),
-                    PinDirection::Input,
-                    PinCategory::Data,
-                    PinCardinality::Single,
-                    true
-                ),
-                NormalizedPinRecord(
-                    "Output",
-                    TypeDesc::Boolean(),
-                    PinDirection::Output,
-                    PinCategory::Data
-                )
+                NormalizedPinRecord("Input", TypeDesc::Boolean(), PinDirection::Input, PinCategory::Data, PinCardinality::Single, true),
+                NormalizedPinRecord("Output", TypeDesc::Boolean(), PinDirection::Output, PinCategory::Data)
             }
         );
     }
@@ -220,12 +190,7 @@ namespace
         return MakeRecord(
             std::move(Identity),
             {
-                NormalizedPinRecord(
-                    "FlowOutput",
-                    TypeDesc::Flow(),
-                    PinDirection::Output,
-                    PinCategory::Execution
-                )
+                NormalizedPinRecord("FlowOutput", TypeDesc::Flow(), PinDirection::Output, PinCategory::Execution)
             },
             EntryControlSchema{PinIndex(0U)}
         );
@@ -236,18 +201,13 @@ namespace
         return MakeRecord(
             std::move(Identity),
             {
-                NormalizedPinRecord(
-                    "FlowInput",
-                    TypeDesc::Flow(),
-                    PinDirection::Input,
-                    PinCategory::Execution
-                )
+                NormalizedPinRecord("FlowInput", TypeDesc::Flow(), PinDirection::Input, PinCategory::Execution)
             },
             ReturnControlSchema{PinIndex(0U)}
         );
     }
 
-   std::vector<NormalizedNodeDescriptorRecord> MakeLegacyRecords()
+    std::vector<NormalizedNodeDescriptorRecord> MakeLegacyRecords()
     {
         std::vector<NormalizedNodeDescriptorRecord> Records;
         Records.reserve(25U);
@@ -271,7 +231,7 @@ namespace
         return Records;
     }
 
-   GiaExportConfiguration MakeConfiguration()
+    GiaExportConfiguration MakeConfiguration()
     {
         const auto Result = GiaExportConfiguration::Create(
             GiaExportTargetProfile::ClientBooleanFilter,
@@ -290,8 +250,7 @@ namespace
         std::int32_t BackendTypeCode,
         GiaLiteralEncodingKind Encoding,
         GiaPinEmissionPolicy EmissionPolicy = GiaPinEmissionPolicy::Emit,
-        bool Connectable = true
-    )
+        bool Connectable = true)
     {
         return GiaBackendPinMapping(
             PinIndex(SemanticPin),
@@ -340,8 +299,7 @@ namespace
         std::vector<NormalizedNodeDescriptorRecord> Records,
         MappingFactory MappingFactoryFunction,
         std::string SourceNamespace = "p62.fixture",
-        std::string SourceRevision = "p62.fixture@1"
-    )
+        std::string SourceRevision = "p62.fixture@1")
     {
         const auto Catalogue = DescriptorCatalogueBuilder::Build(
             std::move(SourceNamespace),
@@ -379,12 +337,7 @@ namespace
             return std::unexpected(MappingPackage.error());
         }
 
-        return GiaExportContext::Create(
-            DescriptorCatalogueBinding(Catalogue->GetIdentity()),
-            *Registry,
-            MakeConfiguration(),
-            *MappingPackage
-        );
+        return GiaExportContext::Create(DescriptorCatalogueBinding(Catalogue->GetIdentity()), *Registry, MakeConfiguration(), *MappingPackage);
     }
 
     std::expected<GiaExportContext, DiagnosticCollection> MakeAuthenticContext(
@@ -392,21 +345,16 @@ namespace
         bool IncludePinOne = true,
         bool WrongTuple = false,
         bool IncludeMapping = true,
-        bool WrongLiteralEncoding = false
-    )
+        bool WrongLiteralEncoding = false)
     {
-        const auto SourceRecord =
-            GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(
-                NodeMetadataJson,
-                ModesJson,
-                EnumEvidenceJson
-            );
+        const auto SourceRecord = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(NodeMetadataJson, ModesJson, EnumEvidenceJson);
         MPP_CHECK(SourceRecord.has_value());
         auto Records = MakeLegacyRecords();
         Records.push_back(*SourceRecord);
         return MakeContext(
             std::move(Records),
-            [=](const DescriptorCatalogueIdentity&) {
+            [=](const DescriptorCatalogueIdentity&)
+            {
                 if (!IncludeMapping)
                 {
                     return std::vector<GiaBackendNodeMapping>{};
@@ -447,9 +395,7 @@ namespace
 
     GraphIR MakeAuthenticGraph(const GiaExportContext& Context)
     {
-        const auto* Entry = Context.GetRegistryContext().GetCatalogue().FindByExternalIdentity(
-            ExternalNodeIdentity("200000")
-        );
+        const auto* Entry = Context.GetRegistryContext().GetCatalogue().FindByExternalIdentity(ExternalNodeIdentity("200000"));
         MPP_CHECK(Entry != nullptr);
         GraphIR Graph;
         Graph.AddNode(NodeInstance{
@@ -462,8 +408,7 @@ namespace
 
     std::expected<GiaExportContext, DiagnosticCollection> MakeSimpleContext(
         std::vector<NormalizedNodeDescriptorRecord> Records,
-        std::vector<GiaBackendNodeMapping> (*Factory)(const DescriptorCatalogueIdentity&)
-    )
+        std::vector<GiaBackendNodeMapping> (*Factory)(const DescriptorCatalogueIdentity&))
     {
         return MakeContext(std::move(Records), Factory);
     }
@@ -580,19 +525,15 @@ namespace
 
     std::expected<GiaExportContext, DiagnosticCollection> MakeOrderingContext(bool ReverseMappings)
     {
-        return MakeSimpleContext(
-            MakeOrderingRecords(),
-            ReverseMappings
-                ? &MakeOrderingMappingsReverse
-                : &MakeOrderingMappingsForward
-        );
+        return MakeSimpleContext(MakeOrderingRecords(), ReverseMappings ? &MakeOrderingMappingsReverse : &MakeOrderingMappingsForward);
     }
 
     std::expected<GiaExportContext, DiagnosticCollection> MakeTwoInputContext()
     {
         return MakeSimpleContext(
             {MakeTwoBooleanInputRecord()},
-            [](const DescriptorCatalogueIdentity&) {
+            [](const DescriptorCatalogueIdentity&)
+            {
                 return std::vector<GiaBackendNodeMapping>{GiaBackendNodeMapping(
                     ExternalNodeIdentity("two-input"),
                     GiaNodeGenericId(120),
@@ -608,8 +549,7 @@ namespace
 
     NodeDescriptorId GetDescriptorId(const GiaExportContext& Context, std::string_view Identity)
     {
-        const auto* Entry = Context.GetRegistryContext().GetCatalogue().
-            FindByExternalIdentity(ExternalNodeIdentity(std::string(Identity)));
+        const auto* Entry = Context.GetRegistryContext().GetCatalogue().FindByExternalIdentity(ExternalNodeIdentity(std::string(Identity)));
         MPP_CHECK(Entry != nullptr);
         return Entry->GetDescriptorIdentifier();
     }
@@ -645,29 +585,13 @@ namespace
 
         if (ReverseBindings)
         {
-            Graph.BindInput(
-                NodeInstanceId(4U),
-                PinIndex(0U),
-                OutputReference{NodeInstanceId(3U), PinIndex(0U)}
-            );
-            Graph.BindInput(
-                NodeInstanceId(2U),
-                PinIndex(0U),
-                OutputReference{NodeInstanceId(1U), PinIndex(0U)}
-            );
+            Graph.BindInput(NodeInstanceId(4U), PinIndex(0U), OutputReference{NodeInstanceId(3U), PinIndex(0U)});
+            Graph.BindInput(NodeInstanceId(2U), PinIndex(0U), OutputReference{NodeInstanceId(1U), PinIndex(0U)});
         }
         else
         {
-            Graph.BindInput(
-                NodeInstanceId(2U),
-                PinIndex(0U),
-                OutputReference{NodeInstanceId(1U), PinIndex(0U)}
-            );
-            Graph.BindInput(
-                NodeInstanceId(4U),
-                PinIndex(0U),
-                OutputReference{NodeInstanceId(3U), PinIndex(0U)}
-            );
+            Graph.BindInput(NodeInstanceId(2U), PinIndex(0U), OutputReference{NodeInstanceId(1U), PinIndex(0U)});
+            Graph.BindInput(NodeInstanceId(4U), PinIndex(0U), OutputReference{NodeInstanceId(3U), PinIndex(0U)});
         }
 
         if (ReverseControlEdges)
@@ -704,15 +628,9 @@ namespace
         return Graph;
     }
 
-    GiaBackendNode ReplaceNodePinMapping(
-        const GiaBackendNode& Original,
-        PinIndex SemanticPin,
-        GiaBackendTypeCode BackendTypeCode,
-        GiaLiteralEncodingKind LiteralEncoding
-    )
+    GiaBackendNode ReplaceNodePinMapping(const GiaBackendNode& Original, PinIndex SemanticPin, GiaBackendTypeCode BackendTypeCode, GiaLiteralEncodingKind LiteralEncoding)
     {
-        std::vector<GiaBackendPinMapping> PinMappings =
-            Original.Mapping.GetPinMappings();
+        std::vector<GiaBackendPinMapping> PinMappings = Original.Mapping.GetPinMappings();
         for (GiaBackendPinMapping& PinMapping : PinMappings)
         {
             if (PinMapping.GetSemanticPinIndex() == SemanticPin)
@@ -753,22 +671,13 @@ namespace
                 Candidate = std::move(Replacement);
             }
         }
-        return GiaBackendGraphDetail::CreateForTesting(
-            Original.GetHeader(),
-            std::move(Nodes),
-            Original.GetDataConnections(),
-            Original.GetControlConnections()
-        );
+        return GiaBackendGraphDetail::CreateForTesting(Original.GetHeader(), std::move(Nodes), Original.GetDataConnections(), Original.GetControlConnections());
     }
 
     std::pair<NodeDescriptorId, NodeDescriptorId> GetDescriptorPair(const GiaExportContext& Context, std::string_view First, std::string_view Second)
     {
-        const auto* FirstEntry = Context.GetRegistryContext().GetCatalogue().FindByExternalIdentity(
-            ExternalNodeIdentity(std::string(First))
-        );
-        const auto* SecondEntry = Context.GetRegistryContext().GetCatalogue().FindByExternalIdentity(
-            ExternalNodeIdentity(std::string(Second))
-        );
+        const auto* FirstEntry = Context.GetRegistryContext().GetCatalogue().FindByExternalIdentity(ExternalNodeIdentity(std::string(First)));
+        const auto* SecondEntry = Context.GetRegistryContext().GetCatalogue().FindByExternalIdentity(ExternalNodeIdentity(std::string(Second)));
         MPP_CHECK(FirstEntry != nullptr && SecondEntry != nullptr);
         return {
             FirstEntry->GetDescriptorIdentifier(),
@@ -780,17 +689,12 @@ namespace
     {
         const auto Context = MakeAuthenticContext();
         MPP_CHECK(Context.has_value());
-        const auto Result = GiaGraphLowerer::Lower(
-            MakeAuthenticGraph(*Context),
-            *Context
-        );
+        const auto Result = GiaGraphLowerer::Lower(MakeAuthenticGraph(*Context), *Context);
         MPP_CHECK(Result.has_value());
         MPP_CHECK(Result->IsValid());
         MPP_CHECK(Context->GetRegistryContext().GetCatalogue().GetEntryCount() == 26U);
-        MPP_CHECK(Context->GetRegistryContext().GetCatalogueIdentity().GetSourceNamespace() ==
-            "genshin.client-bool-filter-descriptor-source");
-        MPP_CHECK(Context->GetRegistryContext().GetCatalogueIdentity().GetSourceRevision() ==
-            CombinedSourceRevision);
+        MPP_CHECK(Context->GetRegistryContext().GetCatalogueIdentity().GetSourceNamespace() == "genshin.client-bool-filter-descriptor-source");
+        MPP_CHECK(Context->GetRegistryContext().GetCatalogueIdentity().GetSourceRevision() == CombinedSourceRevision);
         MPP_CHECK(Result->GetNodes().size() == 1U);
         MPP_CHECK(Result->GetDataConnections().empty());
         MPP_CHECK(Result->GetControlConnections().empty());
@@ -855,9 +759,7 @@ namespace
         MPP_CHECK(!*Inputs[0U].Literal->TryGet<bool>());
         MPP_CHECK(Inputs[1U].SourceKind == GiaBackendInputValueSourceKind::DescriptorDefault);
         MPP_CHECK(Inputs[1U].Literal->Is<EnumLiteralValue>());
-        MPP_CHECK(Inputs[1U].SemanticType == TypeDesc::Enum(
-            EnumTypeIdentity("filter_return_type")
-        ));
+        MPP_CHECK(Inputs[1U].SemanticType == TypeDesc::Enum(EnumTypeIdentity("filter_return_type")));
         MPP_CHECK(Inputs[1U].Literal->TryGet<EnumLiteralValue>()->GetValue() == 1000010);
     }
 
@@ -867,11 +769,7 @@ namespace
         MPP_CHECK(Context.has_value());
         GraphIR Graph = MakeAuthenticGraph(*Context);
         const EnumTypeIdentity Identity("filter_return_type");
-        Graph.BindInput(
-            NodeInstanceId(1U),
-            PinIndex(0U),
-            LiteralValue(LiteralValue::Data{true})
-        );
+        Graph.BindInput(NodeInstanceId(1U), PinIndex(0U), LiteralValue(LiteralValue::Data{true}));
         Graph.BindInput(
             NodeInstanceId(1U),
             PinIndex(1U),
@@ -881,20 +779,18 @@ namespace
         );
         const auto Result = GiaGraphLowerer::Lower(Graph, *Context);
         MPP_CHECK(Result.has_value());
-        MPP_CHECK(Result->GetNodes()[0U].Inputs[0U].SourceKind ==
-            GiaBackendInputValueSourceKind::ExplicitLiteral);
+        MPP_CHECK(Result->GetNodes()[0U].Inputs[0U].SourceKind == GiaBackendInputValueSourceKind::ExplicitLiteral);
         MPP_CHECK(*Result->GetNodes()[0U].Inputs[0U].Literal->TryGet<bool>());
-        MPP_CHECK(Result->GetNodes()[0U].Inputs[1U].SourceKind ==
-            GiaBackendInputValueSourceKind::ExplicitLiteral);
-        MPP_CHECK(Result->GetNodes()[0U].Inputs[1U].Literal->TryGet<EnumLiteralValue>()->GetValue() ==
-            10000011);
+        MPP_CHECK(Result->GetNodes()[0U].Inputs[1U].SourceKind == GiaBackendInputValueSourceKind::ExplicitLiteral);
+        MPP_CHECK(Result->GetNodes()[0U].Inputs[1U].Literal->TryGet<EnumLiteralValue>()->GetValue() == 10000011);
     }
 
     void TestGiaGraphLowererRejectsMissingDefault()
     {
         const auto Context = MakeSimpleContext(
             {MakeBooleanInputRecord("no-default")},
-            [](const DescriptorCatalogueIdentity&) {
+            [](const DescriptorCatalogueIdentity&)
+            {
                 return std::vector<GiaBackendNodeMapping>{GiaBackendNodeMapping(
                     ExternalNodeIdentity("no-default"),
                     GiaNodeGenericId(20),
@@ -922,15 +818,9 @@ namespace
 
         const auto MissingConcreteContext = MakeAuthenticContext(false);
         MPP_CHECK(MissingConcreteContext.has_value());
-        const auto MissingConcrete = GiaGraphLowerer::Lower(
-            MakeAuthenticGraph(*MissingConcreteContext),
-            *MissingConcreteContext
-        );
+        const auto MissingConcrete = GiaGraphLowerer::Lower(MakeAuthenticGraph(*MissingConcreteContext), *MissingConcreteContext);
         MPP_CHECK(!MissingConcrete.has_value());
-        MPP_CHECK(HasCode(
-            MissingConcrete.error(),
-            DiagnosticCode::UnresolvedGiaBackendConcreteIdentity
-        ));
+        MPP_CHECK(HasCode(MissingConcrete.error(), DiagnosticCode::UnresolvedGiaBackendConcreteIdentity));
     }
 
     void TestGiaGraphLowererRejectsMissingPinMapping()
@@ -952,10 +842,7 @@ namespace
 
         const auto LiteralContext = MakeAuthenticContext(true, true, false, true, true);
         MPP_CHECK(LiteralContext.has_value());
-        const auto LiteralResult = GiaGraphLowerer::Lower(
-            MakeAuthenticGraph(*LiteralContext),
-            *LiteralContext
-        );
+        const auto LiteralResult = GiaGraphLowerer::Lower(MakeAuthenticGraph(*LiteralContext), *LiteralContext);
         MPP_CHECK(!LiteralResult.has_value());
         MPP_CHECK(HasCode(LiteralResult.error(), DiagnosticCode::UnsupportedGiaBackendValue));
     }
@@ -971,11 +858,7 @@ namespace
             TypeDesc::Boolean(),
             LiteralValue(LiteralValue::Data{false})
         });
-        Graph.BindInput(
-            NodeInstanceId(1U),
-            PinIndex(0U),
-            GraphVariableReference{GraphVariableId(1U)}
-        );
+        Graph.BindInput(NodeInstanceId(1U), PinIndex(0U), GraphVariableReference{GraphVariableId(1U)});
         const auto Result = GiaGraphLowerer::Lower(Graph, *Context);
         MPP_CHECK(!Result.has_value());
         MPP_CHECK(HasCode(Result.error(), DiagnosticCode::UnsupportedGiaTargetGraphFeature));
@@ -992,11 +875,7 @@ namespace
             TypeDesc::Enum(EnumTypeIdentity("filter_return_type")),
             std::nullopt
         });
-        Graph.BindInput(
-            NodeInstanceId(1U),
-            PinIndex(1U),
-            GraphVariableReference{GraphVariableId(2U)}
-        );
+        Graph.BindInput(NodeInstanceId(1U), PinIndex(1U), GraphVariableReference{GraphVariableId(2U)});
         const auto Result = GiaGraphLowerer::Lower(Graph, *Context);
         MPP_CHECK(!Result.has_value());
         MPP_CHECK(HasCode(Result.error(), DiagnosticCode::UnsupportedGiaTargetGraphFeature));
@@ -1010,18 +889,13 @@ namespace
         GraphIR Graph;
         Graph.AddNode({NodeInstanceId(2U), Ids.second, std::nullopt});
         Graph.AddNode({NodeInstanceId(1U), Ids.first, std::nullopt});
-        Graph.BindInput(
-            NodeInstanceId(2U),
-            PinIndex(0U),
-            OutputReference{NodeInstanceId(1U), PinIndex(0U)}
-        );
+        Graph.BindInput(NodeInstanceId(2U), PinIndex(0U), OutputReference{NodeInstanceId(1U), PinIndex(0U)});
         const auto Result = GiaGraphLowerer::Lower(Graph, *Context);
         MPP_CHECK(Result.has_value());
         MPP_CHECK(Result->GetDataConnections().size() == 1U);
         MPP_CHECK(Result->GetDataConnections()[0U].SourceNode == NodeInstanceId(1U));
         MPP_CHECK(Result->GetDataConnections()[0U].DestinationNode == NodeInstanceId(2U));
-        MPP_CHECK(Result->GetNodes()[1U].Inputs[0U].SourceKind ==
-            GiaBackendInputValueSourceKind::DataConnection);
+        MPP_CHECK(Result->GetNodes()[1U].Inputs[0U].SourceKind == GiaBackendInputValueSourceKind::DataConnection);
         MPP_CHECK(!Result->GetNodes()[1U].Inputs[0U].Literal.has_value());
     }
 
@@ -1034,7 +908,8 @@ namespace
                 MakeFlowOutputRecord("flow-source"),
                 MakeFlowInputRecord("flow-destination")
             },
-            [](const DescriptorCatalogueIdentity&) {
+            [](const DescriptorCatalogueIdentity&)
+            {
                 return std::vector<GiaBackendNodeMapping>{
                     GiaBackendNodeMapping(
                         ExternalNodeIdentity("data-source"), GiaNodeGenericId(30), GiaNodeConcreteId(0),
@@ -1072,7 +947,8 @@ namespace
     {
         const auto Context = MakeSimpleContext(
             {MakeFlowOutputRecord("flow-source"), MakeFlowInputRecord("flow-destination")},
-            [](const DescriptorCatalogueIdentity&) {
+            [](const DescriptorCatalogueIdentity&)
+            {
                 return std::vector<GiaBackendNodeMapping>{GiaBackendNodeMapping(
                     ExternalNodeIdentity("flow-source"), GiaNodeGenericId(40), GiaNodeConcreteId(0),
                     {})};
@@ -1099,8 +975,7 @@ namespace
         MPP_CHECK(Result->GetNodes().size() == 8U);
         for (std::size_t Index = 0U; Index < Result->GetNodes().size(); ++Index)
         {
-            MPP_CHECK(Result->GetNodes()[Index].Trace.GraphNode ==
-                NodeInstanceId(static_cast<std::uint32_t>(Index + 1U)));
+            MPP_CHECK(Result->GetNodes()[Index].Trace.GraphNode == NodeInstanceId(static_cast<std::uint32_t>(Index + 1U)));
         }
         MPP_CHECK(Result->GetDataConnections().size() == 2U);
         MPP_CHECK(Result->GetDataConnections()[0U].SourceNode == NodeInstanceId(1U));
@@ -1121,20 +996,9 @@ namespace
             GetDescriptorId(*TwoInputContext, "two-input"),
             std::nullopt
         });
-        TwoInputGraph.BindInput(
-            NodeInstanceId(1U),
-            PinIndex(1U),
-            LiteralValue(LiteralValue::Data{true})
-        );
-        TwoInputGraph.BindInput(
-            NodeInstanceId(1U),
-            PinIndex(0U),
-            LiteralValue(LiteralValue::Data{false})
-        );
-        const auto TwoInputResult = GiaGraphLowerer::Lower(
-            TwoInputGraph,
-            *TwoInputContext
-        );
+        TwoInputGraph.BindInput(NodeInstanceId(1U), PinIndex(1U), LiteralValue(LiteralValue::Data{true}));
+        TwoInputGraph.BindInput(NodeInstanceId(1U), PinIndex(0U), LiteralValue(LiteralValue::Data{false}));
+        const auto TwoInputResult = GiaGraphLowerer::Lower(TwoInputGraph, *TwoInputContext);
         MPP_CHECK(TwoInputResult.has_value());
         MPP_CHECK(TwoInputResult->GetNodes()[0U].Inputs.size() == 2U);
         MPP_CHECK(TwoInputResult->GetNodes()[0U].Inputs[0U].SemanticPin == PinIndex(0U));
@@ -1170,14 +1034,8 @@ namespace
     {
         const auto Context = MakeOrderingContext(false);
         MPP_CHECK(Context.has_value());
-        const auto First = GiaGraphLowerer::Lower(
-            MakeOrderingGraph(*Context, false, false, false),
-            *Context
-        );
-        const auto Second = GiaGraphLowerer::Lower(
-            MakeOrderingGraph(*Context, false, true, false),
-            *Context
-        );
+        const auto First = GiaGraphLowerer::Lower(MakeOrderingGraph(*Context, false, false, false), *Context);
+        const auto Second = GiaGraphLowerer::Lower(MakeOrderingGraph(*Context, false, true, false), *Context);
         MPP_CHECK(First.has_value() && Second.has_value());
         MPP_CHECK(*First == *Second);
     }
@@ -1186,14 +1044,8 @@ namespace
     {
         const auto Context = MakeOrderingContext(false);
         MPP_CHECK(Context.has_value());
-        const auto First = GiaGraphLowerer::Lower(
-            MakeOrderingGraph(*Context, false, false, false),
-            *Context
-        );
-        const auto Second = GiaGraphLowerer::Lower(
-            MakeOrderingGraph(*Context, false, false, true),
-            *Context
-        );
+        const auto First = GiaGraphLowerer::Lower(MakeOrderingGraph(*Context, false, false, false), *Context);
+        const auto Second = GiaGraphLowerer::Lower(MakeOrderingGraph(*Context, false, false, true), *Context);
         MPP_CHECK(First.has_value() && Second.has_value());
         MPP_CHECK(*First == *Second);
     }
@@ -1203,17 +1055,9 @@ namespace
         const auto ForwardContext = MakeOrderingContext(false);
         const auto ReverseContext = MakeOrderingContext(true);
         MPP_CHECK(ForwardContext.has_value() && ReverseContext.has_value());
-        const GraphIR Graph = MakeOrderingGraph(
-            *ForwardContext,
-            false,
-            false,
-            false
-        );
+        const GraphIR Graph = MakeOrderingGraph(*ForwardContext, false, false, false);
         const auto Forward = GiaGraphLowerer::Lower(Graph, *ForwardContext);
-        const auto Reverse = GiaGraphLowerer::Lower(
-            Graph,
-            *ReverseContext
-        );
+        const auto Reverse = GiaGraphLowerer::Lower(Graph, *ReverseContext);
         MPP_CHECK(Forward.has_value() && Reverse.has_value());
         MPP_CHECK(*Forward == *Reverse);
     }
@@ -1222,10 +1066,7 @@ namespace
     {
         const auto Context = MakeOrderingContext(false);
         MPP_CHECK(Context.has_value());
-        const auto Lowered = GiaGraphLowerer::Lower(
-            MakeOrderingGraph(*Context, false, false, false),
-            *Context
-        );
+        const auto Lowered = GiaGraphLowerer::Lower(MakeOrderingGraph(*Context, false, false, false), *Context);
         MPP_CHECK(Lowered.has_value());
         MPP_CHECK(Lowered->IsValid());
 
@@ -1259,10 +1100,7 @@ namespace
     {
         const auto AuthenticContext = MakeAuthenticContext();
         MPP_CHECK(AuthenticContext.has_value());
-        const auto Authentic = GiaGraphLowerer::Lower(
-            MakeAuthenticGraph(*AuthenticContext),
-            *AuthenticContext
-        );
+        const auto Authentic = GiaGraphLowerer::Lower(MakeAuthenticGraph(*AuthenticContext), *AuthenticContext);
         MPP_CHECK(Authentic.has_value());
         MPP_CHECK(Authentic->IsValid());
 
@@ -1272,11 +1110,7 @@ namespace
             GiaBackendTypeCode(13),
             GiaLiteralEncodingKind::Enum
         );
-        MPP_CHECK(!ReplaceModelNode(
-            *Authentic,
-            NodeInstanceId(1U),
-            BadBooleanNode
-        ).IsValid());
+        MPP_CHECK(!ReplaceModelNode(*Authentic, NodeInstanceId(1U), BadBooleanNode).IsValid());
 
         const GiaBackendNode BadBooleanEncodingNode = ReplaceNodePinMapping(
             Authentic->GetNodes()[0U],
@@ -1284,11 +1118,7 @@ namespace
             GiaBackendTypeCode(5),
             GiaLiteralEncodingKind::Enum
         );
-        MPP_CHECK(!ReplaceModelNode(
-            *Authentic,
-            NodeInstanceId(1U),
-            BadBooleanEncodingNode
-        ).IsValid());
+        MPP_CHECK(!ReplaceModelNode(*Authentic, NodeInstanceId(1U), BadBooleanEncodingNode).IsValid());
 
         const GiaBackendNode BadEnumNode = ReplaceNodePinMapping(
             Authentic->GetNodes()[0U],
@@ -1296,11 +1126,7 @@ namespace
             GiaBackendTypeCode(5),
             GiaLiteralEncodingKind::Boolean
         );
-        MPP_CHECK(!ReplaceModelNode(
-            *Authentic,
-            NodeInstanceId(1U),
-            BadEnumNode
-        ).IsValid());
+        MPP_CHECK(!ReplaceModelNode(*Authentic, NodeInstanceId(1U), BadEnumNode).IsValid());
 
         const GiaBackendNode BadEnumEncodingNode = ReplaceNodePinMapping(
             Authentic->GetNodes()[0U],
@@ -1308,41 +1134,24 @@ namespace
             GiaBackendTypeCode(13),
             GiaLiteralEncodingKind::Boolean
         );
-        MPP_CHECK(!ReplaceModelNode(
-            *Authentic,
-            NodeInstanceId(1U),
-            BadEnumEncodingNode
-        ).IsValid());
+        MPP_CHECK(!ReplaceModelNode(*Authentic, NodeInstanceId(1U), BadEnumEncodingNode).IsValid());
 
         GiaBackendNode WrongFamilyNode = Authentic->GetNodes()[0U];
-        WrongFamilyNode.Inputs[1U].SemanticType =
-            TypeDesc::Enum(EnumTypeIdentity("other_family"));
+        WrongFamilyNode.Inputs[1U].SemanticType = TypeDesc::Enum(EnumTypeIdentity("other_family"));
         WrongFamilyNode.Inputs[1U].Literal = LiteralValue(
             LiteralValue::Data{
                 EnumLiteralValue(EnumTypeIdentity("other_family"), 1000010)
             }
         );
-        MPP_CHECK(!ReplaceModelNode(
-            *Authentic,
-            NodeInstanceId(1U),
-            std::move(WrongFamilyNode)
-        ).IsValid());
+        MPP_CHECK(!ReplaceModelNode(*Authentic, NodeInstanceId(1U), std::move(WrongFamilyNode)).IsValid());
 
         const auto DataContext = MakeOutputReferenceContext();
         MPP_CHECK(DataContext.has_value());
-        const auto DataIds = GetDescriptorPair(
-            *DataContext,
-            "boolean-output",
-            "boolean-input"
-        );
+        const auto DataIds = GetDescriptorPair(*DataContext, "boolean-output", "boolean-input");
         GraphIR DataGraph;
         DataGraph.AddNode({NodeInstanceId(1U), DataIds.first, std::nullopt});
         DataGraph.AddNode({NodeInstanceId(2U), DataIds.second, std::nullopt});
-        DataGraph.BindInput(
-            NodeInstanceId(2U),
-            PinIndex(0U),
-            OutputReference{NodeInstanceId(1U), PinIndex(0U)}
-        );
+        DataGraph.BindInput(NodeInstanceId(2U), PinIndex(0U), OutputReference{NodeInstanceId(1U), PinIndex(0U)});
         const auto DataResult = GiaGraphLowerer::Lower(DataGraph, *DataContext);
         MPP_CHECK(DataResult.has_value());
         MPP_CHECK(DataResult->IsValid());
@@ -1352,11 +1161,7 @@ namespace
             GiaBackendTypeCode(13),
             GiaLiteralEncodingKind::Enum
         );
-        MPP_CHECK(!ReplaceModelNode(
-            *DataResult,
-            NodeInstanceId(2U),
-            BadDataDestination
-        ).IsValid());
+        MPP_CHECK(!ReplaceModelNode(*DataResult, NodeInstanceId(2U), BadDataDestination).IsValid());
     }
 
     void TestGiaGraphLowererDoesNotMutateGraphIR()
@@ -1384,8 +1189,7 @@ namespace
         MPP_CHECK(Result.has_value());
         MPP_CHECK(Result->IsValid());
         MPP_CHECK(Result->GetNodes()[0U].Trace.ExternalIdentity.GetKey() == "200000");
-        MPP_CHECK(Result->GetNodes()[0U].Inputs[1U].Literal->TryGet<EnumLiteralValue>()->GetValue() ==
-            1000010);
+        MPP_CHECK(Result->GetNodes()[0U].Inputs[1U].Literal->TryGet<EnumLiteralValue>()->GetValue() == 1000010);
     }
 
     void TestGiaGraphLowererReturnsNoPartialModelOnFailure()
@@ -1424,13 +1228,7 @@ namespace
 
     void TestGiaGraphLowererOrdersDiagnosticsDeterministically()
     {
-        const auto Context = MakeAuthenticContext(
-            true,
-            true,
-            false,
-            true,
-            true
-        );
+        const auto Context = MakeAuthenticContext(true, true, false, true, true);
         MPP_CHECK(Context.has_value());
         const GraphIR Graph = MakeAuthenticGraph(*Context);
         const auto First = GiaGraphLowerer::Lower(Graph, *Context);
@@ -1439,19 +1237,14 @@ namespace
         MPP_CHECK(First.error().size() == 2U);
         MPP_CHECK(First.error()[0U].Code == DiagnosticCode::UnsupportedGiaBackendValue);
         MPP_CHECK(First.error()[1U].Code == DiagnosticCode::UnsupportedGiaBackendValue);
-        MPP_CHECK(First.error()[0U].Message.find(
-            "the input does not have the required target literal encoding"
-        ) != std::string::npos);
-        MPP_CHECK(First.error()[1U].Message.find(
-            "the descriptor default is unsupported by the backend tuple"
-        ) != std::string::npos);
+        MPP_CHECK(First.error()[0U].Message.find("the input does not have the required target literal encoding") != std::string::npos);
+        MPP_CHECK(First.error()[1U].Message.find("the descriptor default is unsupported by the backend tuple") != std::string::npos);
         MPP_CHECK(First.error().size() == Second.error().size());
         for (std::size_t Index = 0U; Index < First.error().size(); ++Index)
         {
             MPP_CHECK(First.error()[Index].Code == Second.error()[Index].Code);
             MPP_CHECK(First.error()[Index].Message == Second.error()[Index].Message);
-            MPP_CHECK(First.error()[Index].ExternalIdentityKey ==
-                Second.error()[Index].ExternalIdentityKey);
+            MPP_CHECK(First.error()[Index].ExternalIdentityKey == Second.error()[Index].ExternalIdentityKey);
         }
     }
 

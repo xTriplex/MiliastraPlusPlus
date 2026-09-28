@@ -23,8 +23,7 @@ namespace MiliastraPlusPlus
             PinCategory Category,
             PinCardinality Cardinality,
             bool AllowsLiteral,
-            std::optional<LiteralValue> DefaultValue = std::nullopt
-        )
+            std::optional<LiteralValue> DefaultValue = std::nullopt)
             : m_Name(std::move(Name))
             , m_FixedType(std::move(FixedType))
             , m_Reflected(Reflected)
@@ -46,19 +45,15 @@ namespace MiliastraPlusPlus
             {
                 return false;
             }
-            if (m_Direction != PinDirection::Input &&
-                m_Direction != PinDirection::Output)
+            if (m_Direction != PinDirection::Input && m_Direction != PinDirection::Output)
             {
                 return false;
             }
-            if (m_Category != PinCategory::Data &&
-                m_Category != PinCategory::Execution)
+            if (m_Category != PinCategory::Data && m_Category != PinCategory::Execution)
             {
                 return false;
             }
-            if (m_Cardinality != PinCardinality::Single &&
-                m_Cardinality != PinCardinality::Optional &&
-                m_Cardinality != PinCardinality::Multiple)
+            if (m_Cardinality != PinCardinality::Single && m_Cardinality != PinCardinality::Optional && m_Cardinality != PinCardinality::Multiple)
             {
                 return false;
             }
@@ -119,11 +114,7 @@ namespace MiliastraPlusPlus
                 return false;
             }
 
-            return !m_DefaultValue.has_value() ||
-                DescriptorCatalogueDetail::AreNormalizedLiteralValuesEqual(
-                    *m_DefaultValue,
-                    *Other.m_DefaultValue
-                );
+            return !m_DefaultValue.has_value() || DescriptorCatalogueDetail::AreNormalizedLiteralValuesEqual(*m_DefaultValue, *Other.m_DefaultValue);
         }
 
     private:
@@ -171,18 +162,12 @@ namespace MiliastraPlusPlus
     class DescriptorSpecializationVariant final
     {
     public:
-        DescriptorSpecializationVariant(
-            ExternalNodeIdentity ConcreteExternalIdentity,
-            std::string SpecializationKey,
-            std::vector<DescriptorSpecializationPinBinding> PinBindings
-        )
+        DescriptorSpecializationVariant(ExternalNodeIdentity ConcreteExternalIdentity, std::string SpecializationKey, std::vector<DescriptorSpecializationPinBinding> PinBindings)
             : m_ConcreteExternalIdentity(std::move(ConcreteExternalIdentity))
             , m_SpecializationKey(std::move(SpecializationKey))
             , m_PinBindings(std::move(PinBindings))
         {
-            std::sort(
-                m_PinBindings.begin(),
-                m_PinBindings.end(),
+            std::sort(m_PinBindings.begin(), m_PinBindings.end(),
                 [](const DescriptorSpecializationPinBinding& Left, const DescriptorSpecializationPinBinding& Right)
                 {
                     return Left.GetFamilyPinIndex() < Right.GetFamilyPinIndex();
@@ -217,9 +202,7 @@ namespace MiliastraPlusPlus
 
         bool operator==(const DescriptorSpecializationVariant& Other) const
         {
-            return m_ConcreteExternalIdentity == Other.m_ConcreteExternalIdentity &&
-                m_SpecializationKey == Other.m_SpecializationKey &&
-                m_PinBindings == Other.m_PinBindings;
+            return m_ConcreteExternalIdentity == Other.m_ConcreteExternalIdentity && m_SpecializationKey == Other.m_SpecializationKey && m_PinBindings == Other.m_PinBindings;
         }
 
     private:
@@ -238,31 +221,27 @@ namespace MiliastraPlusPlus
             std::vector<DescriptorSpecializationPin> Pins,
             std::optional<ExecutionControlSchema> ControlSchema,
             std::optional<SourceProvenance> Provenance,
-            std::vector<DescriptorSpecializationVariant> Variants
-        )
+            std::vector<DescriptorSpecializationVariant> Variants)
             : m_FamilyExternalIdentity(std::move(FamilyExternalIdentity))
             , m_DisplayName(std::move(DisplayName))
-            , m_Availability(
-                DescriptorCatalogueDetail::CanonicalizeAvailability(Availability))
+            , m_Availability(DescriptorCatalogueDetail::CanonicalizeAvailability(Availability))
             , m_Pins(std::move(Pins))
             , m_ControlSchema(std::move(ControlSchema))
             , m_SourceProvenance(std::move(Provenance))
             , m_Variants(std::move(Variants))
         {
-            std::sort(
-                m_Variants.begin(),
-                m_Variants.end(),
+            std::sort(m_Variants.begin(), m_Variants.end(),
                 [](const DescriptorSpecializationVariant& Left, const DescriptorSpecializationVariant& Right)
                 {
-                    return Left.GetConcreteExternalIdentity() <
-                        Right.GetConcreteExternalIdentity();
+                    return Left.GetConcreteExternalIdentity() < Right.GetConcreteExternalIdentity();
                 }
             );
         }
 
         [[nodiscard]] bool IsValid() const
         {
-            if (!m_FamilyExternalIdentity.IsValid() || m_DisplayName.empty() ||
+            if (!m_FamilyExternalIdentity.IsValid() ||
+                m_DisplayName.empty() ||
                 m_Variants.empty() ||
                 (m_SourceProvenance.has_value() && !m_SourceProvenance->IsValid()))
             {
@@ -271,8 +250,7 @@ namespace MiliastraPlusPlus
 
             for (std::size_t Index = 0U; Index < m_Availability.size(); ++Index)
             {
-                if ((m_Availability[Index] != NodeAvailability::Server &&
-                        m_Availability[Index] != NodeAvailability::Client) ||
+                if ((m_Availability[Index] != NodeAvailability::Server && m_Availability[Index] != NodeAvailability::Client) ||
                     (Index > 0U && m_Availability[Index - 1U] == m_Availability[Index]))
                 {
                     return false;
@@ -359,11 +337,7 @@ namespace MiliastraPlusPlus
                 return false;
             }
 
-            return !m_ControlSchema.has_value() ||
-                DescriptorCatalogueDetail::AreExecutionControlSchemasEqual(
-                    *m_ControlSchema,
-                    *Other.m_ControlSchema
-                );
+            return !m_ControlSchema.has_value() || DescriptorCatalogueDetail::AreExecutionControlSchemasEqual(*m_ControlSchema, *Other.m_ControlSchema);
         }
 
     private:
@@ -400,8 +374,7 @@ namespace MiliastraPlusPlus
 
         bool operator==(const DescriptorSpecializationResult& Other) const
         {
-            return m_Families == Other.m_Families &&
-                m_ConcreteRecords == Other.m_ConcreteRecords;
+            return m_Families == Other.m_Families && m_ConcreteRecords == Other.m_ConcreteRecords;
         }
 
     private:
@@ -427,8 +400,7 @@ namespace MiliastraPlusPlus
             std::string Message,
             std::string ExternalKey = {},
             std::optional<SourceProvenance> PrimaryProvenance = std::nullopt,
-            std::optional<SourceProvenance> RelatedProvenance = std::nullopt
-        )
+            std::optional<SourceProvenance> RelatedProvenance = std::nullopt)
         {
             Diagnostics.push_back({
                 .ExternalKey = std::move(ExternalKey),
@@ -441,8 +413,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] inline const DescriptorSpecializationPinBinding* FindBinding(const DescriptorSpecializationVariant& Variant, PinIndex FamilyPinIndex)
         {
-            for (const DescriptorSpecializationPinBinding& Binding :
-                Variant.GetPinBindings())
+            for (const DescriptorSpecializationPinBinding& Binding : Variant.GetPinBindings())
             {
                 if (Binding.GetFamilyPinIndex() == FamilyPinIndex)
                 {
@@ -456,14 +427,12 @@ namespace MiliastraPlusPlus
         [[nodiscard]] inline bool IsVariantBindingRelationValid(
             const DescriptorSpecializationFamily& Family,
             const DescriptorSpecializationVariant& Variant,
-            std::vector<PendingDiagnostic>* Diagnostics
-        )
+            std::vector<PendingDiagnostic>* Diagnostics)
         {
             bool Valid = true;
             const std::vector<DescriptorSpecializationPin>& Pins = Family.GetPins();
 
-            for (const DescriptorSpecializationPinBinding& Binding :
-                Variant.GetPinBindings())
+            for (const DescriptorSpecializationPinBinding& Binding : Variant.GetPinBindings())
             {
                 const std::uint32_t Index = Binding.GetFamilyPinIndex().GetValue();
                 if (!Binding.IsValid() || Index >= Pins.size())
@@ -501,11 +470,9 @@ namespace MiliastraPlusPlus
             for (std::size_t Index = 0U; Index < Pins.size(); ++Index)
             {
                 std::size_t BindingCount = 0U;
-                for (const DescriptorSpecializationPinBinding& Binding :
-                    Variant.GetPinBindings())
+                for (const DescriptorSpecializationPinBinding& Binding : Variant.GetPinBindings())
                 {
-                    if (Binding.GetFamilyPinIndex() ==
-                        PinIndex(static_cast<std::uint32_t>(Index)))
+                    if (Binding.GetFamilyPinIndex() == PinIndex(static_cast<std::uint32_t>(Index)))
                     {
                         ++BindingCount;
                     }
@@ -535,8 +502,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] inline std::optional<NormalizedNodeDescriptorRecord> MakeConcreteRecord(
             const DescriptorSpecializationFamily& Family,
-            const DescriptorSpecializationVariant& Variant
-        )
+            const DescriptorSpecializationVariant& Variant)
         {
             if (!IsVariantBindingRelationValid(Family, Variant, nullptr))
             {
@@ -551,10 +517,7 @@ namespace MiliastraPlusPlus
                 TypeDesc ConcreteType;
                 if (FamilyPin.IsReflected())
                 {
-                    const DescriptorSpecializationPinBinding* Binding = FindBinding(
-                        Variant,
-                        PinIndex(static_cast<std::uint32_t>(Index))
-                    );
+                    const DescriptorSpecializationPinBinding* Binding = FindBinding(Variant, PinIndex(static_cast<std::uint32_t>(Index)));
                     if (Binding == nullptr)
                     {
                         return std::nullopt;
@@ -591,49 +554,33 @@ namespace MiliastraPlusPlus
     inline bool DescriptorSpecializationResult::IsValid() const
     {
         std::size_t VariantCount = 0U;
-        for (std::size_t FamilyIndex = 0U;
-            FamilyIndex < m_Families.size();
-            ++FamilyIndex)
+        for (std::size_t FamilyIndex = 0U; FamilyIndex < m_Families.size(); ++FamilyIndex)
         {
             const DescriptorSpecializationFamily& Family = m_Families[FamilyIndex];
             if (!Family.IsValid() ||
-                (FamilyIndex > 0U &&
-                    !(m_Families[FamilyIndex - 1U].GetFamilyExternalIdentity() <
-                        Family.GetFamilyExternalIdentity())))
+                (FamilyIndex > 0U && !(m_Families[FamilyIndex - 1U].GetFamilyExternalIdentity() < Family.GetFamilyExternalIdentity())))
             {
                 return false;
             }
 
             VariantCount += Family.GetVariants().size();
-            for (std::size_t VariantIndex = 0U;
-                VariantIndex < Family.GetVariants().size();
-                ++VariantIndex)
+            for (std::size_t VariantIndex = 0U; VariantIndex < Family.GetVariants().size(); ++VariantIndex)
             {
-                const DescriptorSpecializationVariant& Variant =
-                    Family.GetVariants()[VariantIndex];
+                const DescriptorSpecializationVariant& Variant = Family.GetVariants()[VariantIndex];
                 for (std::size_t Prior = 0U; Prior < VariantIndex; ++Prior)
                 {
-                    if (Family.GetVariants()[Prior].GetSpecializationKey() ==
-                            Variant.GetSpecializationKey() ||
-                        Family.GetVariants()[Prior].GetConcreteExternalIdentity() ==
-                            Variant.GetConcreteExternalIdentity())
+                    if (Family.GetVariants()[Prior].GetSpecializationKey() == Variant.GetSpecializationKey() ||
+                        Family.GetVariants()[Prior].GetConcreteExternalIdentity() == Variant.GetConcreteExternalIdentity())
                     {
                         return false;
                     }
                 }
-                if (!DescriptorSpecializationDetail::IsVariantBindingRelationValid(
-                        Family,
-                        Variant,
-                        nullptr
-                    ))
+                if (!DescriptorSpecializationDetail::IsVariantBindingRelationValid(Family, Variant, nullptr))
                 {
                     return false;
                 }
 
-                const auto Expected = DescriptorSpecializationDetail::MakeConcreteRecord(
-                    Family,
-                    Variant
-                );
+                const auto Expected = DescriptorSpecializationDetail::MakeConcreteRecord(Family, Variant);
                 if (!Expected.has_value())
                 {
                     return false;
@@ -642,8 +589,7 @@ namespace MiliastraPlusPlus
                 std::size_t MatchCount = 0U;
                 for (const NormalizedNodeDescriptorRecord& Record : m_ConcreteRecords)
                 {
-                    if (Record.GetExternalIdentity() ==
-                        Variant.GetConcreteExternalIdentity())
+                    if (Record.GetExternalIdentity() == Variant.GetConcreteExternalIdentity())
                     {
                         ++MatchCount;
                         if (!(Record == *Expected) ||
@@ -668,9 +614,7 @@ namespace MiliastraPlusPlus
         for (std::size_t Index = 0U; Index < m_ConcreteRecords.size(); ++Index)
         {
             if (!ValidateNormalizedDescriptorRecord(m_ConcreteRecords[Index]).has_value() ||
-                (Index > 0U &&
-                    !(m_ConcreteRecords[Index - 1U].GetExternalIdentity() <
-                        m_ConcreteRecords[Index].GetExternalIdentity())))
+                (Index > 0U && !(m_ConcreteRecords[Index - 1U].GetExternalIdentity() < m_ConcreteRecords[Index].GetExternalIdentity())))
             {
                 return false;
             }
@@ -678,11 +622,9 @@ namespace MiliastraPlusPlus
             std::size_t VariantMatches = 0U;
             for (const DescriptorSpecializationFamily& Family : m_Families)
             {
-                for (const DescriptorSpecializationVariant& Variant :
-                    Family.GetVariants())
+                for (const DescriptorSpecializationVariant& Variant : Family.GetVariants())
                 {
-                    if (Variant.GetConcreteExternalIdentity() ==
-                        m_ConcreteRecords[Index].GetExternalIdentity())
+                    if (Variant.GetConcreteExternalIdentity() == m_ConcreteRecords[Index].GetExternalIdentity())
                     {
                         ++VariantMatches;
                     }
@@ -702,29 +644,19 @@ namespace MiliastraPlusPlus
     public:
         DescriptorFamilySpecializer() = delete;
 
-        [[nodiscard]] static std::expected<
-            DescriptorSpecializationResult,
-            DiagnosticCollection
-        > Specialize(
-            std::vector<DescriptorSpecializationFamily> Families
-        )
+        [[nodiscard]] static std::expected<DescriptorSpecializationResult, DiagnosticCollection> Specialize(std::vector<DescriptorSpecializationFamily> Families)
         {
             using namespace DescriptorSpecializationDetail;
 
-            std::sort(
-                Families.begin(),
-                Families.end(),
+            std::sort(Families.begin(), Families.end(),
                 [](const DescriptorSpecializationFamily& Left, const DescriptorSpecializationFamily& Right)
                 {
-                    return Left.GetFamilyExternalIdentity() <
-                        Right.GetFamilyExternalIdentity();
+                    return Left.GetFamilyExternalIdentity() < Right.GetFamilyExternalIdentity();
                 }
             );
 
             std::vector<PendingDiagnostic> PendingDiagnostics;
-            for (std::size_t FamilyIndex = 0U;
-                FamilyIndex < Families.size();
-                ++FamilyIndex)
+            for (std::size_t FamilyIndex = 0U; FamilyIndex < Families.size(); ++FamilyIndex)
             {
                 const DescriptorSpecializationFamily& Family = Families[FamilyIndex];
                 if (!Family.IsValid())
@@ -738,9 +670,7 @@ namespace MiliastraPlusPlus
                     );
                 }
 
-                if (FamilyIndex > 0U &&
-                    Families[FamilyIndex - 1U].GetFamilyExternalIdentity() ==
-                        Family.GetFamilyExternalIdentity())
+                if (FamilyIndex > 0U && Families[FamilyIndex - 1U].GetFamilyExternalIdentity() == Family.GetFamilyExternalIdentity())
                 {
                     AddDiagnostic(
                         PendingDiagnostics,
@@ -753,24 +683,15 @@ namespace MiliastraPlusPlus
                 }
 
                 const auto& Variants = Family.GetVariants();
-                for (std::size_t VariantIndex = 0U;
-                    VariantIndex < Variants.size();
-                    ++VariantIndex)
+                for (std::size_t VariantIndex = 0U; VariantIndex < Variants.size(); ++VariantIndex)
                 {
-                    const DescriptorSpecializationVariant& Variant =
-                        Variants[VariantIndex];
-                    static_cast<void>(IsVariantBindingRelationValid(
-                        Family,
-                        Variant,
-                        &PendingDiagnostics
-                    ));
+                    const DescriptorSpecializationVariant& Variant = Variants[VariantIndex];
+                    static_cast<void>(IsVariantBindingRelationValid(Family, Variant, &PendingDiagnostics));
 
                     for (std::size_t Prior = 0U; Prior < VariantIndex; ++Prior)
                     {
-                        if (Variants[Prior].GetSpecializationKey() ==
-                                Variant.GetSpecializationKey() ||
-                            Variants[Prior].GetConcreteExternalIdentity() ==
-                                Variant.GetConcreteExternalIdentity())
+                        if (Variants[Prior].GetSpecializationKey() == Variant.GetSpecializationKey() ||
+                            Variants[Prior].GetConcreteExternalIdentity() == Variant.GetConcreteExternalIdentity())
                         {
                             AddDiagnostic(
                                 PendingDiagnostics,
@@ -786,61 +707,36 @@ namespace MiliastraPlusPlus
 
             if (!PendingDiagnostics.empty())
             {
-                return std::unexpected(
-                    DescriptorCatalogueDetail::MaterializePendingDiagnostics(
-                        std::move(PendingDiagnostics)
-                    )
-                );
+                return std::unexpected(DescriptorCatalogueDetail::MaterializePendingDiagnostics(std::move(PendingDiagnostics)));
             }
 
             std::vector<NormalizedNodeDescriptorRecord> ConcreteRecords;
             for (const DescriptorSpecializationFamily& Family : Families)
             {
-                for (const DescriptorSpecializationVariant& Variant :
-                    Family.GetVariants())
+                for (const DescriptorSpecializationVariant& Variant : Family.GetVariants())
                 {
                     ConcreteRecords.push_back(*MakeConcreteRecord(Family, Variant));
                 }
             }
 
-            std::sort(
-                ConcreteRecords.begin(),
-                ConcreteRecords.end(),
+            std::sort(ConcreteRecords.begin(), ConcreteRecords.end(),
                 [](const NormalizedNodeDescriptorRecord& Left, const NormalizedNodeDescriptorRecord& Right)
                 {
                     return Left.GetExternalIdentity() < Right.GetExternalIdentity();
                 }
             );
 
-            std::vector<PendingDiagnostic> NormalizedDiagnostics =
-                DescriptorCatalogueDetail::CollectNormalizedRecordDiagnostics(
-                    ConcreteRecords
-                );
+            std::vector<PendingDiagnostic> NormalizedDiagnostics = DescriptorCatalogueDetail::CollectNormalizedRecordDiagnostics(ConcreteRecords);
             if (!NormalizedDiagnostics.empty())
             {
-                return std::unexpected(
-                    DescriptorCatalogueDetail::MaterializePendingDiagnostics(
-                        std::move(NormalizedDiagnostics)
-                    )
-                );
+                return std::unexpected(DescriptorCatalogueDetail::MaterializePendingDiagnostics(std::move(NormalizedDiagnostics)));
             }
 
-            DescriptorSpecializationResult Result(
-                std::move(Families),
-                std::move(ConcreteRecords)
-            );
+            DescriptorSpecializationResult Result(std::move(Families), std::move(ConcreteRecords));
             if (!Result.IsValid())
             {
-                AddDiagnostic(
-                    PendingDiagnostics,
-                    DiagnosticCode::InvalidDescriptorSpecializationFamily,
-                    "Descriptor specialization result failed its integrity contract."
-                );
-                return std::unexpected(
-                    DescriptorCatalogueDetail::MaterializePendingDiagnostics(
-                        std::move(PendingDiagnostics)
-                    )
-                );
+                AddDiagnostic(PendingDiagnostics, DiagnosticCode::InvalidDescriptorSpecializationFamily, "Descriptor specialization result failed its integrity contract.");
+                return std::unexpected(DescriptorCatalogueDetail::MaterializePendingDiagnostics(std::move(PendingDiagnostics)));
             }
 
             return Result;

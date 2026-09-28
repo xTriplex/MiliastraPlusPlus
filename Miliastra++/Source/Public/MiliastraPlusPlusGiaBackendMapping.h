@@ -49,8 +49,7 @@ namespace MiliastraPlusPlus
             DescriptorCatalogueIdentity CatalogueIdentity,
             GiaBackendMappingSchemaVersion SchemaVersion,
             GiaExportTargetProfile TargetProfile,
-            GiaExportMode Mode
-        )
+            GiaExportMode Mode)
             : m_CatalogueIdentity(std::move(CatalogueIdentity))
             , m_SchemaVersion(SchemaVersion)
             , m_TargetProfile(TargetProfile)
@@ -228,8 +227,7 @@ namespace MiliastraPlusPlus
             GiaBackendTypeCode BackendTypeCode,
             GiaLiteralEncodingKind LiteralEncoding,
             GiaPinEmissionPolicy EmissionPolicy,
-            bool IsConnectable
-        )
+            bool IsConnectable)
             : m_SemanticPinIndex(SemanticPinIndex)
             , m_PinKind(PinKind)
             , m_BackendIndex(BackendIndex)
@@ -305,8 +303,7 @@ namespace MiliastraPlusPlus
             GiaNodeGenericId GenericNodeIdentifier,
             std::optional<GiaNodeConcreteId> ConcreteNodeIdentifier,
             std::vector<GiaBackendPinMapping> PinMappings,
-            std::optional<SourceProvenance> Provenance = std::nullopt
-        )
+            std::optional<SourceProvenance> Provenance = std::nullopt)
             : m_ExternalIdentity(std::move(ExternalIdentity))
             , m_GenericNodeIdentifier(GenericNodeIdentifier)
             , m_ConcreteNodeIdentifier(std::move(ConcreteNodeIdentifier))
@@ -391,8 +388,7 @@ namespace MiliastraPlusPlus
 
         bool operator==(const GiaBackendMappingPackage& Other) const
         {
-            return m_Identity == Other.m_Identity &&
-                m_NodeMappings == Other.m_NodeMappings;
+            return m_Identity == Other.m_Identity && m_NodeMappings == Other.m_NodeMappings;
         }
 
     private:
@@ -507,36 +503,24 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] inline bool CompareNodeMappings(const GiaBackendNodeMapping& Left, const GiaBackendNodeMapping& Right)
         {
-            if (Left.GetExternalIdentity().GetKey() !=
-                Right.GetExternalIdentity().GetKey())
+            if (Left.GetExternalIdentity().GetKey() != Right.GetExternalIdentity().GetKey())
             {
-                return Left.GetExternalIdentity().GetKey() <
-                    Right.GetExternalIdentity().GetKey();
+                return Left.GetExternalIdentity().GetKey() < Right.GetExternalIdentity().GetKey();
             }
 
-            if (Left.GetGenericNodeIdentifier() !=
-                Right.GetGenericNodeIdentifier())
+            if (Left.GetGenericNodeIdentifier() != Right.GetGenericNodeIdentifier())
             {
-                return Left.GetGenericNodeIdentifier() <
-                    Right.GetGenericNodeIdentifier();
+                return Left.GetGenericNodeIdentifier() < Right.GetGenericNodeIdentifier();
             }
 
-            if (Left.GetConcreteNodeIdentifier() !=
-                Right.GetConcreteNodeIdentifier())
+            if (Left.GetConcreteNodeIdentifier() != Right.GetConcreteNodeIdentifier())
             {
-                return Left.GetConcreteNodeIdentifier() <
-                    Right.GetConcreteNodeIdentifier();
+                return Left.GetConcreteNodeIdentifier() < Right.GetConcreteNodeIdentifier();
             }
 
             if (Left.GetPinMappings() != Right.GetPinMappings())
             {
-                return std::lexicographical_compare(
-                    Left.GetPinMappings().begin(),
-                    Left.GetPinMappings().end(),
-                    Right.GetPinMappings().begin(),
-                    Right.GetPinMappings().end(),
-                    ComparePinMappings
-                );
+                return std::lexicographical_compare(Left.GetPinMappings().begin(), Left.GetPinMappings().end(), Right.GetPinMappings().begin(), Right.GetPinMappings().end(), ComparePinMappings);
             }
 
             return Left.GetSourceProvenance() < Right.GetSourceProvenance();
@@ -653,8 +637,7 @@ namespace MiliastraPlusPlus
             return false;
         }
 
-        const bool IsFlowKind =
-            m_PinKind == GiaPinKind::InputFlow ||
+        const bool IsFlowKind = m_PinKind == GiaPinKind::InputFlow ||
             m_PinKind == GiaPinKind::OutputFlow ||
             m_PinKind == GiaPinKind::ClientExecution ||
             m_PinKind == GiaPinKind::ClientSignal;
@@ -663,8 +646,7 @@ namespace MiliastraPlusPlus
             return false;
         }
 
-        if (m_EmissionPolicy == GiaPinEmissionPolicy::Omit &&
-            (m_IsConnectable || m_LiteralEncoding != GiaLiteralEncodingKind::None))
+        if (m_EmissionPolicy == GiaPinEmissionPolicy::Omit && (m_IsConnectable || m_LiteralEncoding != GiaLiteralEncodingKind::None))
         {
             return false;
         }
@@ -676,17 +658,13 @@ namespace MiliastraPlusPlus
     {
         if (!m_ExternalIdentity.IsValid() ||
             !m_GenericNodeIdentifier.IsValid() ||
-            (m_ConcreteNodeIdentifier.has_value() &&
-                !m_ConcreteNodeIdentifier->IsValid()) ||
-            (m_SourceProvenance.has_value() &&
-                !m_SourceProvenance->IsValid()))
+            (m_ConcreteNodeIdentifier.has_value() && !m_ConcreteNodeIdentifier->IsValid()) ||
+            (m_SourceProvenance.has_value() && !m_SourceProvenance->IsValid()))
         {
             return false;
         }
 
-        return std::all_of(
-            m_PinMappings.begin(),
-            m_PinMappings.end(),
+        return std::all_of(m_PinMappings.begin(), m_PinMappings.end(),
             [](const GiaBackendPinMapping& Mapping)
             {
                 return Mapping.IsValid();
@@ -694,50 +672,32 @@ namespace MiliastraPlusPlus
         );
     }
 
-    inline std::expected<GiaBackendMappingPackage, DiagnosticCollection> GiaBackendMappingPackage::Create(
-        GiaBackendMappingIdentity Identity,
-        std::vector<GiaBackendNodeMapping> NodeMappings)
+    inline std::expected<GiaBackendMappingPackage, DiagnosticCollection> GiaBackendMappingPackage::Create(GiaBackendMappingIdentity Identity, std::vector<GiaBackendNodeMapping> NodeMappings)
     {
         DiagnosticCollection Diagnostics;
 
         if (!Identity.GetCatalogueIdentity().IsValid())
         {
-            Diagnostics.push_back(GiaBackendMappingDetail::MakeDiagnostic(
-                DiagnosticCode::InvalidGiaBackendMappingPackage,
-                "The GIA backend mapping package has an invalid catalogue identity."
-            ));
+            Diagnostics.push_back(GiaBackendMappingDetail::MakeDiagnostic(DiagnosticCode::InvalidGiaBackendMappingPackage, "The GIA backend mapping package has an invalid catalogue identity."));
         }
 
         if (Identity.GetSchemaVersion().GetValue() != 1U)
         {
-            Diagnostics.push_back(GiaBackendMappingDetail::MakeDiagnostic(
-                DiagnosticCode::UnsupportedGiaBackendMappingSchemaVersion,
-                "The GIA backend mapping schema version is unsupported."
-            ));
+            Diagnostics.push_back(GiaBackendMappingDetail::MakeDiagnostic(DiagnosticCode::UnsupportedGiaBackendMappingSchemaVersion, "The GIA backend mapping schema version is unsupported."));
         }
 
-        if (!GiaBackendMappingDetail::IsSupportedTargetProfile(
-                Identity.GetTargetProfile()
-            ) ||
+        if (!GiaBackendMappingDetail::IsSupportedTargetProfile(Identity.GetTargetProfile()) ||
             !GiaBackendMappingDetail::IsSupportedMode(Identity.GetMode()))
         {
-            Diagnostics.push_back(GiaBackendMappingDetail::MakeDiagnostic(
-                DiagnosticCode::UnsupportedGiaExportTarget,
-                "The GIA backend mapping package target or mode is unsupported."
-            ));
+            Diagnostics.push_back(GiaBackendMappingDetail::MakeDiagnostic(DiagnosticCode::UnsupportedGiaExportTarget, "The GIA backend mapping package target or mode is unsupported."));
         }
 
         std::vector<GiaBackendNodeMapping> CanonicalNodeMappings;
         CanonicalNodeMappings.reserve(NodeMappings.size());
         for (const GiaBackendNodeMapping& NodeMapping : NodeMappings)
         {
-            std::vector<GiaBackendPinMapping> CanonicalPinMappings =
-                NodeMapping.GetPinMappings();
-            std::sort(
-                CanonicalPinMappings.begin(),
-                CanonicalPinMappings.end(),
-                GiaBackendMappingDetail::ComparePinMappings
-            );
+            std::vector<GiaBackendPinMapping> CanonicalPinMappings = NodeMapping.GetPinMappings();
+            std::sort(CanonicalPinMappings.begin(), CanonicalPinMappings.end(), GiaBackendMappingDetail::ComparePinMappings);
             CanonicalNodeMappings.emplace_back(
                 NodeMapping.GetExternalIdentity(),
                 NodeMapping.GetGenericNodeIdentifier(),
@@ -747,22 +707,12 @@ namespace MiliastraPlusPlus
             );
         }
 
-        std::sort(
-            CanonicalNodeMappings.begin(),
-            CanonicalNodeMappings.end(),
-            GiaBackendMappingDetail::CompareNodeMappings
-        );
+        std::sort(CanonicalNodeMappings.begin(), CanonicalNodeMappings.end(), GiaBackendMappingDetail::CompareNodeMappings);
 
-        for (std::size_t Index = 0U;
-            Index < CanonicalNodeMappings.size();
-            ++Index)
+        for (std::size_t Index = 0U; Index < CanonicalNodeMappings.size(); ++Index)
         {
-            const GiaBackendNodeMapping& NodeMapping =
-                CanonicalNodeMappings[Index];
-            const std::optional<std::string> ExternalIdentityKey =
-                GiaBackendMappingDetail::GetIdentityKey(
-                    NodeMapping.GetExternalIdentity()
-                );
+            const GiaBackendNodeMapping& NodeMapping = CanonicalNodeMappings[Index];
+            const std::optional<std::string> ExternalIdentityKey = GiaBackendMappingDetail::GetIdentityKey(NodeMapping.GetExternalIdentity());
 
             if (!NodeMapping.GetExternalIdentity().IsValid())
             {
@@ -773,9 +723,7 @@ namespace MiliastraPlusPlus
                     NodeMapping.GetSourceProvenance()
                 ));
             }
-            else if (Index > 0U &&
-                CanonicalNodeMappings[Index - 1U].GetExternalIdentity() ==
-                    NodeMapping.GetExternalIdentity())
+            else if (Index > 0U && CanonicalNodeMappings[Index - 1U].GetExternalIdentity() == NodeMapping.GetExternalIdentity())
             {
                 Diagnostics.push_back(GiaBackendMappingDetail::MakeDiagnostic(
                     DiagnosticCode::DuplicateExternalNodeIdentity,
@@ -785,9 +733,7 @@ namespace MiliastraPlusPlus
                 ));
             }
 
-            if (!NodeMapping.GetGenericNodeIdentifier().IsValid() ||
-                (NodeMapping.GetConcreteNodeIdentifier().has_value() &&
-                    !NodeMapping.GetConcreteNodeIdentifier()->IsValid()))
+            if (!NodeMapping.GetGenericNodeIdentifier().IsValid() || (NodeMapping.GetConcreteNodeIdentifier().has_value() && !NodeMapping.GetConcreteNodeIdentifier()->IsValid()))
             {
                 Diagnostics.push_back(GiaBackendMappingDetail::MakeDiagnostic(
                     DiagnosticCode::InvalidGiaBackendNodeMapping,
@@ -797,8 +743,7 @@ namespace MiliastraPlusPlus
                 ));
             }
 
-            if (NodeMapping.GetSourceProvenance().has_value() &&
-                !NodeMapping.GetSourceProvenance()->IsValid())
+            if (NodeMapping.GetSourceProvenance().has_value() && !NodeMapping.GetSourceProvenance()->IsValid())
             {
                 Diagnostics.push_back(GiaBackendMappingDetail::MakeDiagnostic(
                     DiagnosticCode::InvalidSourceProvenance,
@@ -809,9 +754,7 @@ namespace MiliastraPlusPlus
             }
 
             const auto& PinMappings = NodeMapping.GetPinMappings();
-            for (std::size_t PinIndex = 0U;
-                PinIndex < PinMappings.size();
-                ++PinIndex)
+            for (std::size_t PinIndex = 0U; PinIndex < PinMappings.size(); ++PinIndex)
             {
                 const GiaBackendPinMapping& PinMapping = PinMappings[PinIndex];
                 if (!PinMapping.IsValid())
@@ -819,30 +762,20 @@ namespace MiliastraPlusPlus
                     Diagnostics.push_back(GiaBackendMappingDetail::MakeDiagnostic(
                         DiagnosticCode::InvalidGiaBackendPinMapping,
                         "A GIA backend node mapping has an invalid " +
-                            GiaBackendMappingDetail::DescribePinMapping(
-                                PinMapping
-                            ) +
+                        GiaBackendMappingDetail::DescribePinMapping(PinMapping) +
                             ".",
                         ExternalIdentityKey,
                         NodeMapping.GetSourceProvenance()
                     ));
                 }
 
-                if (GiaBackendMappingDetail::HasDuplicateSemanticPin(
-                        PinMappings,
-                        PinIndex
-                    ) ||
-                    GiaBackendMappingDetail::HasDuplicateBackendCoordinate(
-                        PinMappings,
-                        PinIndex
-                    ))
+                if (GiaBackendMappingDetail::HasDuplicateSemanticPin(PinMappings, PinIndex) ||
+                    GiaBackendMappingDetail::HasDuplicateBackendCoordinate(PinMappings, PinIndex))
                 {
                     Diagnostics.push_back(GiaBackendMappingDetail::MakeDiagnostic(
                         DiagnosticCode::DuplicateGiaBackendPinMapping,
                         "A GIA backend node mapping contains a duplicate " +
-                            GiaBackendMappingDetail::DescribePinMapping(
-                                PinMapping
-                            ) +
+                        GiaBackendMappingDetail::DescribePinMapping(PinMapping) +
                             ".",
                         ExternalIdentityKey,
                         NodeMapping.GetSourceProvenance()
@@ -851,36 +784,25 @@ namespace MiliastraPlusPlus
             }
         }
 
-        std::stable_sort(
-            Diagnostics.begin(),
-            Diagnostics.end(),
-            GiaBackendMappingDetail::CompareDiagnostics
-        );
+        std::stable_sort(Diagnostics.begin(), Diagnostics.end(), GiaBackendMappingDetail::CompareDiagnostics);
 
         if (!Diagnostics.empty())
         {
             return std::unexpected(std::move(Diagnostics));
         }
 
-        return GiaBackendMappingPackage(
-            std::move(Identity),
-            std::move(CanonicalNodeMappings)
-        );
+        return GiaBackendMappingPackage(std::move(Identity), std::move(CanonicalNodeMappings));
     }
 
     inline const GiaBackendNodeMapping* GiaBackendMappingPackage::FindByExternalIdentity(const ExternalNodeIdentity& Identity) const noexcept
     {
-        const auto Iterator = std::lower_bound(
-            m_NodeMappings.begin(),
-            m_NodeMappings.end(),
-            Identity.GetKey(),
+        const auto Iterator = std::lower_bound(m_NodeMappings.begin(), m_NodeMappings.end(), Identity.GetKey(),
             [](const GiaBackendNodeMapping& Mapping, const std::string& Key)
             {
                 return Mapping.GetExternalIdentity().GetKey() < Key;
             }
         );
-        if (Iterator == m_NodeMappings.end() ||
-            Iterator->GetExternalIdentity() != Identity)
+        if (Iterator == m_NodeMappings.end() || Iterator->GetExternalIdentity() != Identity)
         {
             return nullptr;
         }
@@ -889,49 +811,31 @@ namespace MiliastraPlusPlus
 
     inline bool GiaBackendMappingPackage::IsValid() const noexcept
     {
-        if (!m_Identity.IsValid() ||
-            m_Identity.GetSchemaVersion().GetValue() != 1U)
+        if (!m_Identity.IsValid() || m_Identity.GetSchemaVersion().GetValue() != 1U)
         {
             return false;
         }
 
-        for (std::size_t Index = 0U;
-            Index < m_NodeMappings.size();
-            ++Index)
+        for (std::size_t Index = 0U; Index < m_NodeMappings.size(); ++Index)
         {
             const GiaBackendNodeMapping& NodeMapping = m_NodeMappings[Index];
             if (!NodeMapping.IsValid())
             {
                 return false;
             }
-            if (Index > 0U &&
-                m_NodeMappings[Index - 1U].GetExternalIdentity() >=
-                    NodeMapping.GetExternalIdentity())
+            if (Index > 0U && m_NodeMappings[Index - 1U].GetExternalIdentity() >= NodeMapping.GetExternalIdentity())
             {
                 return false;
             }
 
             const auto& PinMappings = NodeMapping.GetPinMappings();
-            for (std::size_t PinIndex = 0U;
-                PinIndex < PinMappings.size();
-                ++PinIndex)
+            for (std::size_t PinIndex = 0U; PinIndex < PinMappings.size(); ++PinIndex)
             {
-                if (PinIndex > 0U &&
-                    !GiaBackendMappingDetail::ComparePinMappings(
-                        PinMappings[PinIndex - 1U],
-                        PinMappings[PinIndex]
-                    ))
+                if (PinIndex > 0U && !GiaBackendMappingDetail::ComparePinMappings(PinMappings[PinIndex - 1U], PinMappings[PinIndex]))
                 {
                     return false;
                 }
-                if (GiaBackendMappingDetail::HasDuplicateSemanticPin(
-                        PinMappings,
-                        PinIndex
-                    ) ||
-                    GiaBackendMappingDetail::HasDuplicateBackendCoordinate(
-                        PinMappings,
-                        PinIndex
-                    ))
+                if (GiaBackendMappingDetail::HasDuplicateSemanticPin(PinMappings, PinIndex) || GiaBackendMappingDetail::HasDuplicateBackendCoordinate(PinMappings, PinIndex))
                 {
                     return false;
                 }

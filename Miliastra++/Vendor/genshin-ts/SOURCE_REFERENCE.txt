@@ -276,3 +276,87 @@ The bounded target rejects ClientExecution and ClientSignal while preserving
 their source-evidence attribution for a later separately audited expansion.
 The deterministic SCC/grid layout policy uses the evidence-backed coordinate
 type and spacing while avoiding source insertion-order behavior.
+
+Phase 6 Milestone 4: Encode and Validate GIA Protobuf Output
+-------------------------------------------------------------
+
+Direct source-evidence consumers:
+Tests/Phase6Milestone4Tests.cpp
+Miliastra++/Source/Private/MiliastraPlusPlusGiaProtobufEncoder.cpp
+
+Transitive backend-neutral support:
+Miliastra++/Source/Public/MiliastraPlusPlusGiaProtobufEncoder.h
+Miliastra++/Source/Public/MiliastraPlusPlusDiagnostics.h
+CMakeLists.txt
+
+The P6.4 implementation uses the same pinned genshin-ts revision:
+26bdf2a9a3fadba934423940489236f0b53eb3ea
+
+Schema and protobuf call-path evidence:
+
+src/thirdparty/Genshin-Impact-Miliastra-Wonderland-Code-Node-Editor-Pack/protobuf/gia.proto
+Pinned Git blob: 233bbb264fa89abb1dc708d4d0ad1142dc213b86
+
+src/thirdparty/Genshin-Impact-Miliastra-Wonderland-Code-Node-Editor-Pack/protobuf/gia.proto.ts
+Pinned Git blob: 90880acf65d0f54e2d3d784018521e0ab12faab9
+
+src/thirdparty/Genshin-Impact-Miliastra-Wonderland-Code-Node-Editor-Pack/protobuf/decode.ts
+Pinned Git blob: dfe353a0767643fa89adf9b954256a18f2082129
+
+src/thirdparty/Genshin-Impact-Miliastra-Wonderland-Code-Node-Editor-Pack/gia_gen/basic.ts
+Pinned Git blob: 4d897fd3cd78c5bfe5baca939b92790b3356589e
+
+src/thirdparty/Genshin-Impact-Miliastra-Wonderland-Code-Node-Editor-Pack/gia_gen/client_basic.ts
+Pinned Git blob: 7fad6e1f4d04d991667840694d598ac590a75dab
+
+src/thirdparty/Genshin-Impact-Miliastra-Wonderland-Code-Node-Editor-Pack/gia_gen/graph.ts
+Pinned Git blob: 784cdd633ce121cd1c91e582642f8688c8b398ad
+
+src/compiler/ir_to_gia_transform/client_graph.ts
+Pinned Git blob: 5daf0088c7bb8f90e54077cbbb904d293f0a56fa
+
+src/compiler/ir_to_gia_transform/client_nodes.ts
+Pinned Git blob: c64b504d02747d1f6ace4338b8babda1943eddd3
+
+src/compiler/ir_to_gia_transform/pins.ts
+Pinned Git blob: a9f007b3334cd7f29df4a75e3012cd8588cd1789
+
+src/compiler/ir_to_gia_transform/mappings.ts
+Pinned Git blob: 2f0ba008bf534a4289ab4752bece874698c1b4dd
+
+src/compiler/ir_to_gia_transform/layout.ts
+Pinned Git blob: e5af968fe4cb6d2ea9b0f678f497213245a91e73
+
+src/compiler/ir_to_gia_transform/index.ts
+Pinned Git blob: f0182ca6128648e91e428044982a74ad427cc7ef
+
+The pinned gia.proto is schema evidence and is copied to
+Miliastra++/Vendor/genshin-ts/gia.proto. It declares proto3 / @version 1.5.0.
+P6.4 generates gia.pb.h and gia.pb.cc into the existing build tree only; the
+generated files are not authored or tracked source files. P6.4 produces bare
+serialized Root protobuf bytes in memory and does not produce .gia framing,
+files, or encoded fixture blobs.
+
+Runtime/compiler dependency provenance:
+
+Google Protobuf
+Repository: https://github.com/protocolbuffers/protobuf
+Release tag: v30.2
+Annotated tag object: 934a01c21238708610bcbde7a9d93a7d297c249d
+Source commit: 43e1626812c1b543e56a7bec59dc09eb18248bd2
+License: preserve the upstream Protobuf license and notices in
+Miliastra++/Vendor/protobuf/.
+
+Abseil
+Repository: https://github.com/abseil/abseil-cpp
+Release tag: 20250127.0
+Source commit: 9ac7062b1860d895fb5a8cbf58c3e9ef8f674b5f
+License: preserve the upstream Abseil Apache 2.0 license and notices in
+Miliastra++/Vendor/abseil-cpp/.
+
+The Protobuf v30.2 source tree contains third_party/utf8_range. It is used as
+the bundled Protobuf dependency and is not separately vendored or independently
+versioned. The P6.4 CMake integration is local-only/offline: Abseil is added
+before Protobuf, Protobuf's local-dependency and force-fetch switches disable
+network acquisition, tests/examples/conformance/install/shared/zlib support are
+disabled, and no system Protobuf or FetchContent dependency is used.

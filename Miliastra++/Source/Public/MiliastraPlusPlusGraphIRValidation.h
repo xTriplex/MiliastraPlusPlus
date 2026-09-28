@@ -29,34 +29,22 @@ namespace MiliastraPlusPlus
                 const NodeInstance& Node = Graph.GetNodes()[Index];
                 if (!Node.Identifier.IsValid() || !Node.Descriptor.IsValid())
                 {
-                    Add(
-                        Diagnostics,
-                        DiagnosticCode::InvalidGraphIRNode,
-                        "GraphIR contains a node with an invalid instance or descriptor identifier.");
+                    Add(Diagnostics, DiagnosticCode::InvalidGraphIRNode, "GraphIR contains a node with an invalid instance or descriptor identifier.");
                 }
                 if (FindPriorNode(Graph, Node.Identifier, Index) != nullptr)
                 {
-                    Add(
-                        Diagnostics,
-                        DiagnosticCode::DuplicateGraphIRNodeIdentifier,
-                        "GraphIR contains duplicate node instance identifiers.");
+                    Add(Diagnostics, DiagnosticCode::DuplicateGraphIRNodeIdentifier, "GraphIR contains duplicate node instance identifiers.");
                 }
                 if (Node.Descriptor.IsValid() && Descriptors.Find(Node.Descriptor) == nullptr)
                 {
-                    Add(
-                        Diagnostics,
-                        DiagnosticCode::MissingDescriptor,
-                        "GraphIR references a node descriptor that is not registered.");
+                    Add(Diagnostics, DiagnosticCode::MissingDescriptor, "GraphIR references a node descriptor that is not registered.");
                 }
                 else if (Node.Descriptor.IsValid())
                 {
                     const NodeDescriptor* Descriptor = Descriptors.Find(Node.Descriptor);
                     if (Descriptor != nullptr && !Descriptor->IsValid())
                     {
-                        Add(
-                            Diagnostics,
-                            DiagnosticCode::InvalidNodeDescriptor,
-                            "GraphIR references a registered descriptor with an invalid trusted schema.");
+                        Add(Diagnostics, DiagnosticCode::InvalidNodeDescriptor, "GraphIR references a registered descriptor with an invalid trusted schema.");
                     }
                 }
             }
@@ -66,65 +54,40 @@ namespace MiliastraPlusPlus
                 const GraphVariable& Variable = Graph.GetVariables()[Index];
                 if (!Variable.IsValid() || ContainsFlowType(Variable.Type))
                 {
-                    Add(
-                        Diagnostics,
-                        DiagnosticCode::InvalidGraphVariable,
-                        "GraphIR contains an invalid graph variable or a control Flow type used as data.");
+                    Add(Diagnostics, DiagnosticCode::InvalidGraphVariable, "GraphIR contains an invalid graph variable or a control Flow type used as data.");
                 }
                 if (FindPriorVariable(Graph, Variable.Identifier, Index) != nullptr)
                 {
-                    Add(
-                        Diagnostics,
-                        DiagnosticCode::DuplicateGraphVariableIdentifier,
-                        "GraphIR contains duplicate graph variable identifiers.");
+                    Add(Diagnostics, DiagnosticCode::DuplicateGraphVariableIdentifier, "GraphIR contains duplicate graph variable identifiers.");
                 }
-                if (Variable.DefaultValue.has_value() &&
-                    !IsLiteralCompatible(*Variable.DefaultValue, Variable.Type))
+                if (Variable.DefaultValue.has_value() && !IsLiteralCompatible(*Variable.DefaultValue, Variable.Type))
                 {
-                    Add(
-                        Diagnostics,
-                        DiagnosticCode::IncompatibleGraphIRTypes,
-                        "A graph variable default literal is incompatible with its declared type.");
+                    Add(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes, "A graph variable default literal is incompatible with its declared type.");
                 }
             }
 
             for (const InputBindingRecord& Record : Graph.GetInputBindings())
             {
                 const NodeInstance* DestinationNode = Graph.FindNode(Record.DestinationNode);
-                const PinSchema* DestinationPin = FindPin(
-                    DestinationNode, Record.DestinationInputPin, Descriptors);
+                const PinSchema* DestinationPin = FindPin(DestinationNode, Record.DestinationInputPin, Descriptors);
                 if (DestinationNode == nullptr)
                 {
-                    Add(
-                        Diagnostics,
-                        DiagnosticCode::InvalidInputBinding,
-                        "An input binding references a missing destination node.");
+                    Add(Diagnostics, DiagnosticCode::InvalidInputBinding, "An input binding references a missing destination node.");
                     continue;
                 }
                 if (DestinationPin == nullptr || !Record.DestinationInputPin.IsValid())
                 {
-                    Add(
-                        Diagnostics,
-                        DiagnosticCode::InvalidGraphIRPinReference,
-                        "An input binding references an invalid destination pin.");
+                    Add(Diagnostics, DiagnosticCode::InvalidGraphIRPinReference, "An input binding references an invalid destination pin.");
                     continue;
                 }
-                if (DestinationPin->GetDirection() != PinDirection::Input ||
-                    DestinationPin->GetCategory() != PinCategory::Data)
+                if (DestinationPin->GetDirection() != PinDirection::Input || DestinationPin->GetCategory() != PinCategory::Data)
                 {
-                    Add(
-                        Diagnostics,
-                        DiagnosticCode::InvalidInputBinding,
-                        "An input binding destination must be a data input pin.");
+                    Add(Diagnostics, DiagnosticCode::InvalidInputBinding, "An input binding destination must be a data input pin.");
                     continue;
                 }
-                if (DestinationPin->GetCardinality() != PinCardinality::Multiple &&
-                    CountBindings(Graph, Record.DestinationNode, Record.DestinationInputPin) > 1U)
+                if (DestinationPin->GetCardinality() != PinCardinality::Multiple && CountBindings(Graph, Record.DestinationNode, Record.DestinationInputPin) > 1U)
                 {
-                    Add(
-                        Diagnostics,
-                        DiagnosticCode::DuplicateInputBinding,
-                        "A Single or Optional input pin has multiple bindings.");
+                    Add(Diagnostics, DiagnosticCode::DuplicateInputBinding, "A Single or Optional input pin has multiple bindings.");
                 }
                 ValidateBinding(Graph, Descriptors, Record, *DestinationPin, Diagnostics);
             }
@@ -135,16 +98,15 @@ namespace MiliastraPlusPlus
                 const NodeInstance* SourceNode = Graph.FindNode(Edge.SourceNode);
                 const NodeInstance* DestinationNode = Graph.FindNode(Edge.DestinationNode);
                 const PinSchema* SourcePin = FindPin(SourceNode, Edge.SourceOutputPin, Descriptors);
-                const PinSchema* DestinationPin = FindPin(
-                    DestinationNode, Edge.DestinationInputPin, Descriptors);
-                if (SourceNode == nullptr || DestinationNode == nullptr ||
-                    SourcePin == nullptr || DestinationPin == nullptr ||
-                    !Edge.SourceOutputPin.IsValid() || !Edge.DestinationInputPin.IsValid())
+                const PinSchema* DestinationPin = FindPin(DestinationNode, Edge.DestinationInputPin, Descriptors);
+                if (SourceNode == nullptr ||
+                    DestinationNode == nullptr ||
+                    SourcePin == nullptr ||
+                    DestinationPin == nullptr ||
+                    !Edge.SourceOutputPin.IsValid() ||
+                    !Edge.DestinationInputPin.IsValid())
                 {
-                    Add(
-                        Diagnostics,
-                        DiagnosticCode::InvalidControlEdge,
-                        "A control edge contains a missing or invalid node or pin reference.");
+                    Add(Diagnostics, DiagnosticCode::InvalidControlEdge, "A control edge contains a missing or invalid node or pin reference.");
                     continue;
                 }
                 if (SourcePin->GetDirection() != PinDirection::Output ||
@@ -154,30 +116,19 @@ namespace MiliastraPlusPlus
                     SourcePin->GetType() != TypeDesc::Flow() ||
                     DestinationPin->GetType() != TypeDesc::Flow())
                 {
-                    Add(
-                        Diagnostics,
-                        DiagnosticCode::InvalidControlEdge,
-                        "A control edge must connect Flow-typed execution output and input pins.");
+                    Add(Diagnostics, DiagnosticCode::InvalidControlEdge, "A control edge must connect Flow-typed execution output and input pins.");
                 }
                 if (HasPriorControlEdge(Graph, Edge, Index))
                 {
-                    Add(
-                        Diagnostics,
-                        DiagnosticCode::InvalidControlEdge,
-                        "GraphIR contains a duplicate control edge.");
+                    Add(Diagnostics, DiagnosticCode::InvalidControlEdge, "GraphIR contains a duplicate control edge.");
                 }
             }
 
             ValidateExecutionMetadata(Graph, Descriptors, Diagnostics);
             ValidateStructuredExecution(Graph, Descriptors, Diagnostics);
 
-            DiagnosticCollection GenericDiagnostics =
-                GraphIRGenericValidationDetail::ValidateGenericTypes(Graph, Descriptors);
-            Diagnostics.insert(
-                Diagnostics.end(),
-                std::make_move_iterator(GenericDiagnostics.begin()),
-                std::make_move_iterator(GenericDiagnostics.end())
-            );
+            DiagnosticCollection GenericDiagnostics = GraphIRGenericValidationDetail::ValidateGenericTypes(Graph, Descriptors);
+            Diagnostics.insert(Diagnostics.end(), std::make_move_iterator(GenericDiagnostics.begin()), std::make_move_iterator(GenericDiagnostics.end()));
 
             return Diagnostics;
         }
@@ -210,8 +161,7 @@ namespace MiliastraPlusPlus
         {
             for (const PinSchema& Pin : Descriptor.GetPins())
             {
-                if (Pin.GetCategory() == PinCategory::Execution ||
-                    Pin.GetType() == TypeDesc::Flow())
+                if (Pin.GetCategory() == PinCategory::Execution || Pin.GetType() == TypeDesc::Flow())
                 {
                     return true;
                 }
@@ -276,8 +226,7 @@ namespace MiliastraPlusPlus
             std::size_t Count = 0U;
             for (const ExecutionRegion& Region : Graph.GetExecutionRegions())
             {
-                if (Region.OwnerNode == Owner && Region.Kind == Kind &&
-                    Region.OwnerOutputPin == Pin)
+                if (Region.OwnerNode == Owner && Region.Kind == Kind && Region.OwnerOutputPin == Pin)
                 {
                     ++Count;
                 }
@@ -309,13 +258,11 @@ namespace MiliastraPlusPlus
                 using SchemaType = std::decay_t<decltype(Schema)>;
                 if constexpr (std::is_same_v<SchemaType, BranchControlSchema>)
                 {
-                    return Kind == ExecutionRegionKind::BranchArm &&
-                        (Schema.TrueOutput == OwnerPin || Schema.FalseOutput == OwnerPin);
+                    return Kind == ExecutionRegionKind::BranchArm && (Schema.TrueOutput == OwnerPin || Schema.FalseOutput == OwnerPin);
                 }
                 else if constexpr (std::is_same_v<SchemaType, LoopControlSchema>)
                 {
-                    return Kind == ExecutionRegionKind::LoopBody &&
-                        Schema.BodyOutput == OwnerPin;
+                    return Kind == ExecutionRegionKind::LoopBody && Schema.BodyOutput == OwnerPin;
                 }
                 else
                 {
@@ -328,25 +275,21 @@ namespace MiliastraPlusPlus
         {
             if (!IsValidExecutionModel(Graph.GetExecutionModel()))
             {
-                Add(Diagnostics, DiagnosticCode::InvalidExecutionModel,
-                    "GraphIR contains an invalid execution-model discriminant.");
+                Add(Diagnostics, DiagnosticCode::InvalidExecutionModel, "GraphIR contains an invalid execution-model discriminant.");
                 return;
             }
 
             if (Graph.GetExecutionModel() == ExecutionModel::Unstructured)
             {
-                if (!Graph.GetExecutionEntries().empty() ||
-                    !Graph.GetExecutionRegions().empty())
+                if (!Graph.GetExecutionEntries().empty() || !Graph.GetExecutionRegions().empty())
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionModel,
-                        "An Unstructured graph cannot contain execution entries or regions.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionModel, "An Unstructured graph cannot contain execution entries or regions.");
                 }
                 for (const NodeInstance& Node : Graph.GetNodes())
                 {
                     if (Node.ExecutionRegion.has_value())
                     {
-                        Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
-                            "An Unstructured node cannot carry execution-region membership.");
+                        Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership, "An Unstructured node cannot carry execution-region membership.");
                     }
                 }
                 return;
@@ -354,8 +297,7 @@ namespace MiliastraPlusPlus
 
             if (Graph.GetExecutionEntries().empty())
             {
-                Add(Diagnostics, DiagnosticCode::InvalidExecutionModel,
-                    "A Structured graph must contain at least one execution entry.");
+                Add(Diagnostics, DiagnosticCode::InvalidExecutionModel, "A Structured graph must contain at least one execution entry.");
             }
 
             for (std::size_t Index = 0U; Index < Graph.GetExecutionEntries().size(); ++Index)
@@ -363,15 +305,13 @@ namespace MiliastraPlusPlus
                 const ExecutionEntry& Entry = Graph.GetExecutionEntries()[Index];
                 if (!Entry.Identifier.IsValid() || !Entry.RootNode.IsValid())
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionEntry,
-                        "A structured execution entry has an invalid identifier or root node.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionEntry, "A structured execution entry has an invalid identifier or root node.");
                 }
                 for (std::size_t Prior = 0U; Prior < Index; ++Prior)
                 {
                     if (Graph.GetExecutionEntries()[Prior].Identifier == Entry.Identifier)
                     {
-                        Add(Diagnostics, DiagnosticCode::DuplicateExecutionEntryIdentifier,
-                            "Structured execution entry identifiers must be unique.");
+                        Add(Diagnostics, DiagnosticCode::DuplicateExecutionEntryIdentifier, "Structured execution entry identifiers must be unique.");
                         break;
                     }
                 }
@@ -380,18 +320,15 @@ namespace MiliastraPlusPlus
             for (std::size_t Index = 0U; Index < Graph.GetExecutionRegions().size(); ++Index)
             {
                 const ExecutionRegion& Region = Graph.GetExecutionRegions()[Index];
-                if (!Region.Identifier.IsValid() || !Region.Entry.IsValid() ||
-                    !IsValidRegionKind(Region.Kind))
+                if (!Region.Identifier.IsValid() || !Region.Entry.IsValid() || !IsValidRegionKind(Region.Kind))
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
-                        "A structured execution region has an invalid identifier, entry, or kind.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion, "A structured execution region has an invalid identifier, entry, or kind.");
                 }
                 for (std::size_t Prior = 0U; Prior < Index; ++Prior)
                 {
                     if (Graph.GetExecutionRegions()[Prior].Identifier == Region.Identifier)
                     {
-                        Add(Diagnostics, DiagnosticCode::DuplicateExecutionRegionIdentifier,
-                            "Structured execution region identifiers must be unique.");
+                        Add(Diagnostics, DiagnosticCode::DuplicateExecutionRegionIdentifier, "Structured execution region identifiers must be unique.");
                         break;
                     }
                 }
@@ -411,8 +348,7 @@ namespace MiliastraPlusPlus
                             return Node.Identifier == Entry.RootNode;
                         }) != 1)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionEntry,
-                        "An execution entry root must reference exactly one graph node.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionEntry, "An execution entry root must reference exactly one graph node.");
                     continue;
                 }
                 const NodeInstance* RootNode = Graph.FindNode(Entry.RootNode);
@@ -420,23 +356,19 @@ namespace MiliastraPlusPlus
                     ? nullptr : Descriptors.Find(RootNode->Descriptor);
                 if (RootDescriptor == nullptr ||
                     !RootDescriptor->GetExecutionControlSchema().has_value() ||
-                    !std::holds_alternative<EntryControlSchema>(
-                        *RootDescriptor->GetExecutionControlSchema()))
+                    !std::holds_alternative<EntryControlSchema>(*RootDescriptor->GetExecutionControlSchema()))
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionEntry,
-                        "An execution entry root must use a descriptor with the Entry control role.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionEntry, "An execution entry root must use a descriptor with the Entry control role.");
                 }
                 if (CountRootReferences(Graph, Entry.RootNode) != 1U)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionEntry,
-                        "An Entry-role node can be the root of exactly one execution entry.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionEntry, "An Entry-role node can be the root of exactly one execution entry.");
                 }
                 const ExecutionRegion* RootRegion = nullptr;
                 std::size_t RootRegionCount = 0U;
                 for (const ExecutionRegion& Region : Graph.GetExecutionRegions())
                 {
-                    if (Region.Entry == Entry.Identifier &&
-                        Region.Kind == ExecutionRegionKind::Entry)
+                    if (Region.Entry == Entry.Identifier && Region.Kind == ExecutionRegionKind::Entry)
                     {
                         RootRegion = &Region;
                         ++RootRegionCount;
@@ -444,61 +376,54 @@ namespace MiliastraPlusPlus
                 }
                 if (RootRegionCount != 1U || RootRegion == nullptr)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionEntry,
-                        "Each execution entry must own exactly one Entry region.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionEntry, "Each execution entry must own exactly one Entry region.");
                 }
-                else if (RootNode != nullptr &&
-                    RootNode->ExecutionRegion != RootRegion->Identifier)
+                else if (RootNode != nullptr && RootNode->ExecutionRegion != RootRegion->Identifier)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
-                        "An execution entry root must belong to its entry region.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership, "An execution entry root must belong to its entry region.");
                 }
             }
 
             for (const ExecutionRegion& Region : Graph.GetExecutionRegions())
             {
-                if (!Region.Identifier.IsValid() || CountRegions(Graph, Region.Identifier) != 1U ||
-                    !IsValidRegionKind(Region.Kind))
+                if (!Region.Identifier.IsValid() || CountRegions(Graph, Region.Identifier) != 1U || !IsValidRegionKind(Region.Kind))
                 {
                     continue;
                 }
                 if (!Region.Entry.IsValid() || CountEntries(Graph, Region.Entry) != 1U)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
-                        "An execution region must reference exactly one declared entry.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion, "An execution region must reference exactly one declared entry.");
                     continue;
                 }
 
                 if (Region.Kind == ExecutionRegionKind::Entry)
                 {
-                    if (Region.Parent.has_value() || Region.OwnerNode.has_value() ||
-                        Region.OwnerOutputPin.has_value())
+                    if (Region.Parent.has_value() || Region.OwnerNode.has_value() || Region.OwnerOutputPin.has_value())
                     {
-                        Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
-                            "An Entry region cannot have a parent or child-owner metadata.");
+                        Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion, "An Entry region cannot have a parent or child-owner metadata.");
                     }
                     continue;
                 }
 
-                if (!Region.Parent.has_value() || !Region.Parent->IsValid() ||
-                    !Region.OwnerNode.has_value() || !Region.OwnerNode->IsValid() ||
-                    !Region.OwnerOutputPin.has_value() || !Region.OwnerOutputPin->IsValid())
+                if (!Region.Parent.has_value() ||
+                    !Region.Parent->IsValid() ||
+                    !Region.OwnerNode.has_value() ||
+                    !Region.OwnerNode->IsValid() ||
+                    !Region.OwnerOutputPin.has_value() ||
+                    !Region.OwnerOutputPin->IsValid())
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
-                        "A child execution region requires a parent, owner node, and owner output pin.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion, "A child execution region requires a parent, owner node, and owner output pin.");
                     continue;
                 }
                 if (CountRegions(Graph, *Region.Parent) != 1U)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
-                        "A child execution region references a missing or ambiguous parent region.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion, "A child execution region references a missing or ambiguous parent region.");
                     continue;
                 }
                 const ExecutionRegion* Parent = Graph.FindExecutionRegion(*Region.Parent);
                 if (Parent == nullptr || Parent->Entry != Region.Entry)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
-                        "A child execution region and its parent must belong to the same entry.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion, "A child execution region and its parent must belong to the same entry.");
                 }
                 if (std::count_if(Graph.GetNodes().begin(), Graph.GetNodes().end(),
                     [&Region](const NodeInstance& Node)
@@ -506,30 +431,23 @@ namespace MiliastraPlusPlus
                         return Node.Identifier == *Region.OwnerNode;
                     }) != 1)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
-                        "A child execution region owner must reference exactly one graph node.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion, "A child execution region owner must reference exactly one graph node.");
                     continue;
                 }
                 const NodeInstance* OwnerNode = Graph.FindNode(*Region.OwnerNode);
                 if (OwnerNode == nullptr || OwnerNode->ExecutionRegion != Region.Parent)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
-                        "A child-region owner node must belong to the declared parent region.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership, "A child-region owner node must belong to the declared parent region.");
                 }
                 const NodeDescriptor* OwnerDescriptor = OwnerNode == nullptr
                     ? nullptr : Descriptors.Find(OwnerNode->Descriptor);
-                if (OwnerDescriptor == nullptr ||
-                    !RegionOwnerPinMatches(*OwnerDescriptor, Region.Kind,
-                        *Region.OwnerOutputPin))
+                if (OwnerDescriptor == nullptr || !RegionOwnerPinMatches(*OwnerDescriptor, Region.Kind, *Region.OwnerOutputPin))
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
-                        "A child-region owner pin must match the trusted Branch or Loop role schema.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion, "A child-region owner pin must match the trusted Branch or Loop role schema.");
                 }
-                if (CountOwnerRegionsAtPin(Graph, *Region.OwnerNode, Region.Kind,
-                    *Region.OwnerOutputPin) > 1U)
+                if (CountOwnerRegionsAtPin(Graph, *Region.OwnerNode, Region.Kind, *Region.OwnerOutputPin) > 1U)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
-                        "A construct cannot own duplicate child regions for the same output role.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion, "A construct cannot own duplicate child regions for the same output role.");
                 }
             }
 
@@ -565,8 +483,7 @@ namespace MiliastraPlusPlus
                     {
                         break;
                     }
-                    if (!Current->Parent.has_value() ||
-                        CountRegions(Graph, *Current->Parent) != 1U)
+                    if (!Current->Parent.has_value() || CountRegions(Graph, *Current->Parent) != 1U)
                     {
                         Broken = true;
                         break;
@@ -575,15 +492,14 @@ namespace MiliastraPlusPlus
                 }
                 if (HasCycle)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
-                        "Execution-region parent relationships must be acyclic.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion, "Execution-region parent relationships must be acyclic.");
                 }
-                else if (Broken || Current == nullptr ||
+                else if (Broken ||
+                    Current == nullptr ||
                     Current->Kind != ExecutionRegionKind::Entry ||
                     Current->Entry != Start.Entry)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
-                        "Every execution-region hierarchy must terminate at its owning Entry region.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion, "Every execution-region hierarchy must terminate at its owning Entry region.");
                 }
             }
 
@@ -602,38 +518,32 @@ namespace MiliastraPlusPlus
                 {
                     if (HasFlow)
                     {
-                        Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
-                            "A Flow-bearing descriptor without a trusted control schema is Unstructured-only.");
+                        Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership, "A Flow-bearing descriptor without a trusted control schema is Unstructured-only.");
                     }
                     if (Node.ExecutionRegion.has_value())
                     {
-                        Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
-                            "A data-only node cannot belong to an execution region.");
+                        Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership, "A data-only node cannot belong to an execution region.");
                     }
                     continue;
                 }
 
                 if (!Node.ExecutionRegion.has_value() || !Node.ExecutionRegion->IsValid())
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
-                        "Every structured execution-capable node must belong to exactly one region.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership, "Every structured execution-capable node must belong to exactly one region.");
                 }
                 else if (CountRegions(Graph, *Node.ExecutionRegion) != 1U)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
-                        "A node execution-region membership must reference exactly one region.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership, "A node execution-region membership must reference exactly one region.");
                 }
 
                 if (Descriptor->GetExecutionControlSchema().has_value())
                 {
-                    const ExecutionControlSchema& Schema =
-                        *Descriptor->GetExecutionControlSchema();
+                    const ExecutionControlSchema& Schema = *Descriptor->GetExecutionControlSchema();
                     if (std::holds_alternative<EntryControlSchema>(Schema))
                     {
                         if (CountRootReferences(Graph, Node.Identifier) != 1U)
                         {
-                            Add(Diagnostics, DiagnosticCode::InvalidExecutionEntry,
-                                "Every Entry-role node must be the root of exactly one execution entry.");
+                            Add(Diagnostics, DiagnosticCode::InvalidExecutionEntry, "Every Entry-role node must be the root of exactly one execution entry.");
                         }
                     }
                     else if (std::holds_alternative<BranchControlSchema>(Schema))
@@ -641,25 +551,19 @@ namespace MiliastraPlusPlus
                         const auto& Branch = std::get<BranchControlSchema>(Schema);
                         if (CountOwnerRegions(Graph, Node.Identifier,
                                 ExecutionRegionKind::BranchArm) != 2U ||
-                            CountOwnerRegionsAtPin(Graph, Node.Identifier,
-                                ExecutionRegionKind::BranchArm, Branch.TrueOutput) != 1U ||
-                            CountOwnerRegionsAtPin(Graph, Node.Identifier,
-                                ExecutionRegionKind::BranchArm, Branch.FalseOutput) != 1U)
+                                CountOwnerRegionsAtPin(Graph, Node.Identifier, ExecutionRegionKind::BranchArm, Branch.TrueOutput) != 1U ||
+                                CountOwnerRegionsAtPin(Graph, Node.Identifier, ExecutionRegionKind::BranchArm, Branch.FalseOutput) != 1U)
                         {
-                            Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
-                                "A Branch-role node must own one region for each declared binary arm output.");
+                            Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion, "A Branch-role node must own one region for each declared binary arm output.");
                         }
                     }
                     else if (std::holds_alternative<LoopControlSchema>(Schema))
                     {
                         const auto& Loop = std::get<LoopControlSchema>(Schema);
-                        if (CountOwnerRegions(Graph, Node.Identifier,
-                                ExecutionRegionKind::LoopBody) != 1U ||
-                            CountOwnerRegionsAtPin(Graph, Node.Identifier,
-                                ExecutionRegionKind::LoopBody, Loop.BodyOutput) != 1U)
+                        if (CountOwnerRegions(Graph, Node.Identifier, ExecutionRegionKind::LoopBody) != 1U ||
+                            CountOwnerRegionsAtPin(Graph, Node.Identifier, ExecutionRegionKind::LoopBody, Loop.BodyOutput) != 1U)
                         {
-                            Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion,
-                                "A Loop-role node must own exactly one LoopBody region at its Body output.");
+                            Add(Diagnostics, DiagnosticCode::InvalidExecutionRegion, "A Loop-role node must own exactly one LoopBody region at its Body output.");
                         }
                     }
                 }
@@ -688,15 +592,11 @@ namespace MiliastraPlusPlus
                 {
                     continue;
                 }
-                const ExecutionRegion* SourceRegion =
-                    Graph.FindExecutionRegion(*Source->ExecutionRegion);
-                const ExecutionRegion* DestinationRegion =
-                    Graph.FindExecutionRegion(*Destination->ExecutionRegion);
-                if (SourceRegion != nullptr && DestinationRegion != nullptr &&
-                    SourceRegion->Entry != DestinationRegion->Entry)
+                const ExecutionRegion* SourceRegion = Graph.FindExecutionRegion(*Source->ExecutionRegion);
+                const ExecutionRegion* DestinationRegion = Graph.FindExecutionRegion(*Destination->ExecutionRegion);
+                if (SourceRegion != nullptr && DestinationRegion != nullptr && SourceRegion->Entry != DestinationRegion->Entry)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
-                        "A structured control edge cannot cross execution-entry ownership.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership, "A structured control edge cannot cross execution-entry ownership.");
                 }
             }
         }
@@ -715,8 +615,7 @@ namespace MiliastraPlusPlus
         {
             for (const ExecutionRegion& Region : Graph.GetExecutionRegions())
             {
-                if (Region.Kind == ExecutionRegionKind::BranchArm &&
-                    Region.OwnerNode == BranchNode && Region.OwnerOutputPin == OutputPin)
+                if (Region.Kind == ExecutionRegionKind::BranchArm && Region.OwnerNode == BranchNode && Region.OwnerOutputPin == OutputPin)
                 {
                     return &Region;
                 }
@@ -728,8 +627,7 @@ namespace MiliastraPlusPlus
         {
             for (const ExecutionRegion& Region : Graph.GetExecutionRegions())
             {
-                if (Region.Kind == ExecutionRegionKind::LoopBody &&
-                    Region.OwnerNode == LoopNode && Region.OwnerOutputPin == BodyOutput)
+                if (Region.Kind == ExecutionRegionKind::LoopBody && Region.OwnerNode == LoopNode && Region.OwnerOutputPin == BodyOutput)
                 {
                     return &Region;
                 }
@@ -743,8 +641,7 @@ namespace MiliastraPlusPlus
             const NodeDescriptor* Descriptor = Source == nullptr
                 ? nullptr : Descriptors.Find(Source->Descriptor);
             const BranchControlSchema* Branch = GetControlSchema<BranchControlSchema>(Descriptor);
-            if (Branch != nullptr && (Edge.SourceOutputPin == Branch->TrueOutput ||
-                Edge.SourceOutputPin == Branch->FalseOutput))
+            if (Branch != nullptr && (Edge.SourceOutputPin == Branch->TrueOutput || Edge.SourceOutputPin == Branch->FalseOutput))
             {
                 return FindBranchArmRegion(Graph, Edge.SourceNode, Edge.SourceOutputPin);
             }
@@ -753,8 +650,7 @@ namespace MiliastraPlusPlus
             {
                 return FindLoopBodyRegion(Graph, Edge.SourceNode, Loop->BodyOutput);
             }
-            return Source != nullptr && Source->ExecutionRegion.has_value()
-                ? Graph.FindExecutionRegion(*Source->ExecutionRegion) : nullptr;
+            return Source != nullptr && Source->ExecutionRegion.has_value() ? Graph.FindExecutionRegion(*Source->ExecutionRegion) : nullptr;
         }
 
         static bool IsInsideLoopBody(const GraphIR& Graph, const NodeInstance& Node)
@@ -767,8 +663,7 @@ namespace MiliastraPlusPlus
             std::vector<ExecutionRegionId> VisitedRegions;
             while (Region != nullptr)
             {
-                if (std::find(VisitedRegions.begin(), VisitedRegions.end(), Region->Identifier) !=
-                    VisitedRegions.end())
+                if (std::find(VisitedRegions.begin(), VisitedRegions.end(), Region->Identifier) != VisitedRegions.end())
                 {
                     // The region-tree validation reports this malformed cycle. Stop ancestry
                     // queries here so later branch/loop checks cannot hang on the bad graph.
@@ -812,8 +707,7 @@ namespace MiliastraPlusPlus
             {
                 const NodeDescriptor* Descriptor = Node.Descriptor.IsValid()
                     ? Descriptors.Find(Node.Descriptor) : nullptr;
-                const ReturnControlSchema* Return =
-                    GetControlSchema<ReturnControlSchema>(Descriptor);
+                const ReturnControlSchema* Return = GetControlSchema<ReturnControlSchema>(Descriptor);
                 if (Return == nullptr)
                 {
                     continue;
@@ -821,19 +715,16 @@ namespace MiliastraPlusPlus
 
                 if (CountIncomingEndpoint(Graph, Node.Identifier, Return->ExecutionInput) != 1U)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability,
-                        "A structured Return must have exactly one explicit execution predecessor.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability, "A structured Return must have exactly one explicit execution predecessor.");
                 }
-                const bool HasSuccessor = std::any_of(
-                    Graph.GetControlEdges().begin(), Graph.GetControlEdges().end(),
+                const bool HasSuccessor = std::any_of(Graph.GetControlEdges().begin(), Graph.GetControlEdges().end(),
                     [&Node](const ControlEdge& Edge)
                     {
                         return Edge.SourceNode == Node.Identifier;
                     });
                 if (HasSuccessor)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability,
-                        "A Return path is terminal and cannot have an execution successor.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability, "A Return path is terminal and cannot have an execution successor.");
                 }
             }
         }
@@ -846,8 +737,7 @@ namespace MiliastraPlusPlus
                 return false;
             }
             const NodeDescriptor* DestinationDescriptor = Descriptors.Find(Destination->Descriptor);
-            const LoopControlSchema* DestinationLoop =
-                GetControlSchema<LoopControlSchema>(DestinationDescriptor);
+            const LoopControlSchema* DestinationLoop = GetControlSchema<LoopControlSchema>(DestinationDescriptor);
             return DestinationLoop != nullptr &&
                 (Edge.DestinationInputPin == DestinationLoop->RepeatInput ||
                     Edge.DestinationInputPin == DestinationLoop->BreakInput);
@@ -896,9 +786,9 @@ namespace MiliastraPlusPlus
                     continue;
                 }
                 const PinSchema* SourcePin = FindPin(Source, Edge.SourceOutputPin, Descriptors);
-                const PinSchema* DestinationPin = FindPin(
-                    Destination, Edge.DestinationInputPin, Descriptors);
-                if (SourcePin == nullptr || DestinationPin == nullptr ||
+                const PinSchema* DestinationPin = FindPin(Destination, Edge.DestinationInputPin, Descriptors);
+                if (SourcePin == nullptr ||
+                    DestinationPin == nullptr ||
                     SourcePin->GetCategory() != PinCategory::Execution ||
                     DestinationPin->GetCategory() != PinCategory::Execution)
                 {
@@ -910,15 +800,11 @@ namespace MiliastraPlusPlus
                 }
                 if (CountOutgoingEndpoint(Graph, Edge.SourceNode, Edge.SourceOutputPin) > 1U)
                 {
-                    Add(Diagnostics, DiagnosticCode::ExecutionEndpointAlreadyConsumed,
-                        "A structured Flow output endpoint may have at most one successor.");
+                    Add(Diagnostics, DiagnosticCode::ExecutionEndpointAlreadyConsumed, "A structured Flow output endpoint may have at most one successor.");
                 }
-                if (DestinationPin->GetCardinality() != PinCardinality::Multiple &&
-                    CountIncomingEndpoint(Graph, Edge.DestinationNode,
-                        Edge.DestinationInputPin) > 1U)
+                if (DestinationPin->GetCardinality() != PinCardinality::Multiple && CountIncomingEndpoint(Graph, Edge.DestinationNode, Edge.DestinationInputPin) > 1U)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidControlEdge,
-                        "A structured Flow input with Single or Optional cardinality has multiple predecessors.");
+                    Add(Diagnostics, DiagnosticCode::InvalidControlEdge, "A structured Flow input with Single or Optional cardinality has multiple predecessors.");
                 }
             }
 
@@ -926,7 +812,8 @@ namespace MiliastraPlusPlus
             {
                 const NodeInstance* Source = Graph.FindNode(Edge.SourceNode);
                 const NodeInstance* Destination = Graph.FindNode(Edge.DestinationNode);
-                if (Source == nullptr || Destination == nullptr ||
+                if (Source == nullptr ||
+                    Destination == nullptr ||
                     !Source->ExecutionRegion.has_value() ||
                     !Destination->ExecutionRegion.has_value() ||
                     IsReturnNode(*Source, Descriptors) ||
@@ -934,10 +821,8 @@ namespace MiliastraPlusPlus
                 {
                     continue;
                 }
-                const ExecutionRegion* SourceRegion =
-                    EffectiveSourceRegion(Graph, Descriptors, Edge);
-                const ExecutionRegion* DestinationRegion =
-                    Graph.FindExecutionRegion(*Destination->ExecutionRegion);
+                const ExecutionRegion* SourceRegion = EffectiveSourceRegion(Graph, Descriptors, Edge);
+                const ExecutionRegion* DestinationRegion = Graph.FindExecutionRegion(*Destination->ExecutionRegion);
                 if (SourceRegion == nullptr || DestinationRegion == nullptr)
                 {
                     continue;
@@ -954,16 +839,14 @@ namespace MiliastraPlusPlus
                     SourceRegion->Parent.has_value() &&
                     *SourceRegion->Parent == DestinationRegion->Identifier;
                 const NodeDescriptor* DestinationDescriptor = Descriptors.Find(Destination->Descriptor);
-                const bool ParentContinuation =
-                    GetControlSchema<JoinControlSchema>(DestinationDescriptor) != nullptr ||
+                const bool ParentContinuation = GetControlSchema<JoinControlSchema>(DestinationDescriptor) != nullptr ||
                     GetControlSchema<SequenceControlSchema>(DestinationDescriptor) != nullptr;
                 if (IsParentExit && ParentContinuation)
                 {
                     continue;
                 }
                 const NodeDescriptor* SourceDescriptor = Descriptors.Find(Source->Descriptor);
-                const BranchControlSchema* Branch =
-                    GetControlSchema<BranchControlSchema>(SourceDescriptor);
+                const BranchControlSchema* Branch = GetControlSchema<BranchControlSchema>(SourceDescriptor);
                 const ExecutionRegion* DestinationParent = DestinationRegion->Parent.has_value()
                     ? Graph.FindExecutionRegion(*DestinationRegion->Parent) : nullptr;
                 const bool IsOwnedArmEntry = Branch != nullptr &&
@@ -976,32 +859,27 @@ namespace MiliastraPlusPlus
                     Source->ExecutionRegion == DestinationParent->Identifier;
                 if (!IsOwnedArmEntry)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
-                        "A structured control edge crosses an execution region boundary without its owning Branch role.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership, "A structured control edge crosses an execution region boundary without its owning Branch role.");
                 }
             }
 
             for (const ExecutionEntry& Entry : Graph.GetExecutionEntries())
             {
-                if (!Entry.Identifier.IsValid() || !Entry.RootNode.IsValid() ||
-                    CountEntries(Graph, Entry.Identifier) != 1U)
+                if (!Entry.Identifier.IsValid() || !Entry.RootNode.IsValid() || CountEntries(Graph, Entry.Identifier) != 1U)
                 {
                     continue;
                 }
                 const NodeInstance* Root = Graph.FindNode(Entry.RootNode);
                 const NodeDescriptor* RootDescriptor = Root == nullptr
                     ? nullptr : Descriptors.Find(Root->Descriptor);
-                const EntryControlSchema* EntrySchema =
-                    GetControlSchema<EntryControlSchema>(RootDescriptor);
+                const EntryControlSchema* EntrySchema = GetControlSchema<EntryControlSchema>(RootDescriptor);
                 if (Root == nullptr || EntrySchema == nullptr)
                 {
                     continue;
                 }
-                if (CountOutgoingEndpoint(Graph, Root->Identifier,
-                    EntrySchema->ExecutionOutput) == 0U)
+                if (CountOutgoingEndpoint(Graph, Root->Identifier, EntrySchema->ExecutionOutput) == 0U)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability,
-                        "A structured Entry root must have an explicit execution successor.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability, "A structured Entry root must have an explicit execution successor.");
                 }
 
                 std::vector<NodeInstanceId> Reachable;
@@ -1016,16 +894,13 @@ namespace MiliastraPlusPlus
                     }
                     for (const ControlEdge& Edge : Graph.GetControlEdges())
                     {
-                        if (Edge.SourceNode != Current ||
-                            IsLoopTransferEdge(Graph, Descriptors, Edge))
+                        if (Edge.SourceNode != Current || IsLoopTransferEdge(Graph, Descriptors, Edge))
                         {
                             continue;
                         }
-                        const PinSchema* SourcePin = FindPin(
-                            CurrentNode, Edge.SourceOutputPin, Descriptors);
+                        const PinSchema* SourcePin = FindPin(CurrentNode, Edge.SourceOutputPin, Descriptors);
                         const NodeInstance* Destination = Graph.FindNode(Edge.DestinationNode);
-                        const PinSchema* DestinationPin = FindPin(
-                            Destination, Edge.DestinationInputPin, Descriptors);
+                        const PinSchema* DestinationPin = FindPin(Destination, Edge.DestinationInputPin, Descriptors);
                         const ExecutionRegion* Region = Destination != nullptr &&
                             Destination->ExecutionRegion.has_value()
                             ? Graph.FindExecutionRegion(*Destination->ExecutionRegion) : nullptr;
@@ -1036,7 +911,9 @@ namespace MiliastraPlusPlus
                             DestinationPin->GetDirection() != PinDirection::Input ||
                             DestinationPin->GetCategory() != PinCategory::Execution ||
                             DestinationPin->GetType() != TypeDesc::Flow() ||
-                            Destination == nullptr || Region == nullptr || Region->Entry != Entry.Identifier ||
+                            Destination == nullptr ||
+                            Region == nullptr ||
+                            Region->Entry != Entry.Identifier ||
                             IsInsideLoopBody(Graph, *Destination))
                         {
                             continue;
@@ -1063,9 +940,12 @@ namespace MiliastraPlusPlus
                         ? Graph.FindExecutionRegion(*Node.ExecutionRegion) : nullptr;
                     const NodeDescriptor* Descriptor = Node.Descriptor.IsValid()
                         ? Descriptors.Find(Node.Descriptor) : nullptr;
-                    if (Region == nullptr || Region->Entry != Entry.Identifier ||
-                        Descriptor == nullptr || !Descriptor->GetExecutionControlSchema().has_value() ||
-                        IsInsideLoopBody(Graph, Node) || IsLoopControlNode(Node, Descriptors))
+                    if (Region == nullptr ||
+                        Region->Entry != Entry.Identifier ||
+                        Descriptor == nullptr ||
+                        !Descriptor->GetExecutionControlSchema().has_value() ||
+                        IsInsideLoopBody(Graph, Node) ||
+                        IsLoopControlNode(Node, Descriptors))
                     {
                         continue;
                     }
@@ -1076,8 +956,7 @@ namespace MiliastraPlusPlus
                     }
                     if (!IsReachable)
                     {
-                        Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability,
-                            "A structured execution node is unreachable from its explicit Entry root.");
+                        Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability, "A structured execution node is unreachable from its explicit Entry root.");
                     }
                 }
 
@@ -1106,12 +985,12 @@ namespace MiliastraPlusPlus
                 {
                     continue;
                 }
-                const ExecutionRegion* TrueRegion = FindBranchArmRegion(
-                    Graph, Node.Identifier, Branch->TrueOutput);
-                const ExecutionRegion* FalseRegion = FindBranchArmRegion(
-                    Graph, Node.Identifier, Branch->FalseOutput);
-                if (TrueRegion == nullptr || FalseRegion == nullptr ||
-                    !TrueRegion->Parent.has_value() || !FalseRegion->Parent.has_value())
+                const ExecutionRegion* TrueRegion = FindBranchArmRegion(Graph, Node.Identifier, Branch->TrueOutput);
+                const ExecutionRegion* FalseRegion = FindBranchArmRegion(Graph, Node.Identifier, Branch->FalseOutput);
+                if (TrueRegion == nullptr ||
+                    FalseRegion == nullptr ||
+                    !TrueRegion->Parent.has_value() ||
+                    !FalseRegion->Parent.has_value())
                 {
                     continue;
                 }
@@ -1130,8 +1009,7 @@ namespace MiliastraPlusPlus
                     }
                     const ExecutionRegion* SourceRegion = EffectiveSourceRegion(Graph, Descriptors, Edge);
                     const NodeInstance* Destination = Graph.FindNode(Edge.DestinationNode);
-                    if (SourceRegion == nullptr || Destination == nullptr ||
-                        !Destination->ExecutionRegion.has_value())
+                    if (SourceRegion == nullptr || Destination == nullptr || !Destination->ExecutionRegion.has_value())
                     {
                         continue;
                     }
@@ -1151,8 +1029,7 @@ namespace MiliastraPlusPlus
                 }
                 if (TrueExits.size() > 1U || FalseExits.size() > 1U)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability,
-                        "Each BranchArm may have at most one live parent-region outcome.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability, "Each BranchArm may have at most one live parent-region outcome.");
                     continue;
                 }
                 const std::size_t LiveCount = TrueExits.size() + FalseExits.size();
@@ -1165,8 +1042,7 @@ namespace MiliastraPlusPlus
                         ? nullptr : Descriptors.Find(Destination->Descriptor);
                     if (GetControlSchema<SequenceControlSchema>(DestinationDescriptor) == nullptr)
                     {
-                        Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability,
-                            "A single live BranchArm must continue through a parent-region Sequence.");
+                        Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability, "A single live BranchArm must continue through a parent-region Sequence.");
                     }
                 }
                 else if (LiveCount == 2U)
@@ -1180,8 +1056,7 @@ namespace MiliastraPlusPlus
                         TrueDestination->ExecutionRegion != ParentRegion->Identifier ||
                         GetControlSchema<JoinControlSchema>(JoinDescriptor) == nullptr)
                     {
-                        Add(Diagnostics, DiagnosticCode::MissingExplicitJoin,
-                            "Two live BranchArms must reconverge at one explicit parent-region Join.");
+                        Add(Diagnostics, DiagnosticCode::MissingExplicitJoin, "Two live BranchArms must reconverge at one explicit parent-region Join.");
                     }
                 }
             }
@@ -1203,8 +1078,7 @@ namespace MiliastraPlusPlus
                 std::vector<const ControlEdge*> Incoming;
                 for (const ControlEdge& Edge : Graph.GetControlEdges())
                 {
-                    if (Edge.DestinationNode == JoinNode.Identifier &&
-                        Edge.DestinationInputPin == Join->ExecutionInput)
+                    if (Edge.DestinationNode == JoinNode.Identifier && Edge.DestinationInputPin == Join->ExecutionInput)
                     {
                         Incoming.push_back(&Edge);
                     }
@@ -1227,8 +1101,7 @@ namespace MiliastraPlusPlus
                         ? Graph.FindNode(*FirstRegion->OwnerNode) : nullptr;
                     const NodeDescriptor* OwnerDescriptor = Owner == nullptr
                         ? nullptr : Descriptors.Find(Owner->Descriptor);
-                    const BranchControlSchema* Branch =
-                        GetControlSchema<BranchControlSchema>(OwnerDescriptor);
+                    const BranchControlSchema* Branch = GetControlSchema<BranchControlSchema>(OwnerDescriptor);
                     ValidPair = ValidPair && Branch != nullptr &&
                         ((FirstRegion->OwnerOutputPin == Branch->TrueOutput &&
                             SecondRegion->OwnerOutputPin == Branch->FalseOutput) ||
@@ -1237,8 +1110,7 @@ namespace MiliastraPlusPlus
                 }
                 if (!ValidPair)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidControlEdge,
-                        "A structured Join must have exactly one incoming tail from each arm of one binary Branch.");
+                    Add(Diagnostics, DiagnosticCode::InvalidControlEdge, "A structured Join must have exactly one incoming tail from each arm of one binary Branch.");
                 }
             }
         }
@@ -1248,8 +1120,7 @@ namespace MiliastraPlusPlus
             const NodeDescriptorRegistry& Descriptors,
             ExecutionEntryId Entry,
             const std::vector<NodeInstanceId>& Reachable,
-            DiagnosticCollection& Diagnostics
-        )
+            DiagnosticCollection& Diagnostics)
         {
             std::vector<NodeInstanceId> Ordered;
             for (const NodeInstanceId NodeId : Reachable)
@@ -1284,11 +1155,9 @@ namespace MiliastraPlusPlus
                             continue;
                         }
                         const NodeInstance* Source = Graph.FindNode(Edge.SourceNode);
-                        const PinSchema* SourcePin = FindPin(
-                            Source, Edge.SourceOutputPin, Descriptors);
+                        const PinSchema* SourcePin = FindPin(Source, Edge.SourceOutputPin, Descriptors);
                         const NodeInstance* Destination = Graph.FindNode(Edge.DestinationNode);
-                        const PinSchema* DestinationPin = FindPin(
-                            Destination, Edge.DestinationInputPin, Descriptors);
+                        const PinSchema* DestinationPin = FindPin(Destination, Edge.DestinationInputPin, Descriptors);
                         const ExecutionRegion* Region = Destination != nullptr &&
                             Destination->ExecutionRegion.has_value()
                             ? Graph.FindExecutionRegion(*Destination->ExecutionRegion) : nullptr;
@@ -1300,7 +1169,9 @@ namespace MiliastraPlusPlus
                             DestinationPin->GetDirection() == PinDirection::Input &&
                             DestinationPin->GetCategory() == PinCategory::Execution &&
                             DestinationPin->GetType() == TypeDesc::Flow() &&
-                            Destination != nullptr && Region != nullptr && Region->Entry == Entry &&
+                            Destination != nullptr &&
+                            Region != nullptr &&
+                            Region->Entry == Entry &&
                             !IsInsideLoopBody(Graph, *Destination))
                         {
                             bool DestinationRemoved = false;
@@ -1320,8 +1191,7 @@ namespace MiliastraPlusPlus
             }
             if (Removed.size() != Ordered.size())
             {
-                Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability,
-                    "A structured execution cycle outside LoopBody is not authorized in M4.2.");
+                Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability, "A structured execution cycle outside LoopBody is not authorized in M4.2.");
             }
         }
 
@@ -1397,8 +1267,10 @@ namespace MiliastraPlusPlus
         {
             const NodeInstance* Target = Graph.FindNode(Edge.DestinationNode);
             const NodeInstance* Source = Graph.FindNode(Edge.SourceNode);
-            if (Target == nullptr || Source == nullptr ||
-                !Source->ExecutionRegion.has_value() || !Target->ExecutionRegion.has_value())
+            if (Target == nullptr ||
+                Source == nullptr ||
+                !Source->ExecutionRegion.has_value() ||
+                !Target->ExecutionRegion.has_value())
             {
                 return false;
             }
@@ -1411,19 +1283,14 @@ namespace MiliastraPlusPlus
             {
                 return false;
             }
-            const LoopControlSchema* TargetSchema = FindLoopSchema(
-                Graph, Descriptors, Target->Identifier);
-            if (TargetSchema == nullptr ||
-                (Edge.DestinationInputPin != TargetSchema->RepeatInput &&
-                    Edge.DestinationInputPin != TargetSchema->BreakInput))
+            const LoopControlSchema* TargetSchema = FindLoopSchema(Graph, Descriptors, Target->Identifier);
+            if (TargetSchema == nullptr || (Edge.DestinationInputPin != TargetSchema->RepeatInput && Edge.DestinationInputPin != TargetSchema->BreakInput))
             {
                 return false;
             }
             const ExecutionRegion* SourceRegion = EffectiveSourceRegion(Graph, Descriptors, Edge);
-            const ExecutionRegion* NearestBody = FindNearestLoopBodyRegion(
-                Graph, Descriptors, SourceRegion);
-            const ExecutionRegion* TargetBody = FindLoopBodyRegion(
-                Graph, Target->Identifier, TargetSchema->BodyOutput);
+            const ExecutionRegion* NearestBody = FindNearestLoopBodyRegion(Graph, Descriptors, SourceRegion);
+            const ExecutionRegion* TargetBody = FindLoopBodyRegion(Graph, Target->Identifier, TargetSchema->BodyOutput);
             return SourceRegion != nullptr && NearestBody != nullptr && TargetBody != nullptr &&
                 NearestBody->Identifier == TargetBody->Identifier &&
                 SourceRegion->Entry == TargetBody->Entry &&
@@ -1452,8 +1319,7 @@ namespace MiliastraPlusPlus
             const GraphIR& Graph,
             const NodeDescriptorRegistry& Descriptors,
             const ExecutionEntry& Entry,
-            std::vector<NodeInstanceId>& ReachableBreakLoops
-        )
+            std::vector<NodeInstanceId>& ReachableBreakLoops)
         {
             std::vector<NodeInstanceId> Reachable;
             Reachable.push_back(Entry.RootNode);
@@ -1465,19 +1331,16 @@ namespace MiliastraPlusPlus
                 {
                     continue;
                 }
-                const LoopControlSchema* CurrentLoop = FindLoopSchema(
-                    Graph, Descriptors, Current);
+                const LoopControlSchema* CurrentLoop = FindLoopSchema(Graph, Descriptors, Current);
                 for (const ControlEdge& Edge : Graph.GetControlEdges())
                 {
                     if (Edge.SourceNode != Current)
                     {
                         continue;
                     }
-                    const PinSchema* SourcePin = FindPin(
-                        CurrentNode, Edge.SourceOutputPin, Descriptors);
+                    const PinSchema* SourcePin = FindPin(CurrentNode, Edge.SourceOutputPin, Descriptors);
                     const NodeInstance* Destination = Graph.FindNode(Edge.DestinationNode);
-                    const PinSchema* DestinationPin = FindPin(
-                        Destination, Edge.DestinationInputPin, Descriptors);
+                    const PinSchema* DestinationPin = FindPin(Destination, Edge.DestinationInputPin, Descriptors);
                     if (SourcePin == nullptr || SourcePin->GetDirection() != PinDirection::Output ||
                         SourcePin->GetCategory() != PinCategory::Execution ||
                         SourcePin->GetType() != TypeDesc::Flow() ||
@@ -1490,23 +1353,20 @@ namespace MiliastraPlusPlus
                     }
                     const LoopControlSchema* DestinationLoop = Destination == nullptr
                         ? nullptr : FindLoopSchema(Graph, Descriptors, Destination->Identifier);
-                    if (DestinationLoop != nullptr &&
-                        Edge.DestinationInputPin == DestinationLoop->RepeatInput)
+                    if (DestinationLoop != nullptr && Edge.DestinationInputPin == DestinationLoop->RepeatInput)
                     {
                         // The loop controller is already reachable through its execution input.
                         // Repeat is the sole authorized cycle-closing transfer.
                         continue;
                     }
-                    if (DestinationLoop != nullptr &&
-                        Edge.DestinationInputPin == DestinationLoop->BreakInput)
+                    if (DestinationLoop != nullptr && Edge.DestinationInputPin == DestinationLoop->BreakInput)
                     {
                         if (IsAuthorizedLoopTransfer(Graph, Descriptors, Edge))
                         {
                             AddReachableNode(ReachableBreakLoops, Destination->Identifier);
                             for (const ControlEdge& ExitEdge : Graph.GetControlEdges())
                             {
-                                if (ExitEdge.SourceNode == Destination->Identifier &&
-                                    ExitEdge.SourceOutputPin == DestinationLoop->ExitOutput)
+                                if (ExitEdge.SourceNode == Destination->Identifier && ExitEdge.SourceOutputPin == DestinationLoop->ExitOutput)
                                 {
                                     AddReachableNode(Reachable, ExitEdge.DestinationNode);
                                 }
@@ -1520,14 +1380,14 @@ namespace MiliastraPlusPlus
                         const NodeDescriptor* LoopDescriptor = LoopNode == nullptr
                             ? nullptr : Descriptors.Find(LoopNode->Descriptor);
                         const LoopControlSchema* Loop = GetControlSchema<LoopControlSchema>(LoopDescriptor);
-                        if (Loop != nullptr && Edge.SourceOutputPin == Loop->ExitOutput &&
+                        if (Loop != nullptr &&
+                            Edge.SourceOutputPin == Loop->ExitOutput &&
                             Loop->ExitPolicy == LoopExitPolicy::Unconditional &&
                             !ContainsEntryLoop(ReachableBreakLoops, Current))
                         {
                             continue;
                         }
-                        if (Loop != nullptr && Edge.SourceOutputPin != Loop->BodyOutput &&
-                            Edge.SourceOutputPin != Loop->ExitOutput)
+                        if (Loop != nullptr && Edge.SourceOutputPin != Loop->BodyOutput && Edge.SourceOutputPin != Loop->ExitOutput)
                         {
                             continue;
                         }
@@ -1557,62 +1417,52 @@ namespace MiliastraPlusPlus
             const std::size_t InitialDiagnosticCount = Diagnostics.size();
             for (const NodeInstance& LoopNode : Graph.GetNodes())
             {
-                const LoopControlSchema* Loop = FindLoopSchema(
-                    Graph, Descriptors, LoopNode.Identifier);
+                const LoopControlSchema* Loop = FindLoopSchema(Graph, Descriptors, LoopNode.Identifier);
                 if (Loop == nullptr)
                 {
                     continue;
                 }
-                const ExecutionRegion* Body = FindLoopBodyRegion(
-                    Graph, LoopNode.Identifier, Loop->BodyOutput);
+                const ExecutionRegion* Body = FindLoopBodyRegion(Graph, LoopNode.Identifier, Loop->BodyOutput);
                 const ExecutionRegion* Parent = LoopNode.ExecutionRegion.has_value()
                     ? Graph.FindExecutionRegion(*LoopNode.ExecutionRegion) : nullptr;
-                if (Body == nullptr || Parent == nullptr || Body->Parent != Parent->Identifier ||
+                if (Body == nullptr ||
+                    Parent == nullptr ||
+                    Body->Parent != Parent->Identifier ||
                     Body->Entry != Parent->Entry)
                 {
                     continue;
                 }
                 if (CountIncomingEndpoint(Graph, LoopNode.Identifier, Loop->ExecutionInput) != 1U)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability,
-                        "A Loop controller must have exactly one explicit execution predecessor.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability, "A Loop controller must have exactly one explicit execution predecessor.");
                 }
                 std::vector<const ControlEdge*> BodyEdges;
                 for (const ControlEdge& Edge : Graph.GetControlEdges())
                 {
-                    if (Edge.SourceNode == LoopNode.Identifier &&
-                        Edge.SourceOutputPin == Loop->BodyOutput)
+                    if (Edge.SourceNode == LoopNode.Identifier && Edge.SourceOutputPin == Loop->BodyOutput)
                     {
                         BodyEdges.push_back(&Edge);
                     }
-                    if (Edge.SourceNode == LoopNode.Identifier &&
-                        Edge.SourceOutputPin == Loop->ExitOutput)
+                    if (Edge.SourceNode == LoopNode.Identifier && Edge.SourceOutputPin == Loop->ExitOutput)
                     {
                         const NodeInstance* Destination = Graph.FindNode(Edge.DestinationNode);
-                        if (Destination == nullptr || !Destination->ExecutionRegion.has_value() ||
-                            *Destination->ExecutionRegion != Parent->Identifier)
+                        if (Destination == nullptr || !Destination->ExecutionRegion.has_value() || *Destination->ExecutionRegion != Parent->Identifier)
                         {
-                            Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
-                                "A Loop Exit output may continue only in its parent execution region.");
+                            Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership, "A Loop Exit output may continue only in its parent execution region.");
                         }
                     }
-                    if (Edge.DestinationNode == LoopNode.Identifier &&
-                        Edge.DestinationInputPin == Loop->ExecutionInput)
+                    if (Edge.DestinationNode == LoopNode.Identifier && Edge.DestinationInputPin == Loop->ExecutionInput)
                     {
-                        const ExecutionRegion* SourceRegion = EffectiveSourceRegion(
-                            Graph, Descriptors, Edge);
-                        if (SourceRegion == nullptr || SourceRegion->Identifier != Parent->Identifier ||
-                            SourceRegion->Entry != Parent->Entry)
+                        const ExecutionRegion* SourceRegion = EffectiveSourceRegion(Graph, Descriptors, Edge);
+                        if (SourceRegion == nullptr || SourceRegion->Identifier != Parent->Identifier || SourceRegion->Entry != Parent->Entry)
                         {
-                            Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
-                                "A Loop ExecutionInput must be reached from its parent region.");
+                            Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership, "A Loop ExecutionInput must be reached from its parent region.");
                         }
                     }
                 }
                 if (BodyEdges.size() != 1U)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability,
-                        "A LoopBody must begin with exactly one explicit Body output successor.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability, "A LoopBody must begin with exactly one explicit Body output successor.");
                 }
                 else
                 {
@@ -1625,7 +1475,8 @@ namespace MiliastraPlusPlus
                     const NodeInstance* BodyRoot = IsAuthorizedDirectTransfer
                         ? nullptr : Graph.FindNode(BodyAction.DestinationNode);
                     if (!IsAuthorizedDirectTransfer &&
-                        (BodyRoot == nullptr || BodyRoot->ExecutionRegion != Body->Identifier ||
+                        (BodyRoot == nullptr ||
+                            BodyRoot->ExecutionRegion != Body->Identifier ||
                             !IsExecutionNode(*BodyRoot, Descriptors)))
                     {
                         Add(Diagnostics, DiagnosticCode::InvalidExecutionOwnership,
@@ -1636,25 +1487,20 @@ namespace MiliastraPlusPlus
                 {
                     if (!Loop->ConditionInput.has_value())
                     {
-                        Add(Diagnostics, DiagnosticCode::InvalidExecutionControlRole,
-                            "A Conditional Loop requires its declared Boolean condition input.");
+                        Add(Diagnostics, DiagnosticCode::InvalidExecutionControlRole, "A Conditional Loop requires its declared Boolean condition input.");
                     }
                     else
                     {
-                        const PinSchema& ConditionPin =
-                            Descriptors.Find(LoopNode.Descriptor)->GetPins()[Loop->ConditionInput->GetValue()];
-                        if (Graph.GetInputBinding(LoopNode.Identifier, *Loop->ConditionInput) == nullptr &&
-                            !ConditionPin.GetDefaultValue().has_value())
+                        const PinSchema& ConditionPin = Descriptors.Find(LoopNode.Descriptor)->GetPins()[Loop->ConditionInput->GetValue()];
+                        if (Graph.GetInputBinding(LoopNode.Identifier, *Loop->ConditionInput) == nullptr && !ConditionPin.GetDefaultValue().has_value())
                         {
-                            Add(Diagnostics, DiagnosticCode::InvalidInputBinding,
-                                "A Conditional Loop requires a condition binding or descriptor default.");
+                            Add(Diagnostics, DiagnosticCode::InvalidInputBinding, "A Conditional Loop requires a condition binding or descriptor default.");
                         }
                     }
                 }
                 else if (Loop->ConditionInput.has_value())
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidExecutionControlRole,
-                        "An Unconditional Loop cannot declare a condition input.");
+                    Add(Diagnostics, DiagnosticCode::InvalidExecutionControlRole, "An Unconditional Loop cannot declare a condition input.");
                 }
             }
 
@@ -1665,15 +1511,13 @@ namespace MiliastraPlusPlus
                 {
                     continue;
                 }
-                const LoopControlSchema* DestinationLoop = FindLoopSchema(
-                    Graph, Descriptors, Destination->Identifier);
+                const LoopControlSchema* DestinationLoop = FindLoopSchema(Graph, Descriptors, Destination->Identifier);
                 if (DestinationLoop != nullptr &&
                     (Edge.DestinationInputPin == DestinationLoop->RepeatInput ||
                         Edge.DestinationInputPin == DestinationLoop->BreakInput) &&
                     !IsAuthorizedLoopTransfer(Graph, Descriptors, Edge))
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidLoopTransfer,
-                        "Repeat and Break transfers must target the nearest owning LoopBody controller.");
+                    Add(Diagnostics, DiagnosticCode::InvalidLoopTransfer, "Repeat and Break transfers must target the nearest owning LoopBody controller.");
                 }
             }
 
@@ -1690,8 +1534,7 @@ namespace MiliastraPlusPlus
                     continue;
                 }
                 std::vector<NodeInstanceId> EntryBreakLoops;
-                const std::vector<NodeInstanceId> Reachable = FindStructuredReachability(
-                    Graph, Descriptors, Entry, EntryBreakLoops);
+                const std::vector<NodeInstanceId> Reachable = FindStructuredReachability(Graph, Descriptors, Entry, EntryBreakLoops);
                 for (const NodeInstanceId BreakLoop : EntryBreakLoops)
                 {
                     AddReachableNode(ReachableBreakLoops, BreakLoop);
@@ -1709,18 +1552,15 @@ namespace MiliastraPlusPlus
                     }
                     if (!ContainsNode(Reachable, Node.Identifier))
                     {
-                        Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability,
-                            "A structured execution node, including LoopBody nodes, must be reachable from its Entry root.");
+                        Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability, "A structured execution node, including LoopBody nodes, must be reachable from its Entry root.");
                     }
                 }
-                ValidateAuthorizedLoopCycles(Graph, Descriptors, Entry, Reachable,
-                    ReachableBreakLoops, Diagnostics);
+                ValidateAuthorizedLoopCycles(Graph, Descriptors, Entry, Reachable, ReachableBreakLoops, Diagnostics);
             }
 
             for (const NodeInstance& LoopNode : Graph.GetNodes())
             {
-                const LoopControlSchema* Loop = FindLoopSchema(
-                    Graph, Descriptors, LoopNode.Identifier);
+                const LoopControlSchema* Loop = FindLoopSchema(Graph, Descriptors, LoopNode.Identifier);
                 if (Loop == nullptr || Loop->ExitPolicy != LoopExitPolicy::Unconditional)
                 {
                     continue;
@@ -1728,20 +1568,17 @@ namespace MiliastraPlusPlus
                 bool HasExitEdge = false;
                 for (const ControlEdge& Edge : Graph.GetControlEdges())
                 {
-                    HasExitEdge = HasExitEdge || (Edge.SourceNode == LoopNode.Identifier &&
-                        Edge.SourceOutputPin == Loop->ExitOutput);
+                    HasExitEdge = HasExitEdge || (Edge.SourceNode == LoopNode.Identifier && Edge.SourceOutputPin == Loop->ExitOutput);
                 }
                 if (HasExitEdge && !ContainsEntryLoop(ReachableBreakLoops, LoopNode.Identifier))
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidLoopTransfer,
-                        "An Unconditional Loop Exit output is reachable only when a valid Break path exists.");
+                    Add(Diagnostics, DiagnosticCode::InvalidLoopTransfer, "An Unconditional Loop Exit output is reachable only when a valid Break path exists.");
                 }
             }
 
             if (Diagnostics.size() == InitialDiagnosticCount && !ContainsError(Diagnostics))
             {
-                ValidateLoopAwareDataDominance(Graph, Descriptors, Diagnostics,
-                    ReachableBreakLoops);
+                ValidateLoopAwareDataDominance(Graph, Descriptors, Diagnostics, ReachableBreakLoops);
             }
         }
 
@@ -1751,15 +1588,13 @@ namespace MiliastraPlusPlus
             const ExecutionEntry& Entry,
             const std::vector<NodeInstanceId>& Reachable,
             const std::vector<NodeInstanceId>& ReachableBreakLoops,
-            DiagnosticCollection& Diagnostics
-        )
+            DiagnosticCollection& Diagnostics)
         {
             std::vector<NodeInstanceId> Nodes;
             for (const NodeInstanceId Node : Reachable)
             {
                 const NodeInstance* Instance = Graph.FindNode(Node);
-                if (Instance != nullptr && IsExecutionNode(*Instance, Descriptors) &&
-                    Instance->ExecutionRegion.has_value())
+                if (Instance != nullptr && IsExecutionNode(*Instance, Descriptors) && Instance->ExecutionRegion.has_value())
                 {
                     const ExecutionRegion* Region = Graph.FindExecutionRegion(*Instance->ExecutionRegion);
                     if (Region != nullptr && Region->Entry == Entry.Identifier)
@@ -1792,14 +1627,12 @@ namespace MiliastraPlusPlus
                 const NodeInstance* Destination = Graph.FindNode(Edge.DestinationNode);
                 const LoopControlSchema* DestinationLoop = Destination == nullptr
                     ? nullptr : FindLoopSchema(Graph, Descriptors, Destination->Identifier);
-                if (DestinationLoop != nullptr &&
-                    Edge.DestinationInputPin == DestinationLoop->RepeatInput)
+                if (DestinationLoop != nullptr && Edge.DestinationInputPin == DestinationLoop->RepeatInput)
                 {
                     // Repeat is the only removed cycle-closing persisted edge.
                     continue;
                 }
-                if (DestinationLoop != nullptr &&
-                    Edge.DestinationInputPin == DestinationLoop->BreakInput)
+                if (DestinationLoop != nullptr && Edge.DestinationInputPin == DestinationLoop->BreakInput)
                 {
                     if (!IsAuthorizedLoopTransfer(Graph, Descriptors, Edge))
                     {
@@ -1807,8 +1640,7 @@ namespace MiliastraPlusPlus
                     }
                     for (const ControlEdge& ExitEdge : Graph.GetControlEdges())
                     {
-                        if (ExitEdge.SourceNode != Destination->Identifier ||
-                            ExitEdge.SourceOutputPin != DestinationLoop->ExitOutput)
+                        if (ExitEdge.SourceNode != Destination->Identifier || ExitEdge.SourceOutputPin != DestinationLoop->ExitOutput)
                         {
                             continue;
                         }
@@ -1827,9 +1659,9 @@ namespace MiliastraPlusPlus
                 {
                     continue;
                 }
-                const LoopControlSchema* SourceLoop = FindLoopSchema(
-                    Graph, Descriptors, Edge.SourceNode);
-                if (SourceLoop != nullptr && Edge.SourceOutputPin == SourceLoop->ExitOutput &&
+                const LoopControlSchema* SourceLoop = FindLoopSchema(Graph, Descriptors, Edge.SourceNode);
+                if (SourceLoop != nullptr &&
+                    Edge.SourceOutputPin == SourceLoop->ExitOutput &&
                     SourceLoop->ExitPolicy == LoopExitPolicy::Unconditional &&
                     !ContainsEntryLoop(ReachableBreakLoops, Edge.SourceNode))
                 {
@@ -1861,8 +1693,7 @@ namespace MiliastraPlusPlus
             }
             if (RemovedCount != Nodes.size())
             {
-                Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability,
-                    "After authorized Repeat transfers are removed, structured execution must be acyclic.");
+                Add(Diagnostics, DiagnosticCode::InvalidExecutionReachability, "After authorized Repeat transfers are removed, structured execution must be acyclic.");
             }
         }
 
@@ -1870,8 +1701,7 @@ namespace MiliastraPlusPlus
             const GraphIR& Graph,
             const NodeDescriptorRegistry& Descriptors,
             DiagnosticCollection& Diagnostics,
-            const std::vector<NodeInstanceId>& ReachableBreakLoops
-        )
+            const std::vector<NodeInstanceId>& ReachableBreakLoops)
         {
             struct ProvenanceRecord
             {
@@ -1930,9 +1760,7 @@ namespace MiliastraPlusPlus
                     }
                     for (const NodeInstanceId Origin : SourceRecord->Origins)
                     {
-                        if (std::find(DestinationRecord->Origins.begin(),
-                                DestinationRecord->Origins.end(), Origin) ==
-                            DestinationRecord->Origins.end())
+                        if (std::find(DestinationRecord->Origins.begin(), DestinationRecord->Origins.end(), Origin) == DestinationRecord->Origins.end())
                         {
                             DestinationRecord->Origins.push_back(Origin);
                             ProvenanceChanged = true;
@@ -1949,8 +1777,7 @@ namespace MiliastraPlusPlus
                     continue;
                 }
                 std::vector<NodeInstanceId> BreakLoops;
-                const std::vector<NodeInstanceId> Reachable = FindStructuredReachability(
-                    Graph, Descriptors, Entry, BreakLoops);
+                const std::vector<NodeInstanceId> Reachable = FindStructuredReachability(Graph, Descriptors, Entry, BreakLoops);
                 for (const NodeInstanceId LoopNode : ReachableBreakLoops)
                 {
                     if (FindLoopSchema(Graph, Descriptors, LoopNode) != nullptr)
@@ -1962,8 +1789,7 @@ namespace MiliastraPlusPlus
                 for (const NodeInstanceId Node : Reachable)
                 {
                     const NodeInstance* Instance = Graph.FindNode(Node);
-                    if (Instance != nullptr && IsExecutionNode(*Instance, Descriptors) &&
-                        Instance->ExecutionRegion.has_value())
+                    if (Instance != nullptr && IsExecutionNode(*Instance, Descriptors) && Instance->ExecutionRegion.has_value())
                     {
                         const ExecutionRegion* Region = Graph.FindExecutionRegion(*Instance->ExecutionRegion);
                         if (Region != nullptr && Region->Entry == Entry.Identifier)
@@ -1995,13 +1821,11 @@ namespace MiliastraPlusPlus
                     const NodeInstance* Destination = Graph.FindNode(Edge.DestinationNode);
                     const LoopControlSchema* DestinationLoop = Destination == nullptr
                         ? nullptr : FindLoopSchema(Graph, Descriptors, Destination->Identifier);
-                    if (DestinationLoop != nullptr &&
-                        Edge.DestinationInputPin == DestinationLoop->RepeatInput)
+                    if (DestinationLoop != nullptr && Edge.DestinationInputPin == DestinationLoop->RepeatInput)
                     {
                         continue;
                     }
-                    if (DestinationLoop != nullptr &&
-                        Edge.DestinationInputPin == DestinationLoop->BreakInput)
+                    if (DestinationLoop != nullptr && Edge.DestinationInputPin == DestinationLoop->BreakInput)
                     {
                         if (!IsAuthorizedLoopTransfer(Graph, Descriptors, Edge))
                         {
@@ -2009,8 +1833,7 @@ namespace MiliastraPlusPlus
                         }
                         for (const ControlEdge& ExitEdge : Graph.GetControlEdges())
                         {
-                            if (ExitEdge.SourceNode != Destination->Identifier ||
-                                ExitEdge.SourceOutputPin != DestinationLoop->ExitOutput)
+                            if (ExitEdge.SourceNode != Destination->Identifier || ExitEdge.SourceOutputPin != DestinationLoop->ExitOutput)
                             {
                                 continue;
                             }
@@ -2028,9 +1851,9 @@ namespace MiliastraPlusPlus
                     {
                         continue;
                     }
-                    const LoopControlSchema* SourceLoop = FindLoopSchema(
-                        Graph, Descriptors, Edge.SourceNode);
-                    if (SourceLoop != nullptr && Edge.SourceOutputPin == SourceLoop->ExitOutput &&
+                    const LoopControlSchema* SourceLoop = FindLoopSchema(Graph, Descriptors, Edge.SourceNode);
+                    if (SourceLoop != nullptr &&
+                        Edge.SourceOutputPin == SourceLoop->ExitOutput &&
                         SourceLoop->ExitPolicy == LoopExitPolicy::Unconditional &&
                         !ContainsEntryLoop(BreakLoops, Edge.SourceNode))
                     {
@@ -2055,8 +1878,7 @@ namespace MiliastraPlusPlus
                 {
                     continue;
                 }
-                std::vector<std::vector<bool>> Dominators(
-                    Nodes.size(), std::vector<bool>(Nodes.size(), true));
+                std::vector<std::vector<bool>> Dominators(Nodes.size(), std::vector<bool>(Nodes.size(), true));
                 for (std::size_t Candidate = 0U; Candidate < Nodes.size(); ++Candidate)
                 {
                     Dominators[RootIndex][Candidate] = Candidate == RootIndex;
@@ -2105,14 +1927,14 @@ namespace MiliastraPlusPlus
                 {
                     const OutputReference* Output = std::get_if<OutputReference>(&Binding.Binding);
                     const NodeInstance* Destination = Graph.FindNode(Binding.DestinationNode);
-                    if (Output == nullptr || Destination == nullptr ||
+                    if (Output == nullptr ||
+                        Destination == nullptr ||
                         !IsExecutionNode(*Destination, Descriptors) ||
                         !Destination->ExecutionRegion.has_value())
                     {
                         continue;
                     }
-                    const ExecutionRegion* DestinationRegion =
-                        Graph.FindExecutionRegion(*Destination->ExecutionRegion);
+                    const ExecutionRegion* DestinationRegion = Graph.FindExecutionRegion(*Destination->ExecutionRegion);
                     if (DestinationRegion == nullptr || DestinationRegion->Entry != Entry.Identifier)
                     {
                         continue;
@@ -2150,8 +1972,7 @@ namespace MiliastraPlusPlus
                         {
                             continue;
                         }
-                        const ExecutionRegion* ProducerRegion =
-                            Graph.FindExecutionRegion(*Producer->ExecutionRegion);
+                        const ExecutionRegion* ProducerRegion = Graph.FindExecutionRegion(*Producer->ExecutionRegion);
                         std::size_t ProducerIndex = Nodes.size();
                         for (std::size_t Index = 0U; Index < Nodes.size(); ++Index)
                         {
@@ -2164,13 +1985,10 @@ namespace MiliastraPlusPlus
                         bool EscapesLoopBody = false;
                         const ExecutionRegion* Region = ProducerRegion;
                         std::vector<ExecutionRegionId> VisitedRegions;
-                        while (Region != nullptr &&
-                            std::find(VisitedRegions.begin(), VisitedRegions.end(), Region->Identifier) ==
-                                VisitedRegions.end())
+                        while (Region != nullptr && std::find(VisitedRegions.begin(), VisitedRegions.end(), Region->Identifier) == VisitedRegions.end())
                         {
                             VisitedRegions.push_back(Region->Identifier);
-                            if (Region->Kind == ExecutionRegionKind::LoopBody &&
-                                !IsRegionWithin(Graph, *Destination->ExecutionRegion, Region->Identifier))
+                            if (Region->Kind == ExecutionRegionKind::LoopBody && !IsRegionWithin(Graph, *Destination->ExecutionRegion, Region->Identifier))
                             {
                                 EscapesLoopBody = true;
                                 break;
@@ -2181,12 +1999,13 @@ namespace MiliastraPlusPlus
                             }
                             Region = Graph.FindExecutionRegion(*Region->Parent);
                         }
-                        if (ProducerRegion == nullptr || ProducerRegion->Entry != Entry.Identifier ||
+                        if (ProducerRegion == nullptr ||
+                            ProducerRegion->Entry != Entry.Identifier ||
                             ProducerIndex == Nodes.size() ||
-                            !Dominators[ConsumerIndex][ProducerIndex] || EscapesLoopBody)
+                            !Dominators[ConsumerIndex][ProducerIndex] ||
+                            EscapesLoopBody)
                         {
-                            Add(Diagnostics, DiagnosticCode::ExecutionDataNotDominated,
-                                "A structured data origin must dominate its use in the same entry and may not escape its LoopBody.");
+                            Add(Diagnostics, DiagnosticCode::ExecutionDataNotDominated, "A structured data origin must dominate its use in the same entry and may not escape its LoopBody.");
                             break;
                         }
                     }
@@ -2232,9 +2051,9 @@ namespace MiliastraPlusPlus
                     const NodeInstance* Destination = Graph.FindNode(Binding.DestinationNode);
                     const NodeDescriptor* DestinationDescriptor = Destination == nullptr
                         ? nullptr : Descriptors.Find(Destination->Descriptor);
-                    if (Destination == nullptr || Destination->ExecutionRegion.has_value() ||
-                        (DestinationDescriptor != nullptr &&
-                            DestinationDescriptor->GetExecutionControlSchema().has_value()))
+                    if (Destination == nullptr ||
+                        Destination->ExecutionRegion.has_value() ||
+                        (DestinationDescriptor != nullptr && DestinationDescriptor->GetExecutionControlSchema().has_value()))
                     {
                         continue;
                     }
@@ -2305,8 +2124,7 @@ namespace MiliastraPlusPlus
                     }
                     for (const ControlEdge& Edge : Graph.GetControlEdges())
                     {
-                        if (Edge.SourceNode != Current ||
-                            IsLoopTransferEdge(Graph, Descriptors, Edge))
+                        if (Edge.SourceNode != Current || IsLoopTransferEdge(Graph, Descriptors, Edge))
                         {
                             continue;
                         }
@@ -2314,7 +2132,8 @@ namespace MiliastraPlusPlus
                         const ExecutionRegion* DestinationRegion = Destination != nullptr &&
                             Destination->ExecutionRegion.has_value()
                             ? Graph.FindExecutionRegion(*Destination->ExecutionRegion) : nullptr;
-                        if (Destination == nullptr || DestinationRegion == nullptr ||
+                        if (Destination == nullptr ||
+                            DestinationRegion == nullptr ||
                             DestinationRegion->Entry != Entry.Identifier ||
                             IsInsideLoopBody(Graph, *Destination))
                         {
@@ -2337,8 +2156,7 @@ namespace MiliastraPlusPlus
                     continue;
                 }
                 const std::size_t RootIndex = 0U;
-                std::vector<std::vector<bool>> Dominators(
-                    Nodes.size(), std::vector<bool>(Nodes.size(), true));
+                std::vector<std::vector<bool>> Dominators(Nodes.size(), std::vector<bool>(Nodes.size(), true));
                 for (std::size_t Candidate = 0U; Candidate < Nodes.size(); ++Candidate)
                 {
                     Dominators[RootIndex][Candidate] = Candidate == RootIndex;
@@ -2352,8 +2170,7 @@ namespace MiliastraPlusPlus
                         std::vector<std::size_t> Predecessors;
                         for (const ControlEdge& Edge : Graph.GetControlEdges())
                         {
-                            if (Edge.DestinationNode != Nodes[NodeIndex] ||
-                                IsLoopTransferEdge(Graph, Descriptors, Edge))
+                            if (Edge.DestinationNode != Nodes[NodeIndex] || IsLoopTransferEdge(Graph, Descriptors, Edge))
                             {
                                 continue;
                             }
@@ -2375,8 +2192,7 @@ namespace MiliastraPlusPlus
                                 bool InEveryPredecessor = true;
                                 for (const std::size_t Predecessor : Predecessors)
                                 {
-                                    InEveryPredecessor = InEveryPredecessor &&
-                                        Dominators[Predecessor][Candidate];
+                                    InEveryPredecessor = InEveryPredecessor && Dominators[Predecessor][Candidate];
                                 }
                                 NewDominators[Candidate] = NewDominators[Candidate] ||
                                     InEveryPredecessor;
@@ -2455,12 +2271,9 @@ namespace MiliastraPlusPlus
                                 break;
                             }
                         }
-                        if (ProducerRegion->Entry != Entry.Identifier ||
-                            ProducerIndex == Nodes.size() ||
-                            !Dominators[ConsumerIndex][ProducerIndex])
+                        if (ProducerRegion->Entry != Entry.Identifier || ProducerIndex == Nodes.size() || !Dominators[ConsumerIndex][ProducerIndex])
                         {
-                            Add(Diagnostics, DiagnosticCode::ExecutionDataNotDominated,
-                                "A structured data use depends on an execution producer that does not dominate it in the same entry.");
+                            Add(Diagnostics, DiagnosticCode::ExecutionDataNotDominated, "A structured data use depends on an execution producer that does not dominate it in the same entry.");
                             break;
                         }
                     }
@@ -2561,13 +2374,11 @@ namespace MiliastraPlusPlus
             {
                 if (!std::holds_alternative<OutputReference>(Binding))
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidInputBinding,
-                        "An output type constraint can only be attached to an output binding.");
+                    Add(Diagnostics, DiagnosticCode::InvalidInputBinding, "An output type constraint can only be attached to an output binding.");
                 }
                 if (!HasValidOutputTypeConstraint)
                 {
-                    Add(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes,
-                        "An output type constraint must be a valid concrete data type.");
+                    Add(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes, "An output type constraint must be a valid concrete data type.");
                 }
             }
 
@@ -2575,25 +2386,21 @@ namespace MiliastraPlusPlus
             {
                 if (!DestinationPin.AllowsLiteral())
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidInputBinding,
-                        "A literal is not allowed by the destination pin schema.");
+                    Add(Diagnostics, DiagnosticCode::InvalidInputBinding, "A literal is not allowed by the destination pin schema.");
                 }
                 else if (!IsLiteralCompatible(*Literal, DestinationPin.GetType()))
                 {
-                    Add(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes,
-                        "A literal binding is incompatible with the destination pin type.");
+                    Add(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes, "A literal binding is incompatible with the destination pin type.");
                 }
                 return;
             }
             if (const OutputReference* Output = std::get_if<OutputReference>(&Binding))
             {
                 const NodeInstance* SourceNode = Graph.FindNode(Output->SourceNode);
-                const PinSchema* SourcePin = FindPin(
-                    SourceNode, Output->SourceOutputPin, Descriptors);
+                const PinSchema* SourcePin = FindPin(SourceNode, Output->SourceOutputPin, Descriptors);
                 if (!Output->IsValid() || SourcePin == nullptr)
                 {
-                    Add(Diagnostics, DiagnosticCode::InvalidGraphIRPinReference,
-                        "An output binding references a missing or invalid source pin.");
+                    Add(Diagnostics, DiagnosticCode::InvalidGraphIRPinReference, "An output binding references a missing or invalid source pin.");
                 }
                 else
                 {
@@ -2603,22 +2410,17 @@ namespace MiliastraPlusPlus
                         ContainsFlowType(DestinationPin.GetType()) ||
                         !SourcePin->GetType().IsCompatibleWith(DestinationPin.GetType()))
                     {
-                        Add(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes,
-                            "An output binding is incompatible with its destination pin.");
+                        Add(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes, "An output binding is incompatible with its destination pin.");
                     }
                     if (HasValidOutputTypeConstraint)
                     {
-                        if (!SourcePin->GetType().IsCompatibleWith(
-                            *Record.OutputTypeConstraint))
+                if (!SourcePin->GetType().IsCompatibleWith(*Record.OutputTypeConstraint))
                         {
-                            Add(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes,
-                                "An output type constraint is structurally incompatible with its source pin.");
+                            Add(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes, "An output type constraint is structurally incompatible with its source pin.");
                         }
-                        else if (!ContainsGenericType(SourcePin->GetType()) &&
-                            SourcePin->GetType() != *Record.OutputTypeConstraint)
+                else if (!ContainsGenericType(SourcePin->GetType()) && SourcePin->GetType() != *Record.OutputTypeConstraint)
                         {
-                            Add(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes,
-                                "A concrete output type must equal its typed-use constraint.");
+                            Add(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes, "A concrete output type must equal its typed-use constraint.");
                         }
                     }
                 }
@@ -2628,14 +2430,11 @@ namespace MiliastraPlusPlus
             const GraphVariable* SourceVariable = Graph.FindVariable(Variable.Variable);
             if (!Variable.IsValid() || SourceVariable == nullptr)
             {
-                Add(Diagnostics, DiagnosticCode::MissingGraphVariable,
-                    "An input binding references a missing or invalid graph variable.");
+                Add(Diagnostics, DiagnosticCode::MissingGraphVariable, "An input binding references a missing or invalid graph variable.");
             }
-            else if (!ContainsFlowType(SourceVariable->Type) &&
-                !SourceVariable->Type.IsCompatibleWith(DestinationPin.GetType()))
+            else if (!ContainsFlowType(SourceVariable->Type) && !SourceVariable->Type.IsCompatibleWith(DestinationPin.GetType()))
             {
-                Add(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes,
-                    "A graph variable binding is incompatible with the destination pin type.");
+                Add(Diagnostics, DiagnosticCode::IncompatibleGraphIRTypes, "A graph variable binding is incompatible with the destination pin type.");
             }
         }
 
@@ -2657,9 +2456,7 @@ namespace MiliastraPlusPlus
             case TypeDesc::Kind::ConfigId: return Literal.Is<ConfigIdValue>();
             case TypeDesc::Kind::Faction: return Literal.Is<FactionValue>();
             case TypeDesc::Kind::Enum:
-                return Literal.Is<EnumLiteralValue>() &&
-                    Literal.TryGet<EnumLiteralValue>()->GetEnumTypeIdentity() ==
-                    Type.GetEnumTypeIdentity();
+                return Literal.Is<EnumLiteralValue>() && Literal.TryGet<EnumLiteralValue>()->GetEnumTypeIdentity() == Type.GetEnumTypeIdentity();
             default: return false;
             }
         }
@@ -2677,8 +2474,7 @@ namespace MiliastraPlusPlus
             case TypeDesc::Kind::List:
                 return ContainsGenericType(*Type.GetElementType());
             case TypeDesc::Kind::Dictionary:
-                return ContainsGenericType(*Type.GetKeyType()) ||
-                    ContainsGenericType(*Type.GetValueType());
+                return ContainsGenericType(*Type.GetKeyType()) || ContainsGenericType(*Type.GetValueType());
             default:
                 return false;
             }
@@ -2697,8 +2493,7 @@ namespace MiliastraPlusPlus
             case TypeDesc::Kind::List:
                 return ContainsFlowType(*Type.GetElementType());
             case TypeDesc::Kind::Dictionary:
-                return ContainsFlowType(*Type.GetKeyType()) ||
-                    ContainsFlowType(*Type.GetValueType());
+                return ContainsFlowType(*Type.GetKeyType()) || ContainsFlowType(*Type.GetValueType());
             default:
                 return false;
             }

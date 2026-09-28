@@ -199,8 +199,7 @@ namespace MiliastraPlusPlus
         {
             for (const InputBindingRecord& Record : m_InputBindings)
             {
-                if (Record.DestinationNode == DestinationNode &&
-                    Record.DestinationInputPin == DestinationInputPin)
+                if (Record.DestinationNode == DestinationNode && Record.DestinationInputPin == DestinationInputPin)
                 {
                     return &Record.Binding;
                 }

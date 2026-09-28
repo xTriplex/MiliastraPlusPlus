@@ -49,9 +49,7 @@ namespace
 
     void RequireReadCode(const std::string& SnapshotJson, DiagnosticCode Code)
     {
-        const auto Result = DescriptorCatalogueSnapshotPersistence::Read(
-            SnapshotJson
-        );
+        const auto Result = DescriptorCatalogueSnapshotPersistence::Read(SnapshotJson);
         MPP_CHECK(!Result.has_value());
         MPP_CHECK(HasCode(Result.error(), Code));
     }
@@ -98,8 +96,7 @@ namespace
         std::vector<NormalizedPinRecord> Pins,
         std::optional<ExecutionControlSchema> Control = std::nullopt,
         std::optional<SourceProvenance> Provenance = std::nullopt,
-        std::vector<NodeAvailability> Availability = {NodeAvailability::Client}
-    )
+        std::vector<NodeAvailability> Availability = {NodeAvailability::Client})
     {
         return NormalizedNodeDescriptorRecord(
             ExternalNodeIdentity(std::move(Identity)),
@@ -111,34 +108,14 @@ namespace
         );
     }
 
-    NormalizedPinRecord MakeInput(
-        std::string Name,
-        TypeDesc Type,
-        PinCardinality Cardinality = PinCardinality::Single,
-        bool AllowsLiteral = false,
-        std::optional<LiteralValue> Default = std::nullopt
-    )
+    NormalizedPinRecord MakeInput(std::string Name, TypeDesc Type, PinCardinality Cardinality = PinCardinality::Single, bool AllowsLiteral = false, std::optional<LiteralValue> Default = std::nullopt)
     {
-        return NormalizedPinRecord(
-            std::move(Name),
-            std::move(Type),
-            PinDirection::Input,
-            PinCategory::Data,
-            Cardinality,
-            AllowsLiteral,
-            std::move(Default)
-        );
+        return NormalizedPinRecord(std::move(Name), std::move(Type), PinDirection::Input, PinCategory::Data, Cardinality, AllowsLiteral, std::move(Default));
     }
 
     NormalizedPinRecord MakeExecution(std::string Name, PinDirection Direction, PinCardinality Cardinality = PinCardinality::Single)
     {
-        return NormalizedPinRecord(
-            std::move(Name),
-            TypeDesc::Flow(),
-            Direction,
-            PinCategory::Execution,
-            Cardinality
-        );
+        return NormalizedPinRecord(std::move(Name), TypeDesc::Flow(), Direction, PinCategory::Execution, Cardinality);
     }
 
     struct SnapshotFixture
@@ -148,12 +125,7 @@ namespace
         DescriptorCatalogueSnapshot Snapshot;
         std::string Json;
 
-        SnapshotFixture(
-            DescriptorCatalogue CatalogueValue,
-            DescriptorSpecializationResult SpecializationValue,
-            DescriptorCatalogueSnapshot SnapshotValue,
-            std::string JsonValue
-        )
+        SnapshotFixture(DescriptorCatalogue CatalogueValue, DescriptorSpecializationResult SpecializationValue, DescriptorCatalogueSnapshot SnapshotValue, std::string JsonValue)
             : Catalogue(std::move(CatalogueValue))
             , Specialization(std::move(SpecializationValue))
             , Snapshot(std::move(SnapshotValue))
@@ -252,21 +224,16 @@ namespace
                     ExternalNodeIdentity("concrete-c"),
                     "opaque-key-c",
                     {
-                        DescriptorSpecializationPinBinding(
-                            PinIndex(1U),
-                            TypeDesc::GUID()
-                        )
+                        DescriptorSpecializationPinBinding(PinIndex(1U), TypeDesc::GUID())
                     }
                 )
             }
         );
 
-        const auto SpecializationResult =
-            DescriptorFamilySpecializer::Specialize({FamilyB, FamilyA});
+        const auto SpecializationResult = DescriptorFamilySpecializer::Specialize({FamilyB, FamilyA});
         MPP_CHECK(SpecializationResult.has_value());
 
-        std::vector<NormalizedNodeDescriptorRecord> Records =
-            SpecializationResult->GetConcreteRecords();
+        std::vector<NormalizedNodeDescriptorRecord> Records = SpecializationResult->GetConcreteRecords();
         Records.push_back(
             MakeRecord(
                 "ordinary",
@@ -274,36 +241,21 @@ namespace
                 {MakeInput("Value", TypeDesc::Float())}
             )
         );
-        const auto CatalogueResult = DescriptorCatalogueBuilder::Build(
-            "snapshot.tests",
-            "snapshot.tests@1",
-            CurrentDescriptorCatalogueSemanticSchemaVersion,
-            std::move(Records)
-        );
+        const auto CatalogueResult = DescriptorCatalogueBuilder::Build("snapshot.tests", "snapshot.tests@1", CurrentDescriptorCatalogueSemanticSchemaVersion, std::move(Records));
         MPP_CHECK(CatalogueResult.has_value());
 
-        const auto SnapshotResult = DescriptorCatalogueSnapshot::Create(
-            *CatalogueResult,
-            *SpecializationResult
-        );
+        const auto SnapshotResult = DescriptorCatalogueSnapshot::Create(*CatalogueResult, *SpecializationResult);
         MPP_CHECK(SnapshotResult.has_value());
 
-        const auto JsonResult =
-            DescriptorCatalogueSnapshotPersistence::Write(*SnapshotResult);
+        const auto JsonResult = DescriptorCatalogueSnapshotPersistence::Write(*SnapshotResult);
         MPP_CHECK(JsonResult.has_value());
 
-        return SnapshotFixture(
-            *CatalogueResult,
-            *SpecializationResult,
-            *SnapshotResult,
-            *JsonResult
-        );
+        return SnapshotFixture(*CatalogueResult, *SpecializationResult, *SnapshotResult, *JsonResult);
     }
 
     std::string WriteFixture(const SnapshotFixture& Fixture)
     {
-        const auto Result =
-            DescriptorCatalogueSnapshotPersistence::Write(Fixture.Snapshot);
+        const auto Result = DescriptorCatalogueSnapshotPersistence::Write(Fixture.Snapshot);
         MPP_CHECK(Result.has_value());
         return *Result;
     }
@@ -324,10 +276,7 @@ namespace
             TypeDesc::Faction(),
             TypeDesc::Generic(GenericParameterId(1U)),
             TypeDesc::List(TypeDesc::Integer()),
-            TypeDesc::Dictionary(
-                TypeDesc::String(),
-                TypeDesc::List(TypeDesc::Integer())
-            ),
+            TypeDesc::Dictionary(TypeDesc::String(), TypeDesc::List(TypeDesc::Integer())),
             TypeDesc::StructObject(StructTypeId(2U))
         };
 
@@ -348,12 +297,7 @@ namespace
             );
         }
 
-        const auto Result = DescriptorCatalogueBuilder::Build(
-            "type.tests",
-            "type.tests@1",
-            CurrentDescriptorCatalogueSemanticSchemaVersion,
-            std::move(Records)
-        );
+        const auto Result = DescriptorCatalogueBuilder::Build("type.tests", "type.tests@1", CurrentDescriptorCatalogueSemanticSchemaVersion, std::move(Records));
         MPP_CHECK(Result.has_value());
         return *Result;
     }
@@ -406,9 +350,7 @@ namespace
                             true,
                             LiteralValue(
                                 LiteralValue::Data{
-                                    std::bit_cast<double>(
-                                        std::uint64_t(0x3ff8000000000000ULL)
-                                    )
+                                    std::bit_cast<double>(std::uint64_t(0x3ff8000000000000ULL))
                                 }
                             )
                         )
@@ -517,19 +459,9 @@ namespace
         std::vector<NormalizedPinRecord> Pins,
         ExecutionControlSchema Control,
         std::optional<SourceProvenance> Provenance = std::nullopt,
-        std::vector<NodeAvailability> Availability = {
-            NodeAvailability::Client
-        }
-    )
+        std::vector<NodeAvailability> Availability = {NodeAvailability::Client})
     {
-        return MakeRecord(
-            std::move(Identity),
-            "Control",
-            std::move(Pins),
-            std::move(Control),
-            std::move(Provenance),
-            std::move(Availability)
-        );
+        return MakeRecord(std::move(Identity), "Control", std::move(Pins), std::move(Control), std::move(Provenance), std::move(Availability));
     }
 
     DescriptorCatalogue MakeControlCatalogue()
@@ -560,13 +492,7 @@ namespace
             MakeControlRecord(
                 "control-join",
                 {
-                    NormalizedPinRecord(
-                        "In",
-                        TypeDesc::Flow(),
-                        PinDirection::Input,
-                        PinCategory::Execution,
-                        PinCardinality::Multiple
-                    ),
+                    NormalizedPinRecord("In", TypeDesc::Flow(), PinDirection::Input, PinCategory::Execution, PinCardinality::Multiple),
                     MakeExecution("Out", PinDirection::Output)
                 },
                 JoinControlSchema{PinIndex(0U), PinIndex(1U)}
@@ -577,12 +503,7 @@ namespace
                 "control-branch",
                 {
                     MakeExecution("In", PinDirection::Input),
-                    NormalizedPinRecord(
-                        "Condition",
-                        TypeDesc::Boolean(),
-                        PinDirection::Input,
-                        PinCategory::Data
-                    ),
+                    NormalizedPinRecord("Condition", TypeDesc::Boolean(), PinDirection::Input, PinCategory::Data),
                     MakeExecution("True", PinDirection::Output),
                     MakeExecution("False", PinDirection::Output)
                 },
@@ -601,22 +522,9 @@ namespace
                     MakeExecution("In", PinDirection::Input),
                     MakeExecution("Body", PinDirection::Output),
                     MakeExecution("Exit", PinDirection::Output),
-                    MakeExecution(
-                        "Repeat",
-                        PinDirection::Input,
-                        PinCardinality::Multiple
-                    ),
-                    MakeExecution(
-                        "Break",
-                        PinDirection::Input,
-                        PinCardinality::Multiple
-                    ),
-                    NormalizedPinRecord(
-                        "Condition",
-                        TypeDesc::Boolean(),
-                        PinDirection::Input,
-                        PinCategory::Data
-                    )
+                    MakeExecution("Repeat", PinDirection::Input, PinCardinality::Multiple),
+                    MakeExecution("Break", PinDirection::Input, PinCardinality::Multiple),
+                    NormalizedPinRecord("Condition", TypeDesc::Boolean(), PinDirection::Input, PinCategory::Data)
                 },
                 LoopControlSchema{
                     PinIndex(0U),
@@ -636,16 +544,8 @@ namespace
                     MakeExecution("In", PinDirection::Input),
                     MakeExecution("Body", PinDirection::Output),
                     MakeExecution("Exit", PinDirection::Output),
-                    MakeExecution(
-                        "Repeat",
-                        PinDirection::Input,
-                        PinCardinality::Multiple
-                    ),
-                    MakeExecution(
-                        "Break",
-                        PinDirection::Input,
-                        PinCardinality::Multiple
-                    )
+                    MakeExecution("Repeat", PinDirection::Input, PinCardinality::Multiple),
+                    MakeExecution("Break", PinDirection::Input, PinCardinality::Multiple)
                 },
                 LoopControlSchema{
                     PinIndex(0U),
@@ -668,27 +568,16 @@ namespace
             )
         );
 
-        const auto Result = DescriptorCatalogueBuilder::Build(
-            "control.tests",
-            "control.tests@1",
-            CurrentDescriptorCatalogueSemanticSchemaVersion,
-            std::move(Records)
-        );
+        const auto Result = DescriptorCatalogueBuilder::Build("control.tests", "control.tests@1", CurrentDescriptorCatalogueSemanticSchemaVersion, std::move(Records));
         MPP_CHECK(Result.has_value());
         return *Result;
     }
 
     DescriptorSpecializationResult MakeMismatchedSpecialization(const SnapshotFixture& Fixture)
     {
-        const DescriptorSpecializationFamily& Family =
-            Fixture.Specialization.GetFamilies().front();
-        const DescriptorSpecializationVariant& Variant =
-            Family.GetVariants().front();
-        DescriptorSpecializationVariant MismatchedVariant(
-            ExternalNodeIdentity("missing-concrete"),
-            "mismatch-key",
-            Variant.GetPinBindings()
-        );
+        const DescriptorSpecializationFamily& Family = Fixture.Specialization.GetFamilies().front();
+        const DescriptorSpecializationVariant& Variant = Family.GetVariants().front();
+        DescriptorSpecializationVariant MismatchedVariant(ExternalNodeIdentity("missing-concrete"), "mismatch-key", Variant.GetPinBindings());
         DescriptorSpecializationFamily MismatchedFamily(
             Family.GetFamilyExternalIdentity(),
             Family.GetDisplayName(),
@@ -698,8 +587,7 @@ namespace
             Family.GetSourceProvenance(),
             {MismatchedVariant}
         );
-        const auto Result =
-            DescriptorFamilySpecializer::Specialize({MismatchedFamily});
+        const auto Result = DescriptorFamilySpecializer::Specialize({MismatchedFamily});
         MPP_CHECK(Result.has_value());
         return *Result;
     }
@@ -707,37 +595,17 @@ namespace
     void CheckCatalogueFields(const DescriptorCatalogue& Expected, const DescriptorCatalogue& Actual)
     {
         MPP_CHECK(Expected == Actual);
-        MPP_CHECK(
-            Expected.GetIdentity().GetSourceNamespace() ==
-            Actual.GetIdentity().GetSourceNamespace()
-        );
-        MPP_CHECK(
-            Expected.GetIdentity().GetSourceRevision() ==
-            Actual.GetIdentity().GetSourceRevision()
-        );
-        MPP_CHECK(
-            Expected.GetIdentity().GetSemanticSchemaVersion() ==
-            Actual.GetIdentity().GetSemanticSchemaVersion()
-        );
-        MPP_CHECK(
-            Expected.GetIdentity().GetCatalogueContentIdentifier() ==
-            Actual.GetIdentity().GetCatalogueContentIdentifier()
-        );
+        MPP_CHECK(Expected.GetIdentity().GetSourceNamespace() == Actual.GetIdentity().GetSourceNamespace());
+        MPP_CHECK(Expected.GetIdentity().GetSourceRevision() == Actual.GetIdentity().GetSourceRevision());
+        MPP_CHECK(Expected.GetIdentity().GetSemanticSchemaVersion() == Actual.GetIdentity().GetSemanticSchemaVersion());
+        MPP_CHECK(Expected.GetIdentity().GetCatalogueContentIdentifier() == Actual.GetIdentity().GetCatalogueContentIdentifier());
         MPP_CHECK(Expected.GetEntryCount() == Actual.GetEntryCount());
 
         for (std::size_t Index = 0U; Index < Expected.GetEntries().size(); ++Index)
         {
-            MPP_CHECK(
-                Expected.GetEntries()[Index] == Actual.GetEntries()[Index]
-            );
-            MPP_CHECK(
-                Expected.GetEntries()[Index].GetDescriptorIdentifier() ==
-                Actual.GetEntries()[Index].GetDescriptorIdentifier()
-            );
-            MPP_CHECK(
-                Expected.GetEntries()[Index].GetRecord() ==
-                Actual.GetEntries()[Index].GetRecord()
-            );
+            MPP_CHECK(Expected.GetEntries()[Index] == Actual.GetEntries()[Index]);
+            MPP_CHECK(Expected.GetEntries()[Index].GetDescriptorIdentifier() == Actual.GetEntries()[Index].GetDescriptorIdentifier());
+            MPP_CHECK(Expected.GetEntries()[Index].GetRecord() == Actual.GetEntries()[Index].GetRecord());
         }
     }
 
@@ -748,10 +616,7 @@ namespace
         MPP_CHECK(Actual.GetName() == Record.GetDisplayName());
         MPP_CHECK(Actual.GetAvailability() == Record.GetAvailability());
         MPP_CHECK(Actual.GetPins().size() == Record.GetPins().size());
-        MPP_CHECK(
-            Actual.GetExecutionControlSchema().has_value() ==
-            Record.GetExecutionControlSchema().has_value()
-        );
+        MPP_CHECK(Actual.GetExecutionControlSchema().has_value() == Record.GetExecutionControlSchema().has_value());
 
         for (std::size_t Index = 0U; Index < Record.GetPins().size(); ++Index)
         {
@@ -761,47 +626,29 @@ namespace
             MPP_CHECK(ActualPin.GetType() == ExpectedPin.GetType());
             MPP_CHECK(ActualPin.GetDirection() == ExpectedPin.GetDirection());
             MPP_CHECK(ActualPin.GetCategory() == ExpectedPin.GetCategory());
-            MPP_CHECK(
-                ActualPin.GetCardinality() == ExpectedPin.GetCardinality()
-            );
+            MPP_CHECK(ActualPin.GetCardinality() == ExpectedPin.GetCardinality());
             MPP_CHECK(ActualPin.AllowsLiteral() == ExpectedPin.AllowsLiteral());
-            MPP_CHECK(
-                ActualPin.GetDefaultValue().has_value() ==
-                ExpectedPin.GetDefaultValue().has_value()
-            );
+            MPP_CHECK(ActualPin.GetDefaultValue().has_value() == ExpectedPin.GetDefaultValue().has_value());
             if (ActualPin.GetDefaultValue().has_value())
             {
-                MPP_CHECK(
-                    DescriptorCatalogueDetail::AreNormalizedLiteralValuesEqual(
-                        *ActualPin.GetDefaultValue(),
-                        *ExpectedPin.GetDefaultValue()
-                    )
-                );
+                MPP_CHECK(DescriptorCatalogueDetail::AreNormalizedLiteralValuesEqual(*ActualPin.GetDefaultValue(), *ExpectedPin.GetDefaultValue()));
             }
         }
 
         if (Record.GetExecutionControlSchema().has_value())
         {
-            MPP_CHECK(
-                DescriptorCatalogueDetail::AreExecutionControlSchemasEqual(
-                    *Actual.GetExecutionControlSchema(),
-                    *Record.GetExecutionControlSchema()
-                )
-            );
+            MPP_CHECK(DescriptorCatalogueDetail::AreExecutionControlSchemasEqual(*Actual.GetExecutionControlSchema(), *Record.GetExecutionControlSchema()));
         }
     }
 
     void TestDescriptorCatalogueSnapshotWriteSuccess()
     {
         const SnapshotFixture Fixture = MakeFixture();
-        const auto Snapshot = DescriptorCatalogueSnapshot::Create(
-            Fixture.Catalogue
-        );
+        const auto Snapshot = DescriptorCatalogueSnapshot::Create(Fixture.Catalogue);
         MPP_CHECK(Snapshot.has_value());
         MPP_CHECK(Snapshot->IsValid());
 
-        const auto Written =
-            DescriptorCatalogueSnapshotPersistence::Write(*Snapshot);
+        const auto Written = DescriptorCatalogueSnapshotPersistence::Write(*Snapshot);
         MPP_CHECK(Written.has_value());
         const JsonValue Document = JsonValue::parse(*Written);
 
@@ -826,37 +673,18 @@ namespace
         );
 
         const auto& Identity = Fixture.Catalogue.GetIdentity();
-        MPP_CHECK(
-            Document["catalogue"]["contentIdentifier"] ==
-            Identity.GetCatalogueContentIdentifier().GetValue()
-        );
-        MPP_CHECK(
-            Document["catalogue"]["semanticSchemaVersion"] ==
-            Identity.GetSemanticSchemaVersion().GetValue()
-        );
-        MPP_CHECK(
-            Document["catalogue"]["sourceNamespace"] ==
-            Identity.GetSourceNamespace()
-        );
-        MPP_CHECK(
-            Document["catalogue"]["sourceRevision"] ==
-            Identity.GetSourceRevision()
-        );
+        MPP_CHECK(Document["catalogue"]["contentIdentifier"] == Identity.GetCatalogueContentIdentifier().GetValue());
+        MPP_CHECK(Document["catalogue"]["semanticSchemaVersion"] == Identity.GetSemanticSchemaVersion().GetValue());
+        MPP_CHECK(Document["catalogue"]["sourceNamespace"] == Identity.GetSourceNamespace());
+        MPP_CHECK(Document["catalogue"]["sourceRevision"] == Identity.GetSourceRevision());
         MPP_CHECK(Document["entries"].is_array());
-        MPP_CHECK(
-            Document["entries"].size() == Fixture.Catalogue.GetEntryCount()
-        );
+        MPP_CHECK(Document["entries"].size() == Fixture.Catalogue.GetEntryCount());
         MPP_CHECK(Document["specialization"].is_null());
 
         const auto& CatalogueEntry = Fixture.Catalogue.GetEntries().front();
         const JsonValue& SerializedEntry = Document["entries"].front();
-        MPP_CHECK(
-            HasExactMembers(SerializedEntry, {"nodeDescriptorId", "record"})
-        );
-        MPP_CHECK(
-            SerializedEntry["nodeDescriptorId"] ==
-            CatalogueEntry.GetDescriptorIdentifier().GetValue()
-        );
+        MPP_CHECK(HasExactMembers(SerializedEntry, {"nodeDescriptorId", "record"}));
+        MPP_CHECK(SerializedEntry["nodeDescriptorId"] == CatalogueEntry.GetDescriptorIdentifier().GetValue());
 
         const JsonValue& Record = SerializedEntry["record"];
         MPP_CHECK(
@@ -872,22 +700,12 @@ namespace
                 }
             )
         );
-        MPP_CHECK(
-            Record["externalIdentity"] ==
-            CatalogueEntry.GetExternalIdentity().GetKey()
-        );
-        MPP_CHECK(
-            Record["displayName"] == CatalogueEntry.GetRecord().GetDisplayName()
-        );
+        MPP_CHECK(Record["externalIdentity"] == CatalogueEntry.GetExternalIdentity().GetKey());
+        MPP_CHECK(Record["displayName"] == CatalogueEntry.GetRecord().GetDisplayName());
         MPP_CHECK(Record["executionControl"].is_null());
         MPP_CHECK(Record["provenance"].is_object());
-        MPP_CHECK(
-            Record["provenance"]["sourceDocumentIdentifier"] ==
-            "logical.document"
-        );
-        MPP_CHECK(
-            Record["provenance"]["sourceRecordIdentifier"] == "family-a"
-        );
+        MPP_CHECK(Record["provenance"]["sourceDocumentIdentifier"] == "logical.document");
+        MPP_CHECK(Record["provenance"]["sourceRecordIdentifier"] == "family-a");
         MPP_CHECK(Record["availability"].size() == 2U);
         MPP_CHECK(Record["availability"][0U] == "Server");
         MPP_CHECK(Record["availability"][1U] == "Client");
@@ -905,15 +723,11 @@ namespace
     void TestDescriptorCatalogueSnapshotReadSuccess()
     {
         const SnapshotFixture Fixture = MakeFixture();
-        const auto Snapshot = DescriptorCatalogueSnapshot::Create(
-            Fixture.Catalogue
-        );
+        const auto Snapshot = DescriptorCatalogueSnapshot::Create(Fixture.Catalogue);
         MPP_CHECK(Snapshot.has_value());
-        const auto Written =
-            DescriptorCatalogueSnapshotPersistence::Write(*Snapshot);
+        const auto Written = DescriptorCatalogueSnapshotPersistence::Write(*Snapshot);
         MPP_CHECK(Written.has_value());
-        const auto Read =
-            DescriptorCatalogueSnapshotPersistence::Read(*Written);
+        const auto Read = DescriptorCatalogueSnapshotPersistence::Read(*Written);
         MPP_CHECK(Read.has_value());
         MPP_CHECK(Read->IsValid());
         CheckCatalogueFields(Fixture.Catalogue, Read->GetCatalogue());
@@ -921,36 +735,15 @@ namespace
 
         const auto& ExpectedIdentity = Fixture.Catalogue.GetIdentity();
         const auto& ActualIdentity = Read->GetCatalogue().GetIdentity();
-        MPP_CHECK(
-            ActualIdentity.GetSourceNamespace() ==
-            ExpectedIdentity.GetSourceNamespace()
-        );
-        MPP_CHECK(
-            ActualIdentity.GetSourceRevision() ==
-            ExpectedIdentity.GetSourceRevision()
-        );
-        MPP_CHECK(
-            ActualIdentity.GetSemanticSchemaVersion() ==
-            ExpectedIdentity.GetSemanticSchemaVersion()
-        );
-        MPP_CHECK(
-            ActualIdentity.GetCatalogueContentIdentifier() ==
-            ExpectedIdentity.GetCatalogueContentIdentifier()
-        );
-        MPP_CHECK(
-            Read->GetCatalogue().GetEntryCount() ==
-            Fixture.Catalogue.GetEntryCount()
-        );
+        MPP_CHECK(ActualIdentity.GetSourceNamespace() == ExpectedIdentity.GetSourceNamespace());
+        MPP_CHECK(ActualIdentity.GetSourceRevision() == ExpectedIdentity.GetSourceRevision());
+        MPP_CHECK(ActualIdentity.GetSemanticSchemaVersion() == ExpectedIdentity.GetSemanticSchemaVersion());
+        MPP_CHECK(ActualIdentity.GetCatalogueContentIdentifier() == ExpectedIdentity.GetCatalogueContentIdentifier());
+        MPP_CHECK(Read->GetCatalogue().GetEntryCount() == Fixture.Catalogue.GetEntryCount());
         for (std::size_t Index = 0U; Index < Fixture.Catalogue.GetEntries().size(); ++Index)
         {
-            MPP_CHECK(
-                Read->GetCatalogue().GetEntries()[Index].GetDescriptorIdentifier() ==
-                Fixture.Catalogue.GetEntries()[Index].GetDescriptorIdentifier()
-            );
-            MPP_CHECK(
-                Read->GetCatalogue().GetEntries()[Index].GetRecord() ==
-                Fixture.Catalogue.GetEntries()[Index].GetRecord()
-            );
+            MPP_CHECK(Read->GetCatalogue().GetEntries()[Index].GetDescriptorIdentifier() == Fixture.Catalogue.GetEntries()[Index].GetDescriptorIdentifier());
+            MPP_CHECK(Read->GetCatalogue().GetEntries()[Index].GetRecord() == Fixture.Catalogue.GetEntries()[Index].GetRecord());
         }
     }
 
@@ -962,9 +755,7 @@ namespace
         MPP_CHECK(Fixture.Json == Independent.Json);
 
         std::vector<NormalizedNodeDescriptorRecord> PermutedRecords;
-        for (auto Iterator = Fixture.Catalogue.GetEntries().rbegin();
-             Iterator != Fixture.Catalogue.GetEntries().rend();
-             ++Iterator)
+        for (auto Iterator = Fixture.Catalogue.GetEntries().rbegin(); Iterator != Fixture.Catalogue.GetEntries().rend(); ++Iterator)
         {
             PermutedRecords.push_back(Iterator->GetRecord());
         }
@@ -975,145 +766,80 @@ namespace
             std::move(PermutedRecords)
         );
         MPP_CHECK(PermutedCatalogue.has_value());
-        const auto PermutedSnapshot =
-            DescriptorCatalogueSnapshot::Create(*PermutedCatalogue);
+        const auto PermutedSnapshot = DescriptorCatalogueSnapshot::Create(*PermutedCatalogue);
         MPP_CHECK(PermutedSnapshot.has_value());
-        const auto PermutedJson =
-            DescriptorCatalogueSnapshotPersistence::Write(*PermutedSnapshot);
+        const auto PermutedJson = DescriptorCatalogueSnapshotPersistence::Write(*PermutedSnapshot);
         MPP_CHECK(PermutedJson.has_value());
 
-        const auto CanonicalNoSidecar =
-            DescriptorCatalogueSnapshot::Create(Fixture.Catalogue);
+        const auto CanonicalNoSidecar = DescriptorCatalogueSnapshot::Create(Fixture.Catalogue);
         MPP_CHECK(CanonicalNoSidecar.has_value());
-        const auto CanonicalJson =
-            DescriptorCatalogueSnapshotPersistence::Write(*CanonicalNoSidecar);
+        const auto CanonicalJson = DescriptorCatalogueSnapshotPersistence::Write(*CanonicalNoSidecar);
         MPP_CHECK(CanonicalJson.has_value());
         MPP_CHECK(*PermutedJson == *CanonicalJson);
 
         const JsonValue Document = JsonValue::parse(Fixture.Json);
-        MPP_CHECK(
-            Document["entries"][0U]["record"]["externalIdentity"] ==
-            Fixture.Catalogue.GetEntries()[0U].GetExternalIdentity().GetKey()
-        );
-        MPP_CHECK(
-            Document["entries"][0U]["record"]["externalIdentity"] <
-            Document["entries"][1U]["record"]["externalIdentity"]
-        );
+        MPP_CHECK(Document["entries"][0U]["record"]["externalIdentity"] == Fixture.Catalogue.GetEntries()[0U].GetExternalIdentity().GetKey());
+        MPP_CHECK(Document["entries"][0U]["record"]["externalIdentity"] < Document["entries"][1U]["record"]["externalIdentity"]);
     }
 
     void TestDescriptorCatalogueSnapshotRoundTripEquality()
     {
         const SnapshotFixture Fixture = MakeFixture();
 
-        const auto NoSidecar =
-            DescriptorCatalogueSnapshot::Create(Fixture.Catalogue);
+        const auto NoSidecar = DescriptorCatalogueSnapshot::Create(Fixture.Catalogue);
         MPP_CHECK(NoSidecar.has_value());
-        const auto NoSidecarJson =
-            DescriptorCatalogueSnapshotPersistence::Write(*NoSidecar);
+        const auto NoSidecarJson = DescriptorCatalogueSnapshotPersistence::Write(*NoSidecar);
         MPP_CHECK(NoSidecarJson.has_value());
-        const auto NoSidecarRead =
-            DescriptorCatalogueSnapshotPersistence::Read(*NoSidecarJson);
+        const auto NoSidecarRead = DescriptorCatalogueSnapshotPersistence::Read(*NoSidecarJson);
         MPP_CHECK(NoSidecarRead.has_value());
         MPP_CHECK(*NoSidecarRead == *NoSidecar);
-        CheckCatalogueFields(
-            NoSidecar->GetCatalogue(),
-            NoSidecarRead->GetCatalogue()
-        );
-        MPP_CHECK(
-            NoSidecarRead->GetSpecializationResult().has_value() ==
-            NoSidecar->GetSpecializationResult().has_value()
-        );
+        CheckCatalogueFields(NoSidecar->GetCatalogue(), NoSidecarRead->GetCatalogue());
+        MPP_CHECK(NoSidecarRead->GetSpecializationResult().has_value() == NoSidecar->GetSpecializationResult().has_value());
 
-        const auto WithSidecar =
-            DescriptorCatalogueSnapshot::Create(
-                Fixture.Catalogue,
-                Fixture.Specialization
-            );
+        const auto WithSidecar = DescriptorCatalogueSnapshot::Create(Fixture.Catalogue, Fixture.Specialization);
         MPP_CHECK(WithSidecar.has_value());
-        const auto WithSidecarJson =
-            DescriptorCatalogueSnapshotPersistence::Write(*WithSidecar);
+        const auto WithSidecarJson = DescriptorCatalogueSnapshotPersistence::Write(*WithSidecar);
         MPP_CHECK(WithSidecarJson.has_value());
-        const auto WithSidecarRead =
-            DescriptorCatalogueSnapshotPersistence::Read(*WithSidecarJson);
+        const auto WithSidecarRead = DescriptorCatalogueSnapshotPersistence::Read(*WithSidecarJson);
         MPP_CHECK(WithSidecarRead.has_value());
         MPP_CHECK(*WithSidecarRead == *WithSidecar);
-        CheckCatalogueFields(
-            WithSidecar->GetCatalogue(),
-            WithSidecarRead->GetCatalogue()
-        );
+        CheckCatalogueFields(WithSidecar->GetCatalogue(), WithSidecarRead->GetCatalogue());
         MPP_CHECK(WithSidecarRead->GetSpecializationResult().has_value());
-        MPP_CHECK(
-            *WithSidecarRead->GetSpecializationResult() ==
-            *WithSidecar->GetSpecializationResult()
-        );
-        MPP_CHECK(
-            WithSidecarRead->GetSpecializationResult()->GetConcreteRecords().size() ==
-            Fixture.Specialization.GetConcreteRecords().size()
-        );
+        MPP_CHECK(*WithSidecarRead->GetSpecializationResult() == *WithSidecar->GetSpecializationResult());
+        MPP_CHECK(WithSidecarRead->GetSpecializationResult()->GetConcreteRecords().size() == Fixture.Specialization.GetConcreteRecords().size());
     }
 
     void TestDescriptorCatalogueSnapshotIdentityAndContentValidation()
     {
         const SnapshotFixture Fixture = MakeFixture();
-        const auto SuccessfulRead =
-            DescriptorCatalogueSnapshotPersistence::Read(Fixture.Json);
+        const auto SuccessfulRead = DescriptorCatalogueSnapshotPersistence::Read(Fixture.Json);
         MPP_CHECK(SuccessfulRead.has_value());
         const auto& ExpectedIdentity = Fixture.Catalogue.GetIdentity();
         const auto& ActualIdentity = SuccessfulRead->GetCatalogue().GetIdentity();
-        MPP_CHECK(
-            ActualIdentity.GetSourceNamespace() ==
-            ExpectedIdentity.GetSourceNamespace()
-        );
-        MPP_CHECK(
-            ActualIdentity.GetSourceRevision() ==
-            ExpectedIdentity.GetSourceRevision()
-        );
-        MPP_CHECK(
-            ActualIdentity.GetSemanticSchemaVersion() ==
-            ExpectedIdentity.GetSemanticSchemaVersion()
-        );
-        MPP_CHECK(
-            ActualIdentity.GetCatalogueContentIdentifier() ==
-            ExpectedIdentity.GetCatalogueContentIdentifier()
-        );
+        MPP_CHECK(ActualIdentity.GetSourceNamespace() == ExpectedIdentity.GetSourceNamespace());
+        MPP_CHECK(ActualIdentity.GetSourceRevision() == ExpectedIdentity.GetSourceRevision());
+        MPP_CHECK(ActualIdentity.GetSemanticSchemaVersion() == ExpectedIdentity.GetSemanticSchemaVersion());
+        MPP_CHECK(ActualIdentity.GetCatalogueContentIdentifier() == ExpectedIdentity.GetCatalogueContentIdentifier());
 
-        const auto InvalidCatalogue =
-            DescriptorCatalogueSnapshot::Create(DescriptorCatalogue{});
+        const auto InvalidCatalogue = DescriptorCatalogueSnapshot::Create(DescriptorCatalogue{});
         MPP_CHECK(!InvalidCatalogue.has_value());
-        MPP_CHECK(
-            HasCode(
-                InvalidCatalogue.error(),
-                DiagnosticCode::DescriptorCatalogueMismatch
-            )
-        );
+        MPP_CHECK(HasCode(InvalidCatalogue.error(), DiagnosticCode::DescriptorCatalogueMismatch));
 
         JsonValue Json = JsonValue::parse(Fixture.Json);
         Json["catalogue"]["contentIdentifier"] = "";
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::InvalidDescriptorCatalogueIdentity
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::InvalidDescriptorCatalogueIdentity);
 
         Json = JsonValue::parse(Fixture.Json);
         Json["catalogue"]["contentIdentifier"] = "sha256:tampered";
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::DescriptorCatalogueSnapshotContentMismatch
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::DescriptorCatalogueSnapshotContentMismatch);
 
         Json = JsonValue::parse(Fixture.Json);
         Json["catalogue"]["semanticSchemaVersion"] = 999U;
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::UnsupportedDescriptorCatalogueSemanticSchemaVersion
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::UnsupportedDescriptorCatalogueSemanticSchemaVersion);
 
         Json = JsonValue::parse(Fixture.Json);
         Json["catalogue"]["sourceNamespace"] = "";
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::InvalidDescriptorCatalogueIdentity
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::InvalidDescriptorCatalogueIdentity);
     }
 
     void TestDescriptorCatalogueSnapshotVersionAndSchemaDiagnostics()
@@ -1122,66 +848,39 @@ namespace
         JsonValue Json = JsonValue::parse(Fixture.Json);
 
         Json.erase("snapshotFormatVersion");
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
         Json["snapshotFormatVersion"] = "1";
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
         Json["snapshotFormatVersion"] = 0U;
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::UnsupportedDescriptorCatalogueSnapshotVersion
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::UnsupportedDescriptorCatalogueSnapshotVersion);
 
         Json = JsonValue::parse(Fixture.Json);
         Json["snapshotFormatVersion"] = 3U;
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::UnsupportedDescriptorCatalogueSnapshotVersion
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::UnsupportedDescriptorCatalogueSnapshotVersion);
 
         Json = JsonValue::parse(Fixture.Json);
         Json["unknown"] = true;
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
         Json.erase("catalogue");
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
         Json["catalogue"] = nullptr;
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
         Json["entries"] = nullptr;
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
         Json["specialization"] = JsonValue::array();
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
     }
 
     void TestDescriptorCatalogueSnapshotNormalizedRecordRoundTrip()
@@ -1204,13 +903,7 @@ namespace
                                 LiteralValue::Data{std::int64_t(11)}
                             )
                         ),
-                        NormalizedPinRecord(
-                            "Alpha",
-                            TypeDesc::Float(),
-                            PinDirection::Output,
-                            PinCategory::Data,
-                            PinCardinality::Multiple
-                        ),
+                        NormalizedPinRecord("Alpha", TypeDesc::Float(), PinDirection::Output, PinCategory::Data, PinCardinality::Multiple),
                         MakeExecution("Middle", PinDirection::Input)
                     }
                 )
@@ -1220,13 +913,11 @@ namespace
 
         const auto Snapshot = DescriptorCatalogueSnapshot::Create(*Catalogue);
         MPP_CHECK(Snapshot.has_value());
-        const auto Json =
-            DescriptorCatalogueSnapshotPersistence::Write(*Snapshot);
+        const auto Json = DescriptorCatalogueSnapshotPersistence::Write(*Snapshot);
         MPP_CHECK(Json.has_value());
 
         const JsonValue Document = JsonValue::parse(*Json);
-        const JsonValue& Pins =
-            Document["entries"][0U]["record"]["pins"];
+        const JsonValue& Pins = Document["entries"][0U]["record"]["pins"];
         MPP_CHECK(Pins.size() == 3U);
         MPP_CHECK(Pins[0U]["name"] == "Zeta");
         MPP_CHECK(Pins[0U]["type"]["kind"] == "Integer");
@@ -1247,11 +938,9 @@ namespace
         MPP_CHECK(Pins[2U]["category"] == "Execution");
         MPP_CHECK(Pins[2U]["cardinality"] == "Single");
 
-        const auto Read =
-            DescriptorCatalogueSnapshotPersistence::Read(*Json);
+        const auto Read = DescriptorCatalogueSnapshotPersistence::Read(*Json);
         MPP_CHECK(Read.has_value());
-        const auto& ReadPins =
-            Read->GetCatalogue().GetEntries()[0U].GetRecord().GetPins();
+        const auto& ReadPins = Read->GetCatalogue().GetEntries()[0U].GetRecord().GetPins();
         MPP_CHECK(ReadPins.size() == 3U);
         MPP_CHECK(ReadPins[0U].GetName() == "Zeta");
         MPP_CHECK(ReadPins[1U].GetName() == "Alpha");
@@ -1260,19 +949,15 @@ namespace
         MPP_CHECK(ReadPins[1U].GetCardinality() == PinCardinality::Multiple);
         MPP_CHECK(ReadPins[2U].GetCategory() == PinCategory::Execution);
         MPP_CHECK(ReadPins[0U].GetDefaultValue().has_value());
-        MPP_CHECK(
-            ReadPins[0U].GetDefaultValue()->TryGet<std::int64_t>() != nullptr
-        );
+        MPP_CHECK(ReadPins[0U].GetDefaultValue()->TryGet<std::int64_t>() != nullptr);
     }
 
     void TestDescriptorCatalogueSnapshotTypeAndLiteralRoundTrip()
     {
         const auto TypeCatalogue = MakeTypeCatalogue();
-        const auto TypeSnapshot =
-            DescriptorCatalogueSnapshot::Create(TypeCatalogue);
+        const auto TypeSnapshot = DescriptorCatalogueSnapshot::Create(TypeCatalogue);
         MPP_CHECK(TypeSnapshot.has_value());
-        const auto TypeJson =
-            DescriptorCatalogueSnapshotPersistence::Write(*TypeSnapshot);
+        const auto TypeJson = DescriptorCatalogueSnapshotPersistence::Write(*TypeSnapshot);
         MPP_CHECK(TypeJson.has_value());
         const JsonValue TypeDocument = JsonValue::parse(*TypeJson);
         const std::vector<std::string> TypeKinds = {
@@ -1295,102 +980,61 @@ namespace
         MPP_CHECK(TypeDocument["entries"].size() == TypeKinds.size());
         for (std::size_t Index = 0U; Index < TypeKinds.size(); ++Index)
         {
-            const JsonValue* Entry = FindJsonEntry(
-                const_cast<JsonValue&>(TypeDocument),
-                "type-" + std::to_string(Index)
-            );
+            const JsonValue* Entry = FindJsonEntry(const_cast<JsonValue&>(TypeDocument), "type-" + std::to_string(Index));
             MPP_CHECK(Entry != nullptr);
-            MPP_CHECK(
-                (*Entry)["record"]["pins"][0U]["type"]["kind"] ==
-                TypeKinds[Index]
-            );
+            MPP_CHECK((*Entry)["record"]["pins"][0U]["type"]["kind"] == TypeKinds[Index]);
         }
 
-        const auto TypeRead =
-            DescriptorCatalogueSnapshotPersistence::Read(*TypeJson);
+        const auto TypeRead = DescriptorCatalogueSnapshotPersistence::Read(*TypeJson);
         MPP_CHECK(TypeRead.has_value());
         MPP_CHECK(*TypeRead == *TypeSnapshot);
 
         const auto LiteralCatalogue = MakeLiteralCatalogue();
-        const auto LiteralSnapshot =
-            DescriptorCatalogueSnapshot::Create(LiteralCatalogue);
+        const auto LiteralSnapshot = DescriptorCatalogueSnapshot::Create(LiteralCatalogue);
         MPP_CHECK(LiteralSnapshot.has_value());
-        const auto LiteralJson =
-            DescriptorCatalogueSnapshotPersistence::Write(*LiteralSnapshot);
+        const auto LiteralJson = DescriptorCatalogueSnapshotPersistence::Write(*LiteralSnapshot);
         MPP_CHECK(LiteralJson.has_value());
         const JsonValue LiteralDocument = JsonValue::parse(*LiteralJson);
-        MPP_CHECK(
-            LiteralDocument["entries"].size() == 9U
-        );
-        const JsonValue& FloatLiteral =
-            FindJsonEntry(
-                const_cast<JsonValue&>(LiteralDocument),
-                "literal-float"
-            )->at("record").at("pins").at(0U).at("default");
+        MPP_CHECK(LiteralDocument["entries"].size() == 9U);
+        const JsonValue& FloatLiteral = FindJsonEntry(const_cast<JsonValue&>(LiteralDocument), "literal-float")->at("record").at("pins").at(0U).at("default");
         MPP_CHECK(FloatLiteral["kind"] == "Float");
         MPP_CHECK(FloatLiteral["bits"] == "3ff8000000000000");
-        const JsonValue& VectorLiteral =
-            FindJsonEntry(
-                const_cast<JsonValue&>(LiteralDocument),
-                "literal-vector"
-            )->at("record").at("pins").at(0U).at("default");
+        const JsonValue& VectorLiteral = FindJsonEntry(const_cast<JsonValue&>(LiteralDocument), "literal-vector")->at("record").at("pins").at(0U).at("default");
         MPP_CHECK(VectorLiteral["xBits"] == "3f800000");
         MPP_CHECK(VectorLiteral["yBits"] == "c0000000");
         MPP_CHECK(VectorLiteral["zBits"] == "40400000");
 
-        const auto LiteralRead =
-            DescriptorCatalogueSnapshotPersistence::Read(*LiteralJson);
+        const auto LiteralRead = DescriptorCatalogueSnapshotPersistence::Read(*LiteralJson);
         MPP_CHECK(LiteralRead.has_value());
         MPP_CHECK(*LiteralRead == *LiteralSnapshot);
 
         JsonValue Mutated = JsonValue::parse(*TypeJson);
         FindJsonEntry(Mutated, "type-0")->at("record").at("pins").at(0U).at("type")["kind"] = "Unknown";
-        RequireReadCode(
-            Mutated.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Mutated.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Mutated = JsonValue::parse(*TypeJson);
         FindJsonEntry(Mutated, "type-11")->at("record").at("pins").at(0U).at("type")["parameter"] = 0U;
-        RequireReadCode(
-            Mutated.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Mutated.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Mutated = JsonValue::parse(*TypeJson);
         FindJsonEntry(Mutated, "type-14")->at("record").at("pins").at(0U).at("type")["structType"] = 0U;
-        RequireReadCode(
-            Mutated.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Mutated.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Mutated = JsonValue::parse(*LiteralJson);
         FindJsonEntry(Mutated, "literal-float")->at("record").at("pins").at(0U).at("default")["bits"] = "3FF8000000000000";
-        RequireReadCode(
-            Mutated.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Mutated.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Mutated = JsonValue::parse(*LiteralJson);
         FindJsonEntry(Mutated, "literal-float")->at("record").at("pins").at(0U).at("default")["bits"] = "123";
-        RequireReadCode(
-            Mutated.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Mutated.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Mutated = JsonValue::parse(*LiteralJson);
         FindJsonEntry(Mutated, "literal-float")->at("record").at("pins").at(0U).at("default")["bits"] = "3ff800000000000g";
-        RequireReadCode(
-            Mutated.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Mutated.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Mutated = JsonValue::parse(*LiteralJson);
         FindJsonEntry(Mutated, "literal-bool")->at("record").at("pins").at(0U).at("default")["kind"] = "Unknown";
-        RequireReadCode(
-            Mutated.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Mutated.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
     }
 
     void TestDescriptorCatalogueSnapshotControlAndProvenanceRoundTrip()
@@ -1398,8 +1042,7 @@ namespace
         const auto Catalogue = MakeControlCatalogue();
         const auto Snapshot = DescriptorCatalogueSnapshot::Create(Catalogue);
         MPP_CHECK(Snapshot.has_value());
-        const auto Json =
-            DescriptorCatalogueSnapshotPersistence::Write(*Snapshot);
+        const auto Json = DescriptorCatalogueSnapshotPersistence::Write(*Snapshot);
         MPP_CHECK(Json.has_value());
         const JsonValue Document = JsonValue::parse(*Json);
 
@@ -1414,130 +1057,59 @@ namespace
         };
         for (const auto& [Identity, Kind] : Kinds)
         {
-            JsonValue* Entry = FindJsonEntry(
-                const_cast<JsonValue&>(Document),
-                Identity
-            );
+            JsonValue* Entry = FindJsonEntry(const_cast<JsonValue&>(Document), Identity);
             MPP_CHECK(Entry != nullptr);
-            MPP_CHECK(
-                (*Entry)["record"]["executionControl"]["kind"] == Kind
-            );
+            MPP_CHECK((*Entry)["record"]["executionControl"]["kind"] == Kind);
         }
-        MPP_CHECK(
-            FindJsonEntry(
-                const_cast<JsonValue&>(Document),
-                "control-sequence"
-            )->at("record").at("executionControl").at("kind") == "Sequence"
-        );
-        MPP_CHECK(
-            FindJsonEntry(
-                const_cast<JsonValue&>(Document),
-                "control-join"
-            )->at("record").at("executionControl").at("kind") == "Join"
-        );
+        MPP_CHECK(FindJsonEntry(const_cast<JsonValue&>(Document), "control-sequence")->at("record").at("executionControl").at("kind") == "Sequence");
+        MPP_CHECK(FindJsonEntry(const_cast<JsonValue&>(Document), "control-join")->at("record").at("executionControl").at("kind") == "Join");
 
-        const JsonValue& ConditionalControl =
-            FindJsonEntry(
-                const_cast<JsonValue&>(Document),
-                "control-loop-conditional"
-            )->at("record").at("executionControl");
+        const JsonValue& ConditionalControl = FindJsonEntry(const_cast<JsonValue&>(Document), "control-loop-conditional")->at("record").at("executionControl");
         MPP_CHECK(ConditionalControl["exitPolicy"] == "Conditional");
         MPP_CHECK(ConditionalControl["conditionInput"].is_number_unsigned());
-        const JsonValue& UnconditionalControl =
-            FindJsonEntry(
-                const_cast<JsonValue&>(Document),
-                "control-loop-unconditional"
-            )->at("record").at("executionControl");
+        const JsonValue& UnconditionalControl = FindJsonEntry(const_cast<JsonValue&>(Document), "control-loop-unconditional")->at("record").at("executionControl");
         MPP_CHECK(UnconditionalControl["exitPolicy"] == "Unconditional");
         MPP_CHECK(UnconditionalControl["conditionInput"].is_null());
 
-        const JsonValue& EntryRecord =
-            FindJsonEntry(
-                const_cast<JsonValue&>(Document),
-                "control-entry"
-            )->at("record");
+        const JsonValue& EntryRecord = FindJsonEntry(const_cast<JsonValue&>(Document), "control-entry")->at("record");
         MPP_CHECK(EntryRecord["availability"][0U] == "Server");
         MPP_CHECK(EntryRecord["availability"][1U] == "Client");
         MPP_CHECK(EntryRecord["provenance"]["sourceDocumentIdentifier"] == "control.document");
         MPP_CHECK(EntryRecord["provenance"]["sourceRecordIdentifier"] == "entry");
-        const JsonValue& SequenceRecord =
-            FindJsonEntry(
-                const_cast<JsonValue&>(Document),
-                "control-sequence"
-            )->at("record");
+        const JsonValue& SequenceRecord = FindJsonEntry(const_cast<JsonValue&>(Document), "control-sequence")->at("record");
         MPP_CHECK(SequenceRecord["provenance"].is_null());
 
-        const auto Read =
-            DescriptorCatalogueSnapshotPersistence::Read(*Json);
+        const auto Read = DescriptorCatalogueSnapshotPersistence::Read(*Json);
         MPP_CHECK(Read.has_value());
-        const auto* SequenceEntry =
-            FindCatalogueEntry(Read->GetCatalogue(), "control-sequence");
-        const auto* JoinEntry =
-            FindCatalogueEntry(Read->GetCatalogue(), "control-join");
-        const auto* ConditionalEntry =
-            FindCatalogueEntry(Read->GetCatalogue(), "control-loop-conditional");
-        const auto* UnconditionalEntry =
-            FindCatalogueEntry(Read->GetCatalogue(), "control-loop-unconditional");
+        const auto* SequenceEntry = FindCatalogueEntry(Read->GetCatalogue(), "control-sequence");
+        const auto* JoinEntry = FindCatalogueEntry(Read->GetCatalogue(), "control-join");
+        const auto* ConditionalEntry = FindCatalogueEntry(Read->GetCatalogue(), "control-loop-conditional");
+        const auto* UnconditionalEntry = FindCatalogueEntry(Read->GetCatalogue(), "control-loop-unconditional");
         MPP_CHECK(SequenceEntry != nullptr && JoinEntry != nullptr);
         MPP_CHECK(ConditionalEntry != nullptr && UnconditionalEntry != nullptr);
-        MPP_CHECK(
-            std::holds_alternative<SequenceControlSchema>(
-                *SequenceEntry->GetRecord().GetExecutionControlSchema()
-            )
-        );
-        MPP_CHECK(
-            std::holds_alternative<JoinControlSchema>(
-                *JoinEntry->GetRecord().GetExecutionControlSchema()
-            )
-        );
-        const LoopControlSchema& Conditional =
-            std::get<LoopControlSchema>(
-                *ConditionalEntry->GetRecord().GetExecutionControlSchema()
-            );
-        const LoopControlSchema& Unconditional =
-            std::get<LoopControlSchema>(
-                *UnconditionalEntry->GetRecord().GetExecutionControlSchema()
-            );
+        MPP_CHECK(std::holds_alternative<SequenceControlSchema>(*SequenceEntry->GetRecord().GetExecutionControlSchema()));
+        MPP_CHECK(std::holds_alternative<JoinControlSchema>(*JoinEntry->GetRecord().GetExecutionControlSchema()));
+        const LoopControlSchema& Conditional = std::get<LoopControlSchema>(*ConditionalEntry->GetRecord().GetExecutionControlSchema());
+        const LoopControlSchema& Unconditional = std::get<LoopControlSchema>(*UnconditionalEntry->GetRecord().GetExecutionControlSchema());
         MPP_CHECK(Conditional.ExitPolicy == LoopExitPolicy::Conditional);
-        MPP_CHECK(
-            Conditional.ConditionInput.has_value() &&
-            Conditional.ConditionInput->GetValue() == 5U
-        );
+        MPP_CHECK(Conditional.ConditionInput.has_value() && Conditional.ConditionInput->GetValue() == 5U);
         MPP_CHECK(Unconditional.ExitPolicy == LoopExitPolicy::Unconditional);
         MPP_CHECK(!Unconditional.ConditionInput.has_value());
-        MPP_CHECK(
-            Read->GetCatalogue().FindByExternalIdentity(
-                ExternalNodeIdentity("control-entry")
-            )->GetRecord().GetSourceProvenance()->GetSourceDocumentIdentifier() ==
-            "control.document"
-        );
-        MPP_CHECK(
-            Read->GetCatalogue().FindByExternalIdentity(
-                ExternalNodeIdentity("control-sequence")
-            )->GetRecord().GetSourceProvenance().has_value() == false
-        );
+        MPP_CHECK(Read->GetCatalogue().FindByExternalIdentity(ExternalNodeIdentity("control-entry"))->GetRecord().GetSourceProvenance()->GetSourceDocumentIdentifier() == "control.document");
+        MPP_CHECK(Read->GetCatalogue().FindByExternalIdentity(ExternalNodeIdentity("control-sequence"))->GetRecord().GetSourceProvenance().has_value() == false);
         const std::vector<NodeAvailability> ExpectedAvailability = {
             NodeAvailability::Server,
             NodeAvailability::Client
         };
-        MPP_CHECK(
-            Read->GetCatalogue().FindByExternalIdentity(
-                ExternalNodeIdentity("control-entry")
-            )->GetRecord().GetAvailability() == ExpectedAvailability
-        );
+        MPP_CHECK(Read->GetCatalogue().FindByExternalIdentity(ExternalNodeIdentity("control-entry"))->GetRecord().GetAvailability() == ExpectedAvailability);
     }
 
     void TestDescriptorCatalogueSnapshotSpecializationSidecarRoundTrip()
     {
         const SnapshotFixture Fixture = MakeFixture();
-        const auto Snapshot =
-            DescriptorCatalogueSnapshot::Create(
-                Fixture.Catalogue,
-                Fixture.Specialization
-            );
+        const auto Snapshot = DescriptorCatalogueSnapshot::Create(Fixture.Catalogue, Fixture.Specialization);
         MPP_CHECK(Snapshot.has_value());
-        const auto Json =
-            DescriptorCatalogueSnapshotPersistence::Write(*Snapshot);
+        const auto Json = DescriptorCatalogueSnapshotPersistence::Write(*Snapshot);
         MPP_CHECK(Json.has_value());
         JsonValue Document = JsonValue::parse(*Json);
 
@@ -1565,13 +1137,8 @@ namespace
         MPP_CHECK(Family["availability"][0U] == "Server");
         MPP_CHECK(Family["availability"][1U] == "Client");
         MPP_CHECK(Family["executionControl"].is_null());
-        MPP_CHECK(
-            Family["provenance"]["sourceDocumentIdentifier"] ==
-            "logical.document"
-        );
-        MPP_CHECK(
-            Family["provenance"]["sourceRecordIdentifier"] == "family-a"
-        );
+        MPP_CHECK(Family["provenance"]["sourceDocumentIdentifier"] == "logical.document");
+        MPP_CHECK(Family["provenance"]["sourceRecordIdentifier"] == "family-a");
         MPP_CHECK(Family["pins"].size() == 3U);
         const JsonValue& FixedPin = Family["pins"][0U];
         const JsonValue& ReflectedPin = Family["pins"][1U];
@@ -1624,14 +1191,8 @@ namespace
         MPP_CHECK(Variant["pinBindings"][1U]["concreteType"]["kind"] == "Float");
         MPP_CHECK(!Variant.contains("record"));
         MPP_CHECK(!Family.contains("record"));
-        MPP_CHECK(
-            Specialization["families"][0U]["familyExternalIdentity"] <
-            Specialization["families"][1U]["familyExternalIdentity"]
-        );
-        MPP_CHECK(
-            Family["variants"][0U]["concreteExternalIdentity"] <
-            Family["variants"][1U]["concreteExternalIdentity"]
-        );
+        MPP_CHECK(Specialization["families"][0U]["familyExternalIdentity"] < Specialization["families"][1U]["familyExternalIdentity"]);
+        MPP_CHECK(Family["variants"][0U]["concreteExternalIdentity"] < Family["variants"][1U]["concreteExternalIdentity"]);
 
         const JsonValue& FamilyB = Specialization["families"][1U];
         MPP_CHECK(FamilyB["provenance"].is_null());
@@ -1641,320 +1202,159 @@ namespace
         MPP_CHECK(FamilyB["pins"][1U]["reflected"] == true);
         MPP_CHECK(FamilyB["variants"][0U]["pinBindings"][0U]["familyPinIndex"] == 1U);
 
-        const auto Read =
-            DescriptorCatalogueSnapshotPersistence::Read(*Json);
+        const auto Read = DescriptorCatalogueSnapshotPersistence::Read(*Json);
         MPP_CHECK(Read.has_value());
         MPP_CHECK(Read->GetSpecializationResult().has_value());
-        MPP_CHECK(
-            *Read->GetSpecializationResult() == Fixture.Specialization
-        );
+        MPP_CHECK(*Read->GetSpecializationResult() == Fixture.Specialization);
         MPP_CHECK(Read->GetSpecializationResult()->IsValid());
-        for (const auto& Record :
-             Read->GetSpecializationResult()->GetConcreteRecords())
+        for (const auto& Record : Read->GetSpecializationResult()->GetConcreteRecords())
         {
-            const DescriptorCatalogueEntry* Entry =
-                Fixture.Catalogue.FindByExternalIdentity(
-                    Record.GetExternalIdentity()
-                );
+            const DescriptorCatalogueEntry* Entry = Fixture.Catalogue.FindByExternalIdentity(Record.GetExternalIdentity());
             MPP_CHECK(Entry != nullptr);
             MPP_CHECK(Entry->GetRecord() == Record);
         }
-        MPP_CHECK(
-            Fixture.Catalogue.FindByExternalIdentity(
-                ExternalNodeIdentity("ordinary")
-            ) != nullptr
-        );
-        MPP_CHECK(
-            Read->GetSpecializationResult()->GetConcreteRecords().size() == 3U
-        );
+        MPP_CHECK(Fixture.Catalogue.FindByExternalIdentity(ExternalNodeIdentity("ordinary")) != nullptr);
+        MPP_CHECK(Read->GetSpecializationResult()->GetConcreteRecords().size() == 3U);
 
-        const auto Mismatched =
-            MakeMismatchedSpecialization(Fixture);
-        const auto MismatchSnapshot =
-            DescriptorCatalogueSnapshot::Create(
-                Fixture.Catalogue,
-                Mismatched
-            );
+        const auto Mismatched = MakeMismatchedSpecialization(Fixture);
+        const auto MismatchSnapshot = DescriptorCatalogueSnapshot::Create(Fixture.Catalogue, Mismatched);
         MPP_CHECK(!MismatchSnapshot.has_value());
-        MPP_CHECK(
-            HasCode(
-                MismatchSnapshot.error(),
-                DiagnosticCode::DescriptorCatalogueSnapshotSpecializationMismatch
-            )
-        );
+        MPP_CHECK(HasCode(MismatchSnapshot.error(), DiagnosticCode::DescriptorCatalogueSnapshotSpecializationMismatch));
     }
 
     void TestDescriptorCatalogueSnapshotMalformedDataAndFailureAtomicity()
     {
         const SnapshotFixture Fixture = MakeFixture();
 
-        RequireReadCode(
-            "{",
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode("{", DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         std::string DuplicateRoot = Fixture.Json;
-        const std::size_t RootPosition =
-            DuplicateRoot.find("\"snapshotFormatVersion\":");
+        const std::size_t RootPosition = DuplicateRoot.find("\"snapshotFormatVersion\":");
         MPP_CHECK(RootPosition != std::string::npos);
-        DuplicateRoot.insert(
-            RootPosition,
-            "\"snapshotFormatVersion\":1,"
-        );
-        RequireReadCode(
-            DuplicateRoot,
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        DuplicateRoot.insert(RootPosition, "\"snapshotFormatVersion\":1,");
+        RequireReadCode(DuplicateRoot, DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         std::string DuplicateNested = Fixture.Json;
-        const std::size_t NestedPosition =
-            DuplicateNested.find("\"sourceNamespace\":");
+        const std::size_t NestedPosition = DuplicateNested.find("\"sourceNamespace\":");
         MPP_CHECK(NestedPosition != std::string::npos);
-        DuplicateNested.insert(
-            NestedPosition,
-            "\"sourceNamespace\":\"duplicate\","
-        );
-        RequireReadCode(
-            DuplicateNested,
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        DuplicateNested.insert(NestedPosition, "\"sourceNamespace\":\"duplicate\",");
+        RequireReadCode(DuplicateNested, DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         JsonValue Json = JsonValue::parse(Fixture.Json);
         Json["unknown"] = true;
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
         FindJsonEntry(Json, "concrete-a")->at("record")["unknown"] = 1;
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
         Json["specialization"]["unexpected"] = true;
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
         Json["specialization"]["families"][0U]["unexpected"] = true;
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
         Json["specialization"]["families"][0U]["pins"][0U]["unexpected"] = true;
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
         Json["specialization"]["families"][0U]["variants"][0U]["unexpected"] = true;
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
         Json["specialization"]["families"][0U]["variants"][0U]["pinBindings"][0U]["unexpected"] = true;
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
         FindJsonEntry(Json, "concrete-a")->at("record").at("displayName") = 7;
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
         std::swap(Json["entries"][0U], Json["entries"][1U]);
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
-        std::swap(
-            Json["entries"][0U]["record"]["availability"][0U],
-            Json["entries"][0U]["record"]["availability"][1U]
-        );
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        std::swap(Json["entries"][0U]["record"]["availability"][0U], Json["entries"][0U]["record"]["availability"][1U]);
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
-        std::swap(
-            Json["specialization"]["families"][0U],
-            Json["specialization"]["families"][1U]
-        );
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        std::swap(Json["specialization"]["families"][0U], Json["specialization"]["families"][1U]);
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
-        std::swap(
-            Json["specialization"]["families"][0U]["variants"][0U],
-            Json["specialization"]["families"][0U]["variants"][1U]
-        );
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        std::swap(Json["specialization"]["families"][0U]["variants"][0U], Json["specialization"]["families"][0U]["variants"][1U]);
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
-        std::swap(
-            Json["specialization"]["families"][0U]["variants"][0U]["pinBindings"][0U],
-            Json["specialization"]["families"][0U]["variants"][0U]["pinBindings"][1U]
-        );
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        std::swap(Json["specialization"]["families"][0U]["variants"][0U]["pinBindings"][0U], Json["specialization"]["families"][0U]["variants"][0U]["pinBindings"][1U]);
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         for (const char* Field : {"direction", "category", "cardinality"})
         {
             Json = JsonValue::parse(Fixture.Json);
-            FindJsonEntry(Json, "concrete-a")->at("record").at("pins").at(0U)[Field] =
-                "invalid";
-            RequireReadCode(
-                Json.dump(),
-                DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-            );
+            FindJsonEntry(Json, "concrete-a")->at("record").at("pins").at(0U)[Field] = "invalid";
+            RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
         }
 
         const auto ControlCatalogue = MakeControlCatalogue();
-        const auto ControlSnapshot =
-            DescriptorCatalogueSnapshot::Create(ControlCatalogue);
+        const auto ControlSnapshot = DescriptorCatalogueSnapshot::Create(ControlCatalogue);
         MPP_CHECK(ControlSnapshot.has_value());
-        const auto ControlJson =
-            DescriptorCatalogueSnapshotPersistence::Write(*ControlSnapshot);
+        const auto ControlJson = DescriptorCatalogueSnapshotPersistence::Write(*ControlSnapshot);
         MPP_CHECK(ControlJson.has_value());
 
         JsonValue ControlDocument = JsonValue::parse(*ControlJson);
-        FindJsonEntry(
-            ControlDocument,
-            "control-entry"
-        )->at("record").at("executionControl") =
-            JsonValue{{"executionOutput", 0U}};
-        RequireReadCode(
-            ControlDocument.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        FindJsonEntry(ControlDocument, "control-entry")->at("record").at("executionControl") = JsonValue{{"executionOutput", 0U}};
+        RequireReadCode(ControlDocument.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         ControlDocument = JsonValue::parse(*ControlJson);
-        FindJsonEntry(
-            ControlDocument,
-            "control-entry"
-        )->at("record").at("executionControl")["kind"] = "Unknown";
-        RequireReadCode(
-            ControlDocument.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        FindJsonEntry(ControlDocument, "control-entry")->at("record").at("executionControl")["kind"] = "Unknown";
+        RequireReadCode(ControlDocument.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         ControlDocument = JsonValue::parse(*ControlJson);
-        FindJsonEntry(
-            ControlDocument,
-            "control-entry"
-        )->at("record").at("executionControl")["extra"] = true;
-        RequireReadCode(
-            ControlDocument.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        FindJsonEntry(ControlDocument, "control-entry")->at("record").at("executionControl")["extra"] = true;
+        RequireReadCode(ControlDocument.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         ControlDocument = JsonValue::parse(*ControlJson);
-        FindJsonEntry(
-            ControlDocument,
-            "control-loop-conditional"
-        )->at("record").at("executionControl")["exitPolicy"] = "Invalid";
-        RequireReadCode(
-            ControlDocument.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        FindJsonEntry(ControlDocument, "control-loop-conditional")->at("record").at("executionControl")["exitPolicy"] = "Invalid";
+        RequireReadCode(ControlDocument.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         ControlDocument = JsonValue::parse(*ControlJson);
-        FindJsonEntry(
-            ControlDocument,
-            "control-loop-conditional"
-        )->at("record").at("executionControl")["conditionInput"] = nullptr;
-        RequireReadCode(
-            ControlDocument.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        FindJsonEntry(ControlDocument, "control-loop-conditional")->at("record").at("executionControl")["conditionInput"] = nullptr;
+        RequireReadCode(ControlDocument.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         ControlDocument = JsonValue::parse(*ControlJson);
-        FindJsonEntry(
-            ControlDocument,
-            "control-loop-unconditional"
-        )->at("record").at("executionControl")["conditionInput"] = 5U;
-        RequireReadCode(
-            ControlDocument.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        FindJsonEntry(ControlDocument, "control-loop-unconditional")->at("record").at("executionControl")["conditionInput"] = 5U;
+        RequireReadCode(ControlDocument.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
-        JsonValue TypeDocument = JsonValue::parse(
-            *DescriptorCatalogueSnapshotPersistence::Write(
-                *DescriptorCatalogueSnapshot::Create(MakeTypeCatalogue())
-            )
-        );
-        FindJsonEntry(TypeDocument, "type-0")->at("record").at("pins").at(0U).at("type") =
-            JsonValue{{"kind", "List"}};
-        RequireReadCode(
-            TypeDocument.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        JsonValue TypeDocument = JsonValue::parse(*DescriptorCatalogueSnapshotPersistence::Write(*DescriptorCatalogueSnapshot::Create(MakeTypeCatalogue())));
+        FindJsonEntry(TypeDocument, "type-0")->at("record").at("pins").at(0U).at("type") = JsonValue{{"kind", "List"}};
+        RequireReadCode(TypeDocument.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
-        FindJsonEntry(Json, "concrete-a")->at("record").at("pins").at(0U).at("default") =
-            JsonValue{{"kind", "Float"}, {"bits", "not-hex"}};
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        FindJsonEntry(Json, "concrete-a")->at("record").at("pins").at(0U).at("default") = JsonValue{{"kind", "Float"}, {"bits", "not-hex"}};
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
         Json["specialization"] = JsonValue::array();
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot);
 
         Json = JsonValue::parse(Fixture.Json);
-        Json["specialization"]["families"][0U]["variants"][0U]["concreteExternalIdentity"] =
-            "concrete-aa";
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::DescriptorCatalogueSnapshotSpecializationMismatch
-        );
+        Json["specialization"]["families"][0U]["variants"][0U]["concreteExternalIdentity"] = "concrete-aa";
+        RequireReadCode(Json.dump(), DiagnosticCode::DescriptorCatalogueSnapshotSpecializationMismatch);
 
         Json = JsonValue::parse(Fixture.Json);
-        const std::uint32_t OriginalId =
-            Json["entries"][0U]["nodeDescriptorId"].get<std::uint32_t>();
+        const std::uint32_t OriginalId = Json["entries"][0U]["nodeDescriptorId"].get<std::uint32_t>();
         Json["entries"][0U]["nodeDescriptorId"] = OriginalId + 100U;
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::DescriptorCatalogueSnapshotIdentifierMismatch
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::DescriptorCatalogueSnapshotIdentifierMismatch);
 
         Json = JsonValue::parse(Fixture.Json);
         Json["catalogue"]["contentIdentifier"] = "sha256:other";
-        RequireReadCode(
-            Json.dump(),
-            DiagnosticCode::DescriptorCatalogueSnapshotContentMismatch
-        );
+        RequireReadCode(Json.dump(), DiagnosticCode::DescriptorCatalogueSnapshotContentMismatch);
 
-        const auto ValidAfterFailures =
-            DescriptorCatalogueSnapshotPersistence::Read(Fixture.Json);
+        const auto ValidAfterFailures = DescriptorCatalogueSnapshotPersistence::Read(Fixture.Json);
         MPP_CHECK(ValidAfterFailures.has_value());
         MPP_CHECK(ValidAfterFailures->IsValid());
     }
@@ -1962,43 +1362,30 @@ namespace
     void TestDescriptorCatalogueRegistryMaterializationMapping()
     {
         const SnapshotFixture Fixture = MakeFixture();
-        const auto Snapshot =
-            DescriptorCatalogueSnapshot::Create(Fixture.Catalogue);
+        const auto Snapshot = DescriptorCatalogueSnapshot::Create(Fixture.Catalogue);
         MPP_CHECK(Snapshot.has_value());
-        const auto Context =
-            DescriptorCatalogueRegistryContext::Materialize(*Snapshot);
+        const auto Context = DescriptorCatalogueRegistryContext::Materialize(*Snapshot);
         MPP_CHECK(Context.has_value());
         MPP_CHECK(Context->IsValid());
         MPP_CHECK(Context->GetSnapshot() == *Snapshot);
         CheckCatalogueFields(Fixture.Catalogue, Context->GetCatalogue());
-        MPP_CHECK(
-            Context->GetCatalogueIdentity() == Fixture.Catalogue.GetIdentity()
-        );
-        MPP_CHECK(
-            Context->GetRegistry().Size() ==
-            Fixture.Catalogue.GetEntryCount()
-        );
+        MPP_CHECK(Context->GetCatalogueIdentity() == Fixture.Catalogue.GetIdentity());
+        MPP_CHECK(Context->GetRegistry().Size() == Fixture.Catalogue.GetEntryCount());
         for (const auto& Entry : Fixture.Catalogue.GetEntries())
         {
-            const NodeDescriptor* Descriptor =
-                Context->GetRegistry().Find(Entry.GetDescriptorIdentifier());
+            const NodeDescriptor* Descriptor = Context->GetRegistry().Find(Entry.GetDescriptorIdentifier());
             MPP_CHECK(Descriptor != nullptr);
             CheckNodeDescriptor(*Descriptor, Entry);
         }
 
         const auto ControlCatalogue = MakeControlCatalogue();
-        const auto ControlSnapshot =
-            DescriptorCatalogueSnapshot::Create(ControlCatalogue);
+        const auto ControlSnapshot = DescriptorCatalogueSnapshot::Create(ControlCatalogue);
         MPP_CHECK(ControlSnapshot.has_value());
-        const auto ControlContext =
-            DescriptorCatalogueRegistryContext::Materialize(*ControlSnapshot);
+        const auto ControlContext = DescriptorCatalogueRegistryContext::Materialize(*ControlSnapshot);
         MPP_CHECK(ControlContext.has_value());
         for (const auto& Entry : ControlCatalogue.GetEntries())
         {
-            const NodeDescriptor* Descriptor =
-                ControlContext->GetRegistry().Find(
-                    Entry.GetDescriptorIdentifier()
-                );
+            const NodeDescriptor* Descriptor = ControlContext->GetRegistry().Find(Entry.GetDescriptorIdentifier());
             MPP_CHECK(Descriptor != nullptr);
             CheckNodeDescriptor(*Descriptor, Entry);
         }
@@ -2045,36 +1432,23 @@ namespace
             }
         );
         MPP_CHECK(NanCatalogueResult.has_value());
-        const auto NanSnapshot =
-            DescriptorCatalogueSnapshot::Create(*NanCatalogueResult);
+        const auto NanSnapshot = DescriptorCatalogueSnapshot::Create(*NanCatalogueResult);
         MPP_CHECK(NanSnapshot.has_value());
-        const auto NanContext =
-            DescriptorCatalogueRegistryContext::Materialize(*NanSnapshot);
+        const auto NanContext = DescriptorCatalogueRegistryContext::Materialize(*NanSnapshot);
         MPP_CHECK(NanContext.has_value());
         MPP_CHECK(NanContext->IsValid());
 
-        const auto* NanDoubleEntry =
-            FindCatalogueEntry(*NanCatalogueResult, "nan-double");
-        const auto* NanVectorEntry =
-            FindCatalogueEntry(*NanCatalogueResult, "nan-vector");
+        const auto* NanDoubleEntry = FindCatalogueEntry(*NanCatalogueResult, "nan-double");
+        const auto* NanVectorEntry = FindCatalogueEntry(*NanCatalogueResult, "nan-vector");
         MPP_CHECK(NanDoubleEntry != nullptr && NanVectorEntry != nullptr);
-        const NodeDescriptor* NanDoubleDescriptor =
-            NanContext->GetRegistry().Find(
-                NanDoubleEntry->GetDescriptorIdentifier()
-            );
-        const NodeDescriptor* NanVectorDescriptor =
-            NanContext->GetRegistry().Find(
-                NanVectorEntry->GetDescriptorIdentifier()
-            );
+        const NodeDescriptor* NanDoubleDescriptor = NanContext->GetRegistry().Find(NanDoubleEntry->GetDescriptorIdentifier());
+        const NodeDescriptor* NanVectorDescriptor = NanContext->GetRegistry().Find(NanVectorEntry->GetDescriptorIdentifier());
         MPP_CHECK(NanDoubleDescriptor != nullptr && NanVectorDescriptor != nullptr);
-        const auto& NanDoubleDefault =
-            NanDoubleDescriptor->GetPins()[0U].GetDefaultValue();
-        const auto& NanVectorDefault =
-            NanVectorDescriptor->GetPins()[0U].GetDefaultValue();
+        const auto& NanDoubleDefault = NanDoubleDescriptor->GetPins()[0U].GetDefaultValue();
+        const auto& NanVectorDefault = NanVectorDescriptor->GetPins()[0U].GetDefaultValue();
         MPP_CHECK(NanDoubleDefault.has_value() && NanVectorDefault.has_value());
         const double* RetrievedDouble = NanDoubleDefault->TryGet<double>();
-        const Vector3Value* RetrievedVector =
-            NanVectorDefault->TryGet<Vector3Value>();
+        const Vector3Value* RetrievedVector = NanVectorDefault->TryGet<Vector3Value>();
         MPP_CHECK(RetrievedDouble != nullptr && RetrievedVector != nullptr);
         MPP_CHECK(std::bit_cast<std::uint64_t>(*RetrievedDouble) == DoubleNanBits);
         MPP_CHECK(std::bit_cast<std::uint32_t>(RetrievedVector->X) == VectorNanBits);
@@ -2082,56 +1456,35 @@ namespace
         MPP_CHECK(std::bit_cast<std::uint32_t>(RetrievedVector->Z) == 0x40000000U);
 
         GraphBuilder Builder(Context->GetRegistry());
-        const auto Node =
-            Builder.AddNode(Fixture.Catalogue.GetEntries()[0U].GetDescriptorIdentifier());
+        const auto Node = Builder.AddNode(Fixture.Catalogue.GetEntries()[0U].GetDescriptorIdentifier());
         MPP_CHECK(Node.has_value());
     }
 
     void TestDescriptorCatalogueRegistryMaterializationDeterminismAndFailure()
     {
         const SnapshotFixture Fixture = MakeFixture();
-        const auto Snapshot =
-            DescriptorCatalogueSnapshot::Create(
-                Fixture.Catalogue,
-                Fixture.Specialization
-            );
+        const auto Snapshot = DescriptorCatalogueSnapshot::Create(Fixture.Catalogue, Fixture.Specialization);
         MPP_CHECK(Snapshot.has_value());
-        const auto First =
-            DescriptorCatalogueRegistryContext::Materialize(*Snapshot);
-        const auto Second =
-            DescriptorCatalogueRegistryContext::Materialize(*Snapshot);
+        const auto First = DescriptorCatalogueRegistryContext::Materialize(*Snapshot);
+        const auto Second = DescriptorCatalogueRegistryContext::Materialize(*Snapshot);
         MPP_CHECK(First.has_value() && Second.has_value());
         MPP_CHECK(First->IsValid() && Second->IsValid());
         MPP_CHECK(First->GetSnapshot() == Second->GetSnapshot());
-        MPP_CHECK(
-            First->GetCatalogueIdentity() ==
-            Second->GetCatalogueIdentity()
-        );
-        MPP_CHECK(
-            First->GetRegistry().Size() == Second->GetRegistry().Size()
-        );
+        MPP_CHECK(First->GetCatalogueIdentity() == Second->GetCatalogueIdentity());
+        MPP_CHECK(First->GetRegistry().Size() == Second->GetRegistry().Size());
         for (const auto& Entry : Fixture.Catalogue.GetEntries())
         {
-            const NodeDescriptor* FirstDescriptor =
-                First->GetRegistry().Find(Entry.GetDescriptorIdentifier());
-            const NodeDescriptor* SecondDescriptor =
-                Second->GetRegistry().Find(Entry.GetDescriptorIdentifier());
+            const NodeDescriptor* FirstDescriptor = First->GetRegistry().Find(Entry.GetDescriptorIdentifier());
+            const NodeDescriptor* SecondDescriptor = Second->GetRegistry().Find(Entry.GetDescriptorIdentifier());
             MPP_CHECK(FirstDescriptor != nullptr && SecondDescriptor != nullptr);
             CheckNodeDescriptor(*FirstDescriptor, Entry);
             CheckNodeDescriptor(*SecondDescriptor, Entry);
         }
 
-        const auto InvalidSnapshot =
-            DescriptorCatalogueSnapshot::Create(DescriptorCatalogue{});
+        const auto InvalidSnapshot = DescriptorCatalogueSnapshot::Create(DescriptorCatalogue{});
         MPP_CHECK(!InvalidSnapshot.has_value());
-        MPP_CHECK(
-            HasCode(
-                InvalidSnapshot.error(),
-                DiagnosticCode::DescriptorCatalogueMismatch
-            )
-        );
-        const auto ValidAfterFailure =
-            DescriptorCatalogueRegistryContext::Materialize(*Snapshot);
+        MPP_CHECK(HasCode(InvalidSnapshot.error(), DiagnosticCode::DescriptorCatalogueMismatch));
+        const auto ValidAfterFailure = DescriptorCatalogueRegistryContext::Materialize(*Snapshot);
         MPP_CHECK(ValidAfterFailure.has_value());
         MPP_CHECK(ValidAfterFailure->IsValid());
     }
@@ -2144,115 +1497,32 @@ namespace
 
     void TestDescriptorCatalogueSnapshotGraphIRAndScopeBoundaries()
     {
-        using CreateSignature = std::expected<
-            DescriptorCatalogueSnapshot,
-            DiagnosticCollection
-        > (*)(
-            DescriptorCatalogue,
-            std::optional<DescriptorSpecializationResult>
-        );
-        using WriteSignature = std::expected<
-            std::string,
-            DiagnosticCollection
-        > (*)(const DescriptorCatalogueSnapshot&);
-        using ReadSignature = std::expected<
-            DescriptorCatalogueSnapshot,
-            DiagnosticCollection
-        > (*)(std::string);
-        using MaterializeSignature = std::expected<
-            DescriptorCatalogueRegistryContext,
-            DiagnosticCollection
-        > (*)(DescriptorCatalogueSnapshot);
-        using GetSnapshotSignature =
-            const DescriptorCatalogueSnapshot& (DescriptorCatalogueRegistryContext::*)() const;
-        using GetCatalogueSignature =
-            const DescriptorCatalogue& (DescriptorCatalogueRegistryContext::*)() const;
-        using GetIdentitySignature =
-            const DescriptorCatalogueIdentity& (DescriptorCatalogueRegistryContext::*)() const;
-        using GetRegistrySignature =
-            const NodeDescriptorRegistry& (DescriptorCatalogueRegistryContext::*)() const;
+        using CreateSignature = std::expected<DescriptorCatalogueSnapshot, DiagnosticCollection> (*)(DescriptorCatalogue, std::optional<DescriptorSpecializationResult>);
+        using WriteSignature = std::expected<std::string, DiagnosticCollection> (*)(const DescriptorCatalogueSnapshot&);
+        using ReadSignature = std::expected<DescriptorCatalogueSnapshot, DiagnosticCollection> (*)(std::string);
+        using MaterializeSignature = std::expected<DescriptorCatalogueRegistryContext, DiagnosticCollection> (*)(DescriptorCatalogueSnapshot);
+        using GetSnapshotSignature = const DescriptorCatalogueSnapshot& (DescriptorCatalogueRegistryContext::*)() const;
+        using GetCatalogueSignature = const DescriptorCatalogue& (DescriptorCatalogueRegistryContext::*)() const;
+        using GetIdentitySignature = const DescriptorCatalogueIdentity& (DescriptorCatalogueRegistryContext::*)() const;
+        using GetRegistrySignature = const NodeDescriptorRegistry& (DescriptorCatalogueRegistryContext::*)() const;
 
-        static_assert(
-            std::is_same_v<
-                decltype(static_cast<CreateSignature>(
-                    &DescriptorCatalogueSnapshot::Create
-                )),
-                CreateSignature
-            >
-        );
-        static_assert(
-            std::is_same_v<
-                decltype(static_cast<WriteSignature>(
-                    &DescriptorCatalogueSnapshotPersistence::Write
-                )),
-                WriteSignature
-            >
-        );
-        static_assert(
-            std::is_same_v<
-                decltype(static_cast<ReadSignature>(
-                    &DescriptorCatalogueSnapshotPersistence::Read
-                )),
-                ReadSignature
-            >
-        );
-        static_assert(
-            std::is_same_v<
-                decltype(static_cast<MaterializeSignature>(
-                    &DescriptorCatalogueRegistryContext::Materialize
-                )),
-                MaterializeSignature
-            >
-        );
-        static_assert(
-            std::is_same_v<
-                decltype(static_cast<GetSnapshotSignature>(
-                    &DescriptorCatalogueRegistryContext::GetSnapshot
-                )),
-                GetSnapshotSignature
-            >
-        );
-        static_assert(
-            std::is_same_v<
-                decltype(static_cast<GetCatalogueSignature>(
-                    &DescriptorCatalogueRegistryContext::GetCatalogue
-                )),
-                GetCatalogueSignature
-            >
-        );
-        static_assert(
-            std::is_same_v<
-                decltype(static_cast<GetIdentitySignature>(
-                    &DescriptorCatalogueRegistryContext::GetCatalogueIdentity
-                )),
-                GetIdentitySignature
-            >
-        );
-        static_assert(
-            std::is_same_v<
-                decltype(static_cast<GetRegistrySignature>(
-                    &DescriptorCatalogueRegistryContext::GetRegistry
-                )),
-                GetRegistrySignature
-            >
-        );
+        static_assert(std::is_same_v<decltype(static_cast<CreateSignature>(&DescriptorCatalogueSnapshot::Create)), CreateSignature>);
+        static_assert(std::is_same_v<decltype(static_cast<WriteSignature>(&DescriptorCatalogueSnapshotPersistence::Write)), WriteSignature>);
+        static_assert(std::is_same_v<decltype(static_cast<ReadSignature>(&DescriptorCatalogueSnapshotPersistence::Read)), ReadSignature>);
+        static_assert(std::is_same_v<decltype(static_cast<MaterializeSignature>(&DescriptorCatalogueRegistryContext::Materialize)), MaterializeSignature>);
+        static_assert(std::is_same_v<decltype(static_cast<GetSnapshotSignature>(&DescriptorCatalogueRegistryContext::GetSnapshot)), GetSnapshotSignature>);
+        static_assert(std::is_same_v<decltype(static_cast<GetCatalogueSignature>(&DescriptorCatalogueRegistryContext::GetCatalogue)), GetCatalogueSignature>);
+        static_assert(std::is_same_v<decltype(static_cast<GetIdentitySignature>(&DescriptorCatalogueRegistryContext::GetCatalogueIdentity)), GetIdentitySignature>);
+        static_assert(std::is_same_v<decltype(static_cast<GetRegistrySignature>(&DescriptorCatalogueRegistryContext::GetRegistry)), GetRegistrySignature>);
         static_assert(!CanWriteAsSnapshotInput<DescriptorCatalogue>);
-        static_assert(
-            !std::is_constructible_v<
-                DescriptorCatalogueSnapshot,
-                DescriptorCatalogue
-            >
-        );
+        static_assert(!std::is_constructible_v<DescriptorCatalogueSnapshot, DescriptorCatalogue>);
         static_assert(!std::is_default_constructible_v<DescriptorCatalogueSnapshot>);
         static_assert(std::is_copy_constructible_v<DescriptorCatalogueSnapshot>);
         static_assert(std::is_move_constructible_v<DescriptorCatalogueSnapshot>);
         static_assert(std::is_copy_constructible_v<DescriptorCatalogueRegistryContext>);
         static_assert(std::is_move_constructible_v<DescriptorCatalogueRegistryContext>);
 
-        MPP_CHECK(
-            DescriptorCatalogueSnapshotPersistence::CurrentSnapshotFormatVersion ==
-            2U
-        );
+        MPP_CHECK(DescriptorCatalogueSnapshotPersistence::CurrentSnapshotFormatVersion == 2U);
     }
 }
 

@@ -106,12 +106,8 @@ struct std::hash<MiliastraPlusPlus::PinReference>
 {
     std::size_t operator()(const MiliastraPlusPlus::PinReference& PinReference) const noexcept
     {
-        const std::size_t NodeHash = std::hash<MiliastraPlusPlus::NodeIdentifier>{}(
-            PinReference.OwningNodeIdentifier
-        );
-        const std::size_t PinHash = std::hash<std::uint32_t>{}(
-            PinReference.LocalPinIdentifier.GetValue()
-        );
+        const std::size_t NodeHash = std::hash<MiliastraPlusPlus::NodeIdentifier>{}(PinReference.OwningNodeIdentifier);
+        const std::size_t PinHash = std::hash<std::uint32_t>{}(PinReference.LocalPinIdentifier.GetValue());
         return NodeHash ^ (PinHash + 0x9e3779b9U + (NodeHash << 6U) + (NodeHash >> 2U));
     }
 };

@@ -49,8 +49,7 @@ namespace MiliastraPlusPlus
             std::string Message,
             std::string ExternalIdentityKey = {},
             std::optional<std::uint64_t> PinIndex = std::nullopt,
-            std::optional<SourceProvenance> Provenance = std::nullopt
-        )
+            std::optional<SourceProvenance> Provenance = std::nullopt)
         {
             Diagnostics.push_back({
                 .Stage = Stage,
@@ -64,20 +63,16 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] inline DiagnosticCollection Materialize(std::vector<PendingDiagnostic> Diagnostics)
         {
-            std::sort(
-                Diagnostics.begin(),
-                Diagnostics.end(),
+            std::sort(Diagnostics.begin(), Diagnostics.end(),
                 [](const PendingDiagnostic& Left, const PendingDiagnostic& Right)
                 {
                     if (Left.Stage != Right.Stage)
                     {
-                        return static_cast<std::uint8_t>(Left.Stage) <
-                            static_cast<std::uint8_t>(Right.Stage);
+                        return static_cast<std::uint8_t>(Left.Stage) < static_cast<std::uint8_t>(Right.Stage);
                     }
                     if (Left.Code != Right.Code)
                     {
-                        return static_cast<std::uint32_t>(Left.Code) <
-                            static_cast<std::uint32_t>(Right.Code);
+                        return static_cast<std::uint32_t>(Left.Code) < static_cast<std::uint32_t>(Right.Code);
                     }
                     if (Left.ExternalIdentityKey != Right.ExternalIdentityKey)
                     {
@@ -127,8 +122,7 @@ namespace MiliastraPlusPlus
             ValidationStage Stage,
             std::string_view ExternalIdentityKey,
             const std::optional<SourceProvenance>& Provenance,
-            std::string_view Scope
-        )
+            std::string_view Scope)
         {
             bool Valid = Object.is_object();
             for (const std::string_view Field : Fields)
@@ -179,8 +173,7 @@ namespace MiliastraPlusPlus
             ValidationStage Stage,
             std::string_view ExternalIdentityKey,
             const std::optional<SourceProvenance>& Provenance,
-            std::string_view Scope
-        )
+            std::string_view Scope)
         {
             const Json* Value = Find(Object, Field);
             if (Value == nullptr)
@@ -222,8 +215,7 @@ namespace MiliastraPlusPlus
             std::string_view ExternalIdentityKey,
             const std::optional<SourceProvenance>& Provenance,
             std::string_view Scope,
-            std::optional<std::uint64_t> PinIndex = std::nullopt
-        )
+            std::optional<std::uint64_t> PinIndex = std::nullopt)
         {
             const Json* Value = Find(Object, Field);
             if (Value == nullptr)
@@ -274,8 +266,7 @@ namespace MiliastraPlusPlus
             std::string_view ExternalIdentityKey,
             const std::optional<SourceProvenance>& Provenance,
             std::string_view Scope,
-            std::optional<std::uint64_t> PinIndex = std::nullopt
-        )
+            std::optional<std::uint64_t> PinIndex = std::nullopt)
         {
             const Json* Value = Find(Object, Field);
             if (Value == nullptr)
@@ -318,8 +309,7 @@ namespace MiliastraPlusPlus
             std::string_view ExternalIdentityKey,
             const std::optional<SourceProvenance>& Provenance,
             std::string_view Scope,
-            std::optional<std::uint64_t> PinIndex = std::nullopt
-        )
+            std::optional<std::uint64_t> PinIndex = std::nullopt)
         {
             const std::optional<std::string> Value = ReadString(
                 Object,
@@ -360,8 +350,7 @@ namespace MiliastraPlusPlus
             std::string_view ExternalIdentityKey,
             const std::optional<SourceProvenance>& Provenance,
             std::string_view Scope,
-            std::optional<std::uint64_t> PinIndex = std::nullopt
-        )
+            std::optional<std::uint64_t> PinIndex = std::nullopt)
         {
             const std::optional<std::uint64_t> Value = ReadUnsigned(
                 Object,
@@ -490,31 +479,23 @@ namespace MiliastraPlusPlus
                 ParsedMembers.push_back({*Identity, *Value});
             }
 
-            std::sort(
-                ParsedMembers.begin(),
-                ParsedMembers.end(),
+            std::sort(ParsedMembers.begin(), ParsedMembers.end(),
                 [](const Member& Left, const Member& Right)
                 {
                     return Left.Identity < Right.Identity;
                 }
             );
 
-            const bool HasBooleanMember = std::any_of(
-                ParsedMembers.begin(),
-                ParsedMembers.end(),
+            const bool HasBooleanMember = std::any_of(ParsedMembers.begin(), ParsedMembers.end(),
                 [](const Member& Value)
                 {
-                    return Value.Identity == "filter_return_type_return_boolean" &&
-                        Value.Value == 1000010U;
+                    return Value.Identity == "filter_return_type_return_boolean" && Value.Value == 1000010U;
                 }
             );
-            const bool HasIntegerMember = std::any_of(
-                ParsedMembers.begin(),
-                ParsedMembers.end(),
+            const bool HasIntegerMember = std::any_of(ParsedMembers.begin(), ParsedMembers.end(),
                 [](const Member& Value)
                 {
-                    return Value.Identity == "filter_return_type_return_integer" &&
-                        Value.Value == 10000011U;
+                    return Value.Identity == "filter_return_type_return_integer" && Value.Value == 10000011U;
                 }
             );
             if (!HasBooleanMember || !HasIntegerMember)
@@ -535,12 +516,7 @@ namespace MiliastraPlusPlus
             bool Valid = Modes.is_object();
             if (!Valid)
             {
-                Add(
-                    Diagnostics,
-                    ValidationStage::SourceDocumentParsing,
-                    DiagnosticCode::MalformedGenshinClientBooleanFilterResultNodeSource,
-                    "Mode source document must be a JSON object."
-                );
+                Add(Diagnostics, ValidationStage::SourceDocumentParsing, DiagnosticCode::MalformedGenshinClientBooleanFilterResultNodeSource, "Mode source document must be a JSON object.");
                 return false;
             }
 
@@ -558,12 +534,7 @@ namespace MiliastraPlusPlus
             const Json* Graphs = Find(Modes, "graphs");
             if (Graphs == nullptr)
             {
-                Add(
-                    Diagnostics,
-                    ValidationStage::ModeValidation,
-                    DiagnosticCode::MissingGenshinClientBooleanFilterResultNodeSourceField,
-                    "Required source field is missing: modes.graphs."
-                );
+                Add(Diagnostics, ValidationStage::ModeValidation, DiagnosticCode::MissingGenshinClientBooleanFilterResultNodeSourceField, "Required source field is missing: modes.graphs.");
                 return false;
             }
             const Json* BooleanFilter = Find(*Graphs, "bool_filter");
@@ -579,12 +550,7 @@ namespace MiliastraPlusPlus
             }
             if (!BooleanFilter->is_object())
             {
-                Add(
-                    Diagnostics,
-                    ValidationStage::ModeValidation,
-                    DiagnosticCode::UnsupportedGenshinClientBooleanFilterResultNodeSourceForm,
-                    "modes.graphs.bool_filter must be an object."
-                );
+                Add(Diagnostics, ValidationStage::ModeValidation, DiagnosticCode::UnsupportedGenshinClientBooleanFilterResultNodeSourceForm, "modes.graphs.bool_filter must be an object.");
                 return false;
             }
 
@@ -783,14 +749,10 @@ namespace MiliastraPlusPlus
     public:
         GenshinClientBooleanFilterResultNodeSourceAdapter() = delete;
 
-        [[nodiscard]] static std::expected<
-            NormalizedNodeDescriptorRecord,
-            DiagnosticCollection
-        > Adapt(
+        [[nodiscard]] static std::expected<NormalizedNodeDescriptorRecord, DiagnosticCollection> Adapt(
             std::string NodeMetadataJson,
             std::string NodeModesJson,
-            std::string EnumEvidenceJson
-        )
+            std::string EnumEvidenceJson)
         {
             using namespace GenshinClientBooleanFilterResultNodeSourceAdapterDetail;
 
@@ -806,12 +768,7 @@ namespace MiliastraPlusPlus
             }
             catch (const Json::exception&)
             {
-                Add(
-                    PendingDiagnostics,
-                    ValidationStage::SourceDocumentParsing,
-                    DiagnosticCode::MalformedGenshinClientBooleanFilterResultNodeSource,
-                    "Result-node source JSON is malformed."
-                );
+                Add(PendingDiagnostics, ValidationStage::SourceDocumentParsing, DiagnosticCode::MalformedGenshinClientBooleanFilterResultNodeSource, "Result-node source JSON is malformed.");
                 return std::unexpected(Materialize(std::move(PendingDiagnostics)));
             }
 
@@ -831,8 +788,7 @@ namespace MiliastraPlusPlus
             for (const Json& Candidate : NodeMetadata)
             {
                 const Json* NodeType = Find(Candidate, "nodeType");
-                if (NodeType != nullptr && NodeType->is_string() &&
-                    NodeType->get<std::string>() == "node_graph_end_boolean")
+                if (NodeType != nullptr && NodeType->is_string() && NodeType->get<std::string>() == "node_graph_end_boolean")
                 {
                     SelectedRecord = &Candidate;
                     ++MatchingRecordCount;
@@ -898,10 +854,7 @@ namespace MiliastraPlusPlus
                 Valid = false;
             }
 
-            const SourceProvenance Provenance(
-                SampleFile.value_or("node_graph_end_boolean"),
-                "200000"
-            );
+            const SourceProvenance Provenance(SampleFile.value_or("node_graph_end_boolean"), "200000");
             Valid = ReadExactString(
                 *SelectedRecord,
                 "subType",
@@ -1048,18 +1001,8 @@ namespace MiliastraPlusPlus
 
             if (Inputs != nullptr && Inputs->is_array() && Inputs->size() == 2U)
             {
-                Valid = ValidatePin(
-                    (*Inputs)[0U],
-                    0U,
-                    PendingDiagnostics,
-                    Provenance
-                ) && Valid;
-                Valid = ValidatePin(
-                    (*Inputs)[1U],
-                    1U,
-                    PendingDiagnostics,
-                    Provenance
-                ) && Valid;
+                Valid = ValidatePin((*Inputs)[0U], 0U, PendingDiagnostics, Provenance) && Valid;
+                Valid = ValidatePin((*Inputs)[1U], 1U, PendingDiagnostics, Provenance) && Valid;
             }
 
             Valid = ValidateModes(NodeModes, PendingDiagnostics) && Valid;

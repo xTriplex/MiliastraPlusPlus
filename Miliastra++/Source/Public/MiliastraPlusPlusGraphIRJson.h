@@ -166,9 +166,7 @@ namespace MiliastraPlusPlus::GraphIRJson
 
         inline std::expected<TypeDesc, DiagnosticCollection> TypeFromJson(const Json& Value, bool AllowEnum)
         {
-            if (!Value.is_object()
-                || !Value.contains("kind")
-                || !Value["kind"].is_string())
+            if (!Value.is_object() || !Value.contains("kind") || !Value["kind"].is_string())
             {
                 return Fail<TypeDesc>("Malformed TypeDesc.");
             }
@@ -261,17 +259,16 @@ namespace MiliastraPlusPlus::GraphIRJson
 
             if (Kind == "Enum")
             {
-                if (!AllowEnum || Value.size() != 2 ||
+                if (!AllowEnum ||
+                    Value.size() != 2 ||
                     !Value.contains("identity") ||
                     !Value["identity"].is_string() ||
                     Value["identity"].get<std::string>().empty())
                 {
-                    return Fail<TypeDesc>(
-                        "Enum TypeDesc is not valid for this GraphIR JSON version.");
+                    return Fail<TypeDesc>("Enum TypeDesc is not valid for this GraphIR JSON version.");
                 }
 
-                return TypeDesc::Enum(
-                    EnumTypeIdentity(Value["identity"].get<std::string>()));
+                return TypeDesc::Enum(EnumTypeIdentity(Value["identity"].get<std::string>()));
             }
 
             if (Kind == "List")
@@ -387,8 +384,7 @@ namespace MiliastraPlusPlus::GraphIRJson
                     else if constexpr (std::is_same_v<Type, EnumLiteralValue>)
                     {
                         Result["kind"] = "Enum";
-                        Result["enumIdentity"] =
-                            Value.GetEnumTypeIdentity().GetValue();
+                        Result["enumIdentity"] = Value.GetEnumTypeIdentity().GetValue();
                         Result["value"] = Value.GetValue();
                     }
                 },
@@ -399,9 +395,7 @@ namespace MiliastraPlusPlus::GraphIRJson
 
         inline std::expected<LiteralValue, DiagnosticCollection> LiteralFromJson(const Json& Value, bool AllowEnum)
         {
-            if (!Value.is_object()
-                || !Value.contains("kind")
-                || !Value["kind"].is_string())
+            if (!Value.is_object() || !Value.contains("kind") || !Value["kind"].is_string())
             {
                 return Fail<LiteralValue>("Malformed LiteralValue.");
             }
@@ -423,20 +417,16 @@ namespace MiliastraPlusPlus::GraphIRJson
                     (!Value["value"].is_number_integer() &&
                         !Value["value"].is_number_unsigned()))
                 {
-                    return Fail<LiteralValue>(
-                        "Enum LiteralValue is not valid for this GraphIR JSON version.");
+                    return Fail<LiteralValue>("Enum LiteralValue is not valid for this GraphIR JSON version.");
                 }
 
                 std::int64_t EnumValue = 0;
                 if (Value["value"].is_number_unsigned())
                 {
-                    const std::uint64_t UnsignedValue =
-                        Value["value"].get<std::uint64_t>();
-                    if (UnsignedValue > static_cast<std::uint64_t>(
-                        std::numeric_limits<std::int64_t>::max()))
+                    const std::uint64_t UnsignedValue = Value["value"].get<std::uint64_t>();
+                    if (UnsignedValue > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()))
                     {
-                        return Fail<LiteralValue>(
-                            "Enum literal value is outside the signed 64-bit graph range.");
+                        return Fail<LiteralValue>("Enum literal value is outside the signed 64-bit graph range.");
                     }
                     EnumValue = static_cast<std::int64_t>(UnsignedValue);
                 }
@@ -447,10 +437,7 @@ namespace MiliastraPlusPlus::GraphIRJson
 
                 return LiteralValue(
                     LiteralValue::Data{
-                        EnumLiteralValue(
-                            EnumTypeIdentity(
-                                Value["enumIdentity"].get<std::string>()),
-                            EnumValue)
+                        EnumLiteralValue(EnumTypeIdentity(Value["enumIdentity"].get<std::string>()), EnumValue)
                     });
             }
 
@@ -470,11 +457,9 @@ namespace MiliastraPlusPlus::GraphIRJson
             if (Kind == "Integer" && Value["value"].is_number_unsigned())
             {
                 const std::uint64_t Number = Value["value"].get<std::uint64_t>();
-                if (Number > static_cast<std::uint64_t>(
-                    std::numeric_limits<std::int64_t>::max()))
+                if (Number > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()))
                 {
-                    return Fail<LiteralValue>(
-                        "Integer literal is outside the signed 64-bit graph range.");
+                    return Fail<LiteralValue>("Integer literal is outside the signed 64-bit graph range.");
                 }
                 return LiteralValue(
                     LiteralValue::Data{static_cast<std::int64_t>(Number)});
@@ -504,11 +489,7 @@ namespace MiliastraPlusPlus::GraphIRJson
                     });
             }
 
-            if ((Kind == "GUID"
-                 || Kind == "PrefabId"
-                 || Kind == "ConfigId"
-                 || Kind == "Faction")
-                && Value["value"].is_number_unsigned())
+            if ((Kind == "GUID" || Kind == "PrefabId" || Kind == "ConfigId" || Kind == "Faction") && Value["value"].is_number_unsigned())
             {
                 const auto Number = Value["value"].get<std::uint64_t>();
 
@@ -542,13 +523,13 @@ namespace MiliastraPlusPlus::GraphIRJson
                     });
             }
 
-            if (Kind == "Vector3"
-                && Value.contains("x")
-                && Value.contains("y")
-                && Value.contains("z")
-                && Value["x"].is_number()
-                && Value["y"].is_number()
-                && Value["z"].is_number())
+            if (Kind == "Vector3" &&
+                Value.contains("x") &&
+                Value.contains("y") &&
+                Value.contains("z") &&
+                Value["x"].is_number() &&
+                Value["y"].is_number() &&
+                Value["z"].is_number())
             {
                 return LiteralValue(
                     LiteralValue::Data{
@@ -560,16 +541,14 @@ namespace MiliastraPlusPlus::GraphIRJson
                     });
             }
 
-            return Fail<LiteralValue>(
-                "Malformed or unknown LiteralValue kind: " + Kind);
+            return Fail<LiteralValue>("Malformed or unknown LiteralValue kind: " + Kind);
         }
 
         inline std::expected<std::uint64_t, DiagnosticCollection> Id(const Json& Value, const char* Name)
         {
             if (!Value.contains(Name) || !Value[Name].is_number_unsigned())
             {
-                return Fail<std::uint64_t>(
-                    std::string("Invalid unsigned 64-bit identifier field: ") + Name);
+                return Fail<std::uint64_t>(std::string("Invalid unsigned 64-bit identifier field: ") + Name);
             }
             return Value.at(Name).get<std::uint64_t>();
         }
@@ -590,8 +569,7 @@ namespace MiliastraPlusPlus::GraphIRJson
         {
             if (!Value.contains(Name))
             {
-                return Fail<std::optional<Identifier>>(
-                    std::string("Missing optional identifier field: ") + Name);
+                return Fail<std::optional<Identifier>>(std::string("Missing optional identifier field: ") + Name);
             }
             if (Value[Name].is_null())
             {
@@ -608,13 +586,11 @@ namespace MiliastraPlusPlus::GraphIRJson
 
         inline std::expected<std::uint32_t, DiagnosticCollection> UInt32(const Json& Value, const char* Name)
         {
-            if (!Value.contains(Name)
-                || !Value[Name].is_number_unsigned()
-                || Value[Name].get<std::uint64_t>()
-                    > std::numeric_limits<std::uint32_t>::max())
+            if (!Value.contains(Name) ||
+                !Value[Name].is_number_unsigned() ||
+                Value[Name].get<std::uint64_t>() > std::numeric_limits<std::uint32_t>::max())
             {
-                return Fail<std::uint32_t>(
-                    std::string("Invalid 32-bit integer field: ") + Name);
+                return Fail<std::uint32_t>(std::string("Invalid 32-bit integer field: ") + Name);
             }
 
             return Value[Name].get<std::uint32_t>();
@@ -643,7 +619,7 @@ namespace MiliastraPlusPlus::GraphIRJson
                 {"descriptor", Node.Descriptor.GetValue()},
                 {"executionRegion", Node.ExecutionRegion.has_value()
                     ? Json(Node.ExecutionRegion->GetValue()) : Json(nullptr)}
-                                      });
+            });
         }
 
         for (const GraphVariable& Variable : Graph.GetVariables())
@@ -656,8 +632,7 @@ namespace MiliastraPlusPlus::GraphIRJson
 
             if (Variable.DefaultValue)
             {
-                Value["default"] = Detail::LiteralToJson(
-                    *Variable.DefaultValue);
+                Value["default"] = Detail::LiteralToJson(*Variable.DefaultValue);
             }
 
             Result["variables"].push_back(Value);
@@ -713,7 +688,7 @@ namespace MiliastraPlusPlus::GraphIRJson
                 {"sourcePin", Edge.SourceOutputPin.GetValue()},
                 {"destinationNode", Edge.DestinationNode.GetValue()},
                 {"destinationPin", Edge.DestinationInputPin.GetValue()}
-                                             });
+            });
         }
 
         for (const ExecutionEntry& Entry : Graph.GetExecutionEntries())
@@ -748,19 +723,18 @@ namespace MiliastraPlusPlus::GraphIRJson
     {
         try
         {
-            if (!Root.is_object()
-                || !Root.contains("irVersion")
-                || !Root.contains("nodes")
-                || !Root.contains("variables")
-                || !Root.contains("inputBindings")
-                || !Root.contains("controlEdges")
-                || !Root["nodes"].is_array()
-                || !Root["variables"].is_array()
-                || !Root["inputBindings"].is_array()
-                || !Root["controlEdges"].is_array())
+            if (!Root.is_object() ||
+                !Root.contains("irVersion") ||
+                !Root.contains("nodes") ||
+                !Root.contains("variables") ||
+                !Root.contains("inputBindings") ||
+                !Root.contains("controlEdges") ||
+                !Root["nodes"].is_array() ||
+                !Root["variables"].is_array() ||
+                !Root["inputBindings"].is_array() ||
+                !Root["controlEdges"].is_array())
             {
-                return Detail::Fail<GraphIR>(
-                    "Malformed GraphIR JSON root.");
+                return Detail::Fail<GraphIR>("Malformed GraphIR JSON root.");
             }
 
             const Json& VersionValue = Root["irVersion"];
@@ -770,8 +744,7 @@ namespace MiliastraPlusPlus::GraphIRJson
                 const std::uint64_t ParsedVersion = VersionValue.get<std::uint64_t>();
                 if (ParsedVersion < 1U || ParsedVersion > 3U)
                 {
-                    return Detail::Fail<GraphIR>(
-                        "Unsupported GraphIR JSON version.");
+                    return Detail::Fail<GraphIR>("Unsupported GraphIR JSON version.");
                 }
                 Version = static_cast<std::uint32_t>(ParsedVersion);
             }
@@ -780,30 +753,31 @@ namespace MiliastraPlusPlus::GraphIRJson
                 const std::int64_t ParsedVersion = VersionValue.get<std::int64_t>();
                 if (ParsedVersion < 1 || ParsedVersion > 3)
                 {
-                    return Detail::Fail<GraphIR>(
-                        "Unsupported GraphIR JSON version.");
+                    return Detail::Fail<GraphIR>("Unsupported GraphIR JSON version.");
                 }
                 Version = static_cast<std::uint32_t>(ParsedVersion);
             }
             else
             {
-                return Detail::Fail<GraphIR>(
-                    "Unsupported GraphIR JSON version.");
+                return Detail::Fail<GraphIR>("Unsupported GraphIR JSON version.");
             }
 
-            if (Version < 3U && (Root.contains("executionModel") ||
-                Root.contains("executionEntries") || Root.contains("executionRegions")))
+            if (Version < 3U &&
+                (Root.contains("executionModel") ||
+                    Root.contains("executionEntries") ||
+                    Root.contains("executionRegions")))
             {
-                return Detail::Fail<GraphIR>(
-                    "Legacy GraphIR JSON versions cannot carry structured execution fields.");
+                return Detail::Fail<GraphIR>("Legacy GraphIR JSON versions cannot carry structured execution fields.");
             }
-            if (Version == 3U && (!Root.contains("executionModel") ||
-                !Root["executionModel"].is_string() ||
-                !Root.contains("executionEntries") || !Root["executionEntries"].is_array() ||
-                !Root.contains("executionRegions") || !Root["executionRegions"].is_array()))
+            if (Version == 3U &&
+                (!Root.contains("executionModel") ||
+                    !Root["executionModel"].is_string() ||
+                    !Root.contains("executionEntries") ||
+                    !Root["executionEntries"].is_array() ||
+                    !Root.contains("executionRegions") ||
+                    !Root["executionRegions"].is_array()))
             {
-                return Detail::Fail<GraphIR>(
-                    "GraphIR JSON version 3 requires executionModel, executionEntries, and executionRegions.");
+                return Detail::Fail<GraphIR>("GraphIR JSON version 3 requires executionModel, executionEntries, and executionRegions.");
             }
 
             const bool AllowEnum = Version == 3U;
@@ -822,8 +796,7 @@ namespace MiliastraPlusPlus::GraphIRJson
                 }
                 else
                 {
-                    return Detail::Fail<GraphIR>(
-                        "GraphIR JSON version 3 has an invalid executionModel.");
+                    return Detail::Fail<GraphIR>("GraphIR JSON version 3 has an invalid executionModel.");
                 }
             }
 
@@ -836,18 +809,14 @@ namespace MiliastraPlusPlus::GraphIRJson
                         : std::initializer_list<const char*>{"id", "descriptor"})
                     || !Value["id"].is_number_unsigned())
                 {
-                    return Detail::Fail<GraphIR>(
-                        "Malformed node entry.");
+                    return Detail::Fail<GraphIR>("Malformed node entry.");
                 }
                 if (Version < 3U && Value.contains("executionRegion"))
                 {
-                    return Detail::Fail<GraphIR>(
-                        "Legacy GraphIR JSON nodes cannot carry executionRegion membership.");
+                    return Detail::Fail<GraphIR>("Legacy GraphIR JSON nodes cannot carry executionRegion membership.");
                 }
 
-                const auto Descriptor = Detail::UInt32(
-                    Value,
-                    "descriptor");
+                const auto Descriptor = Detail::UInt32(Value, "descriptor");
 
                 if (!Descriptor)
                 {
@@ -863,8 +832,7 @@ namespace MiliastraPlusPlus::GraphIRJson
                 std::optional<ExecutionRegionId> Region;
                 if (Version == 3U && !Value["executionRegion"].is_null())
                 {
-                    const auto ParsedRegion = Detail::StrongId<ExecutionRegionId>(
-                        Value, "executionRegion");
+                    const auto ParsedRegion = Detail::StrongId<ExecutionRegionId>(Value, "executionRegion");
                     if (!ParsedRegion)
                     {
                         return std::unexpected(ParsedRegion.error());
@@ -881,19 +849,12 @@ namespace MiliastraPlusPlus::GraphIRJson
 
             for (const Json& Value : Root["variables"])
             {
-                if (!Detail::HasObjectFields(
-                    Value,
-                    {"id", "name", "type"})
-                    || !Value["id"].is_number_unsigned()
-                    || !Value["name"].is_string())
+                if (!Detail::HasObjectFields(Value, {"id", "name", "type"}) || !Value["id"].is_number_unsigned() || !Value["name"].is_string())
                 {
-                    return Detail::Fail<GraphIR>(
-                        "Malformed graph variable entry.");
+                    return Detail::Fail<GraphIR>("Malformed graph variable entry.");
                 }
 
-                const auto Type = Detail::TypeFromJson(
-                    Value["type"],
-                    AllowEnum);
+                const auto Type = Detail::TypeFromJson(Value["type"], AllowEnum);
 
                 if (!Type)
                 {
@@ -910,9 +871,7 @@ namespace MiliastraPlusPlus::GraphIRJson
 
                 if (Value.contains("default"))
                 {
-                    const auto Parsed = Detail::LiteralFromJson(
-                        Value["default"],
-                        AllowEnum);
+                    const auto Parsed = Detail::LiteralFromJson(Value["default"], AllowEnum);
 
                     if (!Parsed)
                     {
@@ -927,7 +886,7 @@ namespace MiliastraPlusPlus::GraphIRJson
                     Value["name"].get<std::string>(),
                     *Type,
                     Default
-                                  });
+                });
             }
 
             for (const Json& Value : Root["inputBindings"])
@@ -944,17 +903,14 @@ namespace MiliastraPlusPlus::GraphIRJson
                             "binding",
                             "outputTypeConstraint"
                         });
-                if (!HasRequiredBindingFields
-                    || (Version == 1U && Value.contains("outputTypeConstraint"))
-                    || !Value["binding"].is_object())
+                if (!HasRequiredBindingFields ||
+                    (Version == 1U && Value.contains("outputTypeConstraint")) ||
+                    !Value["binding"].is_object())
                 {
-                    return Detail::Fail<GraphIR>(
-                        "Malformed input binding entry.");
+                    return Detail::Fail<GraphIR>("Malformed input binding entry.");
                 }
 
-                const auto DestinationPin = Detail::UInt32(
-                    Value,
-                    "destinationPin");
+                const auto DestinationPin = Detail::UInt32(Value, "destinationPin");
 
                 if (!DestinationPin)
                 {
@@ -964,9 +920,7 @@ namespace MiliastraPlusPlus::GraphIRJson
                 std::optional<TypeDesc> OutputTypeConstraint;
                 if (Version >= 2U && !Value["outputTypeConstraint"].is_null())
                 {
-                    const auto ParsedConstraint = Detail::TypeFromJson(
-                        Value["outputTypeConstraint"],
-                        AllowEnum);
+                    const auto ParsedConstraint = Detail::TypeFromJson(Value["outputTypeConstraint"], AllowEnum);
                     if (!ParsedConstraint)
                     {
                         return std::unexpected(ParsedConstraint.error());
@@ -976,24 +930,18 @@ namespace MiliastraPlusPlus::GraphIRJson
 
                 const Json& Binding = Value["binding"];
 
-                if (!Binding.contains("kind")
-                    || !Binding["kind"].is_string())
+                if (!Binding.contains("kind") || !Binding["kind"].is_string())
                 {
-                    return Detail::Fail<GraphIR>(
-                        "Input binding kind is missing.");
+                    return Detail::Fail<GraphIR>("Input binding kind is missing.");
                 }
 
-                const std::string Kind =
-                    Binding["kind"].get<std::string>();
+                const std::string Kind = Binding["kind"].get<std::string>();
 
                 InputBinding Parsed;
 
-                if (Kind == "Literal"
-                    && Binding.contains("value"))
+                if (Kind == "Literal" && Binding.contains("value"))
                 {
-                    const auto Literal = Detail::LiteralFromJson(
-                        Binding["value"],
-                        AllowEnum);
+                    const auto Literal = Detail::LiteralFromJson(Binding["value"], AllowEnum);
 
                     if (!Literal)
                     {
@@ -1002,23 +950,16 @@ namespace MiliastraPlusPlus::GraphIRJson
 
                     Parsed = *Literal;
                 }
-                else if (
-                    Kind == "OutputReference"
-                    && Detail::HasObjectFields(
-                        Binding,
-                        {"sourceNode", "sourcePin"}))
+                else if (Kind == "OutputReference" && Detail::HasObjectFields(Binding, {"sourceNode", "sourcePin"}))
                 {
-                    const auto SourcePin = Detail::UInt32(
-                        Binding,
-                        "sourcePin");
+                    const auto SourcePin = Detail::UInt32(Binding, "sourcePin");
 
                     if (!SourcePin)
                     {
                         return std::unexpected(SourcePin.error());
                     }
 
-                    const auto SourceNode = Detail::StrongId<NodeInstanceId>(
-                        Binding, "sourceNode");
+                    const auto SourceNode = Detail::StrongId<NodeInstanceId>(Binding, "sourceNode");
                     if (!SourceNode)
                     {
                         return std::unexpected(SourceNode.error());
@@ -1029,13 +970,9 @@ namespace MiliastraPlusPlus::GraphIRJson
                         PinIndex(*SourcePin)
                     };
                 }
-                else if (
-                    Kind == "GraphVariableReference"
-                    && Binding.contains("variable")
-                    && Binding["variable"].is_number_unsigned())
+                else if (Kind == "GraphVariableReference" && Binding.contains("variable") && Binding["variable"].is_number_unsigned())
                 {
-                    const auto Variable = Detail::StrongId<GraphVariableId>(
-                        Binding, "variable");
+                    const auto Variable = Detail::StrongId<GraphVariableId>(Binding, "variable");
                     if (!Variable)
                     {
                         return std::unexpected(Variable.error());
@@ -1046,12 +983,10 @@ namespace MiliastraPlusPlus::GraphIRJson
                 }
                 else
                 {
-                    return Detail::Fail<GraphIR>(
-                        "Malformed or unknown input binding kind.");
+                    return Detail::Fail<GraphIR>("Malformed or unknown input binding kind.");
                 }
 
-                const auto DestinationNode = Detail::StrongId<NodeInstanceId>(
-                    Value, "destinationNode");
+                const auto DestinationNode = Detail::StrongId<NodeInstanceId>(Value, "destinationNode");
                 if (!DestinationNode)
                 {
                     return std::unexpected(DestinationNode.error());
@@ -1065,26 +1000,14 @@ namespace MiliastraPlusPlus::GraphIRJson
 
             for (const Json& Value : Root["controlEdges"])
             {
-                if (!Detail::HasObjectFields(
-                    Value,
-                    {
-                        "sourceNode",
-                        "sourcePin",
-                        "destinationNode",
-                        "destinationPin"
-                    }))
+                if (!Detail::HasObjectFields(Value, { "sourceNode", "sourcePin", "destinationNode", "destinationPin" }))
                 {
-                    return Detail::Fail<GraphIR>(
-                        "Malformed control edge entry.");
+                    return Detail::Fail<GraphIR>("Malformed control edge entry.");
                 }
 
-                const auto SourcePin = Detail::UInt32(
-                    Value,
-                    "sourcePin");
+                const auto SourcePin = Detail::UInt32(Value, "sourcePin");
 
-                const auto DestinationPin = Detail::UInt32(
-                    Value,
-                    "destinationPin");
+                const auto DestinationPin = Detail::UInt32(Value, "destinationPin");
 
                 if (!SourcePin)
                 {
@@ -1096,10 +1019,8 @@ namespace MiliastraPlusPlus::GraphIRJson
                     return std::unexpected(DestinationPin.error());
                 }
 
-                const auto SourceNode = Detail::StrongId<NodeInstanceId>(
-                    Value, "sourceNode");
-                const auto DestinationNode = Detail::StrongId<NodeInstanceId>(
-                    Value, "destinationNode");
+                const auto SourceNode = Detail::StrongId<NodeInstanceId>(Value, "sourceNode");
+                const auto DestinationNode = Detail::StrongId<NodeInstanceId>(Value, "destinationNode");
                 if (!SourceNode)
                 {
                     return std::unexpected(SourceNode.error());
@@ -1123,8 +1044,7 @@ namespace MiliastraPlusPlus::GraphIRJson
                 {
                     if (!Detail::HasObjectFields(Value, {"id", "rootNode"}))
                     {
-                        return Detail::Fail<GraphIR>(
-                            "Malformed execution entry record.");
+                        return Detail::Fail<GraphIR>("Malformed execution entry record.");
                     }
                     const auto Identifier = Detail::StrongId<ExecutionEntryId>(Value, "id");
                     const auto RootNode = Detail::StrongId<NodeInstanceId>(Value, "rootNode");
@@ -1144,12 +1064,10 @@ namespace MiliastraPlusPlus::GraphIRJson
 
                 for (const Json& Value : Root["executionRegions"])
                 {
-                    if (!Detail::HasObjectFields(Value, {
-                        "id", "entry", "kind", "parent", "ownerNode", "ownerOutputPin"
-                    }) || !Value["kind"].is_string())
+                    if (!Detail::HasObjectFields(Value, {"id", "entry", "kind", "parent", "ownerNode", "ownerOutputPin"}) ||
+                        !Value["kind"].is_string())
                     {
-                        return Detail::Fail<GraphIR>(
-                            "Malformed execution region record.");
+                        return Detail::Fail<GraphIR>("Malformed execution region record.");
                     }
 
                     const auto Identifier = Detail::StrongId<ExecutionRegionId>(Value, "id");
@@ -1179,18 +1097,14 @@ namespace MiliastraPlusPlus::GraphIRJson
                     }
                     else
                     {
-                        return Detail::Fail<GraphIR>(
-                            "Unknown execution region kind.");
+                        return Detail::Fail<GraphIR>("Unknown execution region kind.");
                     }
 
-                    const auto Parent = Detail::OptionalId<ExecutionRegionId>(
-                        Value, "parent");
-                    const auto OwnerNode = Detail::OptionalId<NodeInstanceId>(
-                        Value, "ownerNode");
+                    const auto Parent = Detail::OptionalId<ExecutionRegionId>(Value, "parent");
+                    const auto OwnerNode = Detail::OptionalId<NodeInstanceId>(Value, "ownerNode");
                     if (!Parent || !OwnerNode)
                     {
-                        return Detail::Fail<GraphIR>(
-                            "Execution region parent and ownerNode must be unsigned integers or null.");
+                        return Detail::Fail<GraphIR>("Execution region parent and ownerNode must be unsigned integers or null.");
                     }
 
                     std::optional<PinIndex> OwnerOutputPin;
@@ -1219,9 +1133,7 @@ namespace MiliastraPlusPlus::GraphIRJson
         }
         catch (const std::exception& Exception)
         {
-            return Detail::Fail<GraphIR>(
-                std::string("Malformed GraphIR JSON: ")
-                + Exception.what());
+            return Detail::Fail<GraphIR>(std::string("Malformed GraphIR JSON: ") + Exception.what());
         }
     }
 }

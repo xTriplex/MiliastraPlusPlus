@@ -11,14 +11,7 @@ namespace
 {
     [[noreturn]] void ReportFailure(const char* Expression, const std::source_location& Location)
     {
-        std::fprintf(
-            stderr,
-            "Check failed: %s (%s:%u, %s)\n",
-            Expression,
-            Location.file_name(),
-            Location.line(),
-            Location.function_name()
-        );
+        std::fprintf(stderr, "Check failed: %s (%s:%u, %s)\n", Expression, Location.file_name(), Location.line(), Location.function_name());
         std::abort();
     }
 
@@ -37,12 +30,7 @@ namespace
 
     NodeDescriptor MakeDescriptor(NodeDescriptorId Identifier, const char* Name)
     {
-        return NodeDescriptor(
-            Identifier,
-            Name,
-            {NodeAvailability::Server},
-            {}
-        );
+        return NodeDescriptor(Identifier, Name, {NodeAvailability::Server}, {});
     }
 
     NodeDescriptorRegistry MakeRegistry()
@@ -76,12 +64,7 @@ namespace
     void TestGraphBuilderHandleAndLifecycleContracts()
     {
         NodeDescriptorRegistry InvalidRegistry;
-        const auto InvalidRegistration = InvalidRegistry.Register(NodeDescriptor(
-            NodeDescriptorId{},
-            "",
-            {},
-            {}
-        ));
+        const auto InvalidRegistration = InvalidRegistry.Register(NodeDescriptor(NodeDescriptorId{}, "", {}, {}));
         MPP_CHECK(!InvalidRegistration.has_value());
         MPP_CHECK(InvalidRegistration.error().Code == DiagnosticCode::InvalidNodeDescriptor);
 
@@ -164,12 +147,8 @@ namespace
         }
 
         MPP_CHECK(FinalGraph.GetNodeCount() == 2U);
-        MPP_CHECK((FinalGraph.GetNodes()[0] == NodeInstance{
-            NodeInstanceId(1U), DescriptorId
-        }));
-        MPP_CHECK((FinalGraph.GetNodes()[1] == NodeInstance{
-            NodeInstanceId(2U), OtherDescriptorId
-        }));
+        MPP_CHECK((FinalGraph.GetNodes()[0] == NodeInstance{NodeInstanceId(1U), DescriptorId}));
+        MPP_CHECK((FinalGraph.GetNodes()[1] == NodeInstance{NodeInstanceId(2U), OtherDescriptorId}));
         MPP_CHECK(GraphIRValidator::Validate(FinalGraph, Descriptors).empty());
 
         {

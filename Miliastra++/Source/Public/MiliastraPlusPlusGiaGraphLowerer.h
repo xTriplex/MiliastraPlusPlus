@@ -51,8 +51,7 @@ namespace MiliastraPlusPlus
             std::optional<PinIndex> Pin = std::nullopt,
             std::string ExternalIdentityKey = {},
             std::optional<SourceProvenance> PrimarySourceProvenance = std::nullopt,
-            std::optional<SourceProvenance> RelatedSourceProvenance = std::nullopt
-        )
+            std::optional<SourceProvenance> RelatedSourceProvenance = std::nullopt)
         {
             Diagnostics.push_back(PendingDiagnostic{
                 Stage,
@@ -80,9 +79,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] inline DiagnosticCollection Materialize(std::vector<PendingDiagnostic> Diagnostics)
         {
-            std::stable_sort(
-                Diagnostics.begin(),
-                Diagnostics.end(),
+            std::stable_sort(Diagnostics.begin(), Diagnostics.end(),
                 [](const PendingDiagnostic& Left, const PendingDiagnostic& Right)
                 {
                     return DiagnosticSortKey(Left) < DiagnosticSortKey(Right);
@@ -118,8 +115,7 @@ namespace MiliastraPlusPlus
             {
                 return true;
             }
-            return Type.GetKind() == TypeDesc::Kind::Enum &&
-                Type.GetEnumTypeIdentity() == EnumTypeIdentity("filter_return_type");
+            return Type.GetKind() == TypeDesc::Kind::Enum && Type.GetEnumTypeIdentity() == EnumTypeIdentity("filter_return_type");
         }
 
         [[nodiscard]] inline bool IsLiteralCompatible(const LiteralValue& Literal, const TypeDesc& Type)
@@ -132,9 +128,7 @@ namespace MiliastraPlusPlus
             {
                 return Literal.Is<bool>();
             }
-            return Literal.Is<EnumLiteralValue>() &&
-                Literal.TryGet<EnumLiteralValue>()->GetEnumTypeIdentity() ==
-                Type.GetEnumTypeIdentity();
+            return Literal.Is<EnumLiteralValue>() && Literal.TryGet<EnumLiteralValue>()->GetEnumTypeIdentity() == Type.GetEnumTypeIdentity();
         }
 
         [[nodiscard]] inline const GiaBackendPinMapping* FindMapping(const GiaBackendNodeMapping& Mapping, PinIndex SemanticPin)
@@ -153,8 +147,7 @@ namespace MiliastraPlusPlus
         {
             for (const InputBindingRecord& Record : Graph.GetInputBindings())
             {
-                if (Record.DestinationNode == Node &&
-                    Record.DestinationInputPin == Pin)
+                if (Record.DestinationNode == Node && Record.DestinationInputPin == Pin)
                 {
                     return &Record;
                 }
@@ -178,26 +171,22 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] inline bool IsDataInput(const PinSchema& Pin)
         {
-            return Pin.GetCategory() == PinCategory::Data &&
-                Pin.GetDirection() == PinDirection::Input;
+            return Pin.GetCategory() == PinCategory::Data && Pin.GetDirection() == PinDirection::Input;
         }
 
         [[nodiscard]] inline bool IsDataOutput(const PinSchema& Pin)
         {
-            return Pin.GetCategory() == PinCategory::Data &&
-                Pin.GetDirection() == PinDirection::Output;
+            return Pin.GetCategory() == PinCategory::Data && Pin.GetDirection() == PinDirection::Output;
         }
 
         [[nodiscard]] inline bool IsExecutionInput(const PinSchema& Pin)
         {
-            return Pin.GetCategory() == PinCategory::Execution &&
-                Pin.GetDirection() == PinDirection::Input;
+            return Pin.GetCategory() == PinCategory::Execution && Pin.GetDirection() == PinDirection::Input;
         }
 
         [[nodiscard]] inline bool IsExecutionOutput(const PinSchema& Pin)
         {
-            return Pin.GetCategory() == PinCategory::Execution &&
-                Pin.GetDirection() == PinDirection::Output;
+            return Pin.GetCategory() == PinCategory::Execution && Pin.GetDirection() == PinDirection::Output;
         }
 
         [[nodiscard]] inline bool IsBooleanTuple(const PinSchema& Pin, const GiaBackendPinMapping& Mapping)
@@ -220,11 +209,8 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] inline bool IsSupportedDataTypeTuple(const PinSchema& Pin, const GiaBackendPinMapping& Mapping)
         {
-            const bool DirectionMatches =
-                (Pin.GetDirection() == PinDirection::Input &&
-                    Mapping.GetPinKind() == GiaPinKind::InputParameter) ||
-                (Pin.GetDirection() == PinDirection::Output &&
-                    Mapping.GetPinKind() == GiaPinKind::OutputParameter);
+            const bool DirectionMatches = (Pin.GetDirection() == PinDirection::Input && Mapping.GetPinKind() == GiaPinKind::InputParameter) ||
+                (Pin.GetDirection() == PinDirection::Output && Mapping.GetPinKind() == GiaPinKind::OutputParameter);
             if (!DirectionMatches)
             {
                 return false;
@@ -243,24 +229,20 @@ namespace MiliastraPlusPlus
         {
             if (Pin.GetType().GetKind() == TypeDesc::Kind::Boolean)
             {
-                return Mapping.GetLiteralEncoding() ==
-                    GiaLiteralEncodingKind::Boolean;
+                return Mapping.GetLiteralEncoding() == GiaLiteralEncodingKind::Boolean;
             }
-            return Pin.GetType().GetKind() == TypeDesc::Kind::Enum &&
-                Mapping.GetLiteralEncoding() == GiaLiteralEncodingKind::Enum;
+            return Pin.GetType().GetKind() == TypeDesc::Kind::Enum && Mapping.GetLiteralEncoding() == GiaLiteralEncodingKind::Enum;
         }
 
         [[nodiscard]] inline bool IsSupportedLiteralEncoding(const LiteralValue& Literal, const GiaBackendPinMapping& Mapping)
         {
             if (Literal.Is<bool>())
             {
-                return Mapping.GetLiteralEncoding() == GiaLiteralEncodingKind::Boolean &&
-                    Mapping.GetBackendTypeCode().GetValue() == 5;
+                return Mapping.GetLiteralEncoding() == GiaLiteralEncodingKind::Boolean && Mapping.GetBackendTypeCode().GetValue() == 5;
             }
             if (Literal.Is<EnumLiteralValue>())
             {
-                return Mapping.GetLiteralEncoding() == GiaLiteralEncodingKind::Enum &&
-                    Mapping.GetBackendTypeCode().GetValue() == 13;
+                return Mapping.GetLiteralEncoding() == GiaLiteralEncodingKind::Enum && Mapping.GetBackendTypeCode().GetValue() == 13;
             }
             return false;
         }
@@ -290,10 +272,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] inline std::string PinMessage(NodeInstanceId Node, PinIndex Pin, const std::string& Message)
         {
-            return NodeMessage(
-                Node,
-                "semantic pin " + std::to_string(Pin.GetValue()) + ": " + Message
-            );
+            return NodeMessage(Node, "semantic pin " + std::to_string(Pin.GetValue()) + ": " + Message);
         }
 
         [[nodiscard]] inline bool HasPendingErrors(const std::vector<PendingDiagnostic>& Diagnostics)
@@ -303,9 +282,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] inline bool IsSupportedTarget(const GiaExportConfiguration& Configuration)
         {
-            return Configuration.GetTargetProfile() ==
-                    GiaExportTargetProfile::ClientBooleanFilter &&
-                Configuration.GetMode() == GiaExportMode::Beyond;
+            return Configuration.GetTargetProfile() == GiaExportTargetProfile::ClientBooleanFilter && Configuration.GetMode() == GiaExportMode::Beyond;
         }
 
         [[nodiscard]] inline GiaBackendGraphHeader MakeHeader(const GiaExportContext& Context)
@@ -337,19 +314,11 @@ namespace MiliastraPlusPlus
             if (!Context.IsValid())
             {
                 std::vector<PendingDiagnostic> Diagnostics;
-                Add(
-                    Diagnostics,
-                    ValidationStage::ContextValidation,
-                    DiagnosticCode::InvalidGiaLoweringInput,
-                    "The GIA lowering context is invalid."
-                );
+                Add(Diagnostics, ValidationStage::ContextValidation, DiagnosticCode::InvalidGiaLoweringInput, "The GIA lowering context is invalid.");
                 return std::unexpected(Materialize(std::move(Diagnostics)));
             }
 
-            DiagnosticCollection GraphDiagnostics = GraphIRValidator::Validate(
-                Graph,
-                Context.GetRegistryContext().GetRegistry()
-            );
+            DiagnosticCollection GraphDiagnostics = GraphIRValidator::Validate(Graph, Context.GetRegistryContext().GetRegistry());
             if (!GraphDiagnostics.empty())
             {
                 return std::unexpected(std::move(GraphDiagnostics));
@@ -361,9 +330,7 @@ namespace MiliastraPlusPlus
             {
                 SortedGraphNodes.push_back(&Node);
             }
-            std::sort(
-                SortedGraphNodes.begin(),
-                SortedGraphNodes.end(),
+            std::sort(SortedGraphNodes.begin(), SortedGraphNodes.end(),
                 [](const NodeInstance* Left, const NodeInstance* Right)
                 {
                     return Left->Identifier < Right->Identifier;
@@ -374,36 +341,26 @@ namespace MiliastraPlusPlus
             std::vector<ResolvedNode> ResolvedNodes;
             ResolvedNodes.reserve(SortedGraphNodes.size());
 
-            const NodeDescriptorRegistry& Registry =
-                Context.GetRegistryContext().GetRegistry();
-            const DescriptorCatalogue& Catalogue =
-                Context.GetRegistryContext().GetCatalogue();
-            const GiaBackendMappingPackage& MappingPackage =
-                Context.GetMappingPackage();
+            const NodeDescriptorRegistry& Registry = Context.GetRegistryContext().GetRegistry();
+            const DescriptorCatalogue& Catalogue = Context.GetRegistryContext().GetCatalogue();
+            const GiaBackendMappingPackage& MappingPackage = Context.GetMappingPackage();
 
             for (const NodeInstance* GraphNode : SortedGraphNodes)
             {
                 ResolvedNode Resolved;
                 Resolved.GraphNode = GraphNode;
                 Resolved.Descriptor = Registry.Find(GraphNode->Descriptor);
-                Resolved.CatalogueEntry = Catalogue.FindByDescriptorIdentifier(
-                    GraphNode->Descriptor);
+                Resolved.CatalogueEntry = Catalogue.FindByDescriptorIdentifier(GraphNode->Descriptor);
 
                 if (Resolved.Descriptor == nullptr ||
                     Resolved.CatalogueEntry == nullptr ||
-                    Resolved.CatalogueEntry->GetDescriptorIdentifier() !=
-                        GraphNode->Descriptor)
+                    Resolved.CatalogueEntry->GetDescriptorIdentifier() != GraphNode->Descriptor)
                 {
                     Add(
                         Diagnostics,
                         ValidationStage::DescriptorResolution,
                         DiagnosticCode::InvalidGiaDescriptorCatalogueAssociation,
-                        NodeMessage(
-                            GraphNode->Identifier,
-                            "the trusted descriptor and catalogue entry cannot be reconciled."
-                        ),
-                        GraphNode->Identifier
-                    );
+                        NodeMessage(GraphNode->Identifier, "the trusted descriptor and catalogue entry cannot be reconciled."), GraphNode->Identifier);
                     ResolvedNodes.push_back(Resolved);
                     continue;
                 }
@@ -416,10 +373,7 @@ namespace MiliastraPlusPlus
                         Diagnostics,
                         ValidationStage::MappingResolution,
                         DiagnosticCode::MissingGiaBackendNodeMapping,
-                        NodeMessage(
-                            GraphNode->Identifier,
-                            "the exact opaque external identity has no backend mapping."
-                        ),
+                        NodeMessage(GraphNode->Identifier, "the exact opaque external identity has no backend mapping."),
                         GraphNode->Identifier,
                         std::nullopt,
                         Resolved.CatalogueEntry->GetExternalIdentity().GetKey(),
@@ -434,10 +388,7 @@ namespace MiliastraPlusPlus
                             Diagnostics,
                             ValidationStage::MappingResolution,
                             DiagnosticCode::UnresolvedGiaBackendConcreteIdentity,
-                            NodeMessage(
-                                GraphNode->Identifier,
-                                "the selected target requires a concrete backend identity."
-                            ),
+                            NodeMessage(GraphNode->Identifier, "the selected target requires a concrete backend identity."),
                             GraphNode->Identifier,
                             std::nullopt,
                             Resolved.CatalogueEntry->GetExternalIdentity().GetKey(),
@@ -445,9 +396,7 @@ namespace MiliastraPlusPlus
                         );
                     }
 
-                    for (std::size_t PinOffset = 0U;
-                        PinOffset < Resolved.Descriptor->GetPins().size();
-                        ++PinOffset)
+                for (std::size_t PinOffset = 0U; PinOffset < Resolved.Descriptor->GetPins().size(); ++PinOffset)
                     {
                         const PinIndex SemanticPin(static_cast<std::uint32_t>(PinOffset));
                         if (FindMapping(*Resolved.Mapping, SemanticPin) == nullptr)
@@ -456,11 +405,7 @@ namespace MiliastraPlusPlus
                                 Diagnostics,
                                 ValidationStage::MappingResolution,
                                 DiagnosticCode::MissingGiaBackendPinMapping,
-                                PinMessage(
-                                    GraphNode->Identifier,
-                                    SemanticPin,
-                                    "the descriptor pin has no backend mapping."
-                                ),
+                                PinMessage(GraphNode->Identifier, SemanticPin, "the descriptor pin has no backend mapping."),
                                 GraphNode->Identifier,
                                 SemanticPin,
                                 Resolved.CatalogueEntry->GetExternalIdentity().GetKey(),
@@ -474,22 +419,12 @@ namespace MiliastraPlusPlus
 
             if (!IsSupportedTarget(Context.GetConfiguration()))
             {
-                Add(
-                    Diagnostics,
-                    ValidationStage::TargetPreflight,
-                    DiagnosticCode::UnsupportedGiaTargetGraphFeature,
-                    "The export configuration is outside the supported P6.2 target."
-                );
+                Add(Diagnostics, ValidationStage::TargetPreflight, DiagnosticCode::UnsupportedGiaTargetGraphFeature, "The export configuration is outside the supported P6.2 target.");
             }
 
             if (!Graph.GetVariables().empty())
             {
-                Add(
-                    Diagnostics,
-                    ValidationStage::TargetPreflight,
-                    DiagnosticCode::UnsupportedGiaTargetGraphFeature,
-                    "Graph variables are unsupported for the ClientBooleanFilter target."
-                );
+                Add(Diagnostics, ValidationStage::TargetPreflight, DiagnosticCode::UnsupportedGiaTargetGraphFeature, "Graph variables are unsupported for the ClientBooleanFilter target.");
             }
 
             for (const ResolvedNode& Resolved : ResolvedNodes)
@@ -499,16 +434,11 @@ namespace MiliastraPlusPlus
                     continue;
                 }
 
-                for (std::size_t PinOffset = 0U;
-                    PinOffset < Resolved.Descriptor->GetPins().size();
-                    ++PinOffset)
+                    for (std::size_t PinOffset = 0U; PinOffset < Resolved.Descriptor->GetPins().size(); ++PinOffset)
                 {
                     const PinIndex SemanticPin(static_cast<std::uint32_t>(PinOffset));
                     const PinSchema& Pin = Resolved.Descriptor->GetPins()[PinOffset];
-                    const GiaBackendPinMapping* PinMapping = FindMapping(
-                        *Resolved.Mapping,
-                        SemanticPin
-                    );
+                    const GiaBackendPinMapping* PinMapping = FindMapping(*Resolved.Mapping, SemanticPin);
                     if (PinMapping == nullptr)
                     {
                         continue;
@@ -516,23 +446,15 @@ namespace MiliastraPlusPlus
 
                     if (Pin.GetCategory() == PinCategory::Data)
                     {
-                        const bool DirectionMatches =
-                            (Pin.GetDirection() == PinDirection::Input &&
-                                PinMapping->GetPinKind() == GiaPinKind::InputParameter) ||
-                            (Pin.GetDirection() == PinDirection::Output &&
-                                PinMapping->GetPinKind() == GiaPinKind::OutputParameter);
-                        if (!DirectionMatches ||
-                            !IsSupportedType(Pin.GetType()))
+                        const bool DirectionMatches = (Pin.GetDirection() == PinDirection::Input && PinMapping->GetPinKind() == GiaPinKind::InputParameter) ||
+                            (Pin.GetDirection() == PinDirection::Output && PinMapping->GetPinKind() == GiaPinKind::OutputParameter);
+                        if (!DirectionMatches || !IsSupportedType(Pin.GetType()))
                         {
                             Add(
                                 Diagnostics,
                                 ValidationStage::TargetPreflight,
                                 DiagnosticCode::UnsupportedGiaBackendType,
-                                PinMessage(
-                                    Resolved.GraphNode->Identifier,
-                                    SemanticPin,
-                                    "the descriptor type and backend pin tuple are unsupported."
-                                ),
+                                PinMessage(Resolved.GraphNode->Identifier, SemanticPin, "the descriptor type and backend pin tuple are unsupported."),
                                 Resolved.GraphNode->Identifier,
                                 SemanticPin,
                                 Resolved.CatalogueEntry->GetExternalIdentity().GetKey(),
@@ -545,11 +467,7 @@ namespace MiliastraPlusPlus
                                 Diagnostics,
                                 ValidationStage::TargetPreflight,
                                 DiagnosticCode::UnsupportedGiaBackendType,
-                                PinMessage(
-                                    Resolved.GraphNode->Identifier,
-                                    SemanticPin,
-                                    "the input does not have the required target type tuple."
-                                ),
+                                PinMessage(Resolved.GraphNode->Identifier, SemanticPin, "the input does not have the required target type tuple."),
                                 Resolved.GraphNode->Identifier,
                                 SemanticPin,
                                 Resolved.CatalogueEntry->GetExternalIdentity().GetKey(),
@@ -564,11 +482,7 @@ namespace MiliastraPlusPlus
                                 Diagnostics,
                                 ValidationStage::TargetPreflight,
                                 DiagnosticCode::UnsupportedGiaBackendValue,
-                                PinMessage(
-                                    Resolved.GraphNode->Identifier,
-                                    SemanticPin,
-                                    "the input does not have the required target literal encoding."
-                                ),
+                                PinMessage(Resolved.GraphNode->Identifier, SemanticPin, "the input does not have the required target literal encoding."),
                                 Resolved.GraphNode->Identifier,
                                 SemanticPin,
                                 Resolved.CatalogueEntry->GetExternalIdentity().GetKey(),
@@ -587,11 +501,7 @@ namespace MiliastraPlusPlus
                             Diagnostics,
                             ValidationStage::TargetPreflight,
                             DiagnosticCode::UnsupportedGiaTargetGraphFeature,
-                            PinMessage(
-                                Resolved.GraphNode->Identifier,
-                                SemanticPin,
-                                "the execution pin has no supported ordinary-flow mapping."
-                            ),
+                            PinMessage(Resolved.GraphNode->Identifier, SemanticPin, "the execution pin has no supported ordinary-flow mapping."),
                             Resolved.GraphNode->Identifier,
                             SemanticPin,
                             Resolved.CatalogueEntry->GetExternalIdentity().GetKey(),
@@ -609,9 +519,7 @@ namespace MiliastraPlusPlus
                     continue;
                 }
 
-                for (std::size_t PinOffset = 0U;
-                    PinOffset < Resolved.Descriptor->GetPins().size();
-                    ++PinOffset)
+                for (std::size_t PinOffset = 0U; PinOffset < Resolved.Descriptor->GetPins().size(); ++PinOffset)
                 {
                     const PinIndex SemanticPin(static_cast<std::uint32_t>(PinOffset));
                     const PinSchema& Pin = Resolved.Descriptor->GetPins()[PinOffset];
@@ -620,20 +528,13 @@ namespace MiliastraPlusPlus
                         continue;
                     }
 
-                    const GiaBackendPinMapping* PinMapping = FindMapping(
-                        *Resolved.Mapping,
-                        SemanticPin
-                    );
+                    const GiaBackendPinMapping* PinMapping = FindMapping(*Resolved.Mapping, SemanticPin);
                     if (PinMapping == nullptr)
                     {
                         continue;
                     }
 
-                    const InputBindingRecord* BindingRecord = FindBinding(
-                        Graph,
-                        Resolved.GraphNode->Identifier,
-                        SemanticPin
-                    );
+                    const InputBindingRecord* BindingRecord = FindBinding(Graph, Resolved.GraphNode->Identifier, SemanticPin);
                     if (BindingRecord == nullptr)
                     {
                         if (Pin.GetDefaultValue().has_value())
@@ -644,33 +545,20 @@ namespace MiliastraPlusPlus
                                     Diagnostics,
                                     ValidationStage::ValueResolution,
                                     DiagnosticCode::InvalidGiaBackendInputResolution,
-                                    PinMessage(
-                                        Resolved.GraphNode->Identifier,
-                                        SemanticPin,
-                                        "a descriptor default cannot target an omitted backend pin."
-                                    ),
+                                    PinMessage(Resolved.GraphNode->Identifier, SemanticPin, "a descriptor default cannot target an omitted backend pin."),
                                     Resolved.GraphNode->Identifier,
                                     SemanticPin,
                                     Resolved.CatalogueEntry->GetExternalIdentity().GetKey(),
                                     Resolved.Mapping->GetSourceProvenance()
                                 );
                             }
-                            else if (!IsLiteralCompatible(
-                                *Pin.GetDefaultValue(),
-                                Pin.GetType()) ||
-                                !IsSupportedLiteralEncoding(
-                                    *Pin.GetDefaultValue(),
-                                    *PinMapping))
+                            else if (!IsLiteralCompatible(*Pin.GetDefaultValue(), Pin.GetType()) || !IsSupportedLiteralEncoding(*Pin.GetDefaultValue(), *PinMapping))
                             {
                                 Add(
                                     Diagnostics,
                                     ValidationStage::ValueResolution,
                                     DiagnosticCode::UnsupportedGiaBackendValue,
-                                    PinMessage(
-                                        Resolved.GraphNode->Identifier,
-                                        SemanticPin,
-                                        "the descriptor default is unsupported by the backend tuple."
-                                    ),
+                                    PinMessage(Resolved.GraphNode->Identifier, SemanticPin, "the descriptor default is unsupported by the backend tuple."),
                                     Resolved.GraphNode->Identifier,
                                     SemanticPin,
                                     Resolved.CatalogueEntry->GetExternalIdentity().GetKey(),
@@ -684,11 +572,7 @@ namespace MiliastraPlusPlus
                                 Diagnostics,
                                 ValidationStage::ValueResolution,
                                 DiagnosticCode::InvalidGiaBackendInputResolution,
-                                PinMessage(
-                                    Resolved.GraphNode->Identifier,
-                                    SemanticPin,
-                                    "an emitted input has neither a binding nor a descriptor default."
-                                ),
+                                PinMessage(Resolved.GraphNode->Identifier, SemanticPin, "an emitted input has neither a binding nor a descriptor default."),
                                 Resolved.GraphNode->Identifier,
                                 SemanticPin,
                                 Resolved.CatalogueEntry->GetExternalIdentity().GetKey(),
@@ -707,11 +591,7 @@ namespace MiliastraPlusPlus
                                 Diagnostics,
                                 ValidationStage::ValueResolution,
                                 DiagnosticCode::InvalidGiaBackendInputResolution,
-                                PinMessage(
-                                    Resolved.GraphNode->Identifier,
-                                    SemanticPin,
-                                    "a bound literal cannot target an omitted backend pin."
-                                ),
+                                PinMessage(Resolved.GraphNode->Identifier, SemanticPin, "a bound literal cannot target an omitted backend pin."),
                                 Resolved.GraphNode->Identifier,
                                 SemanticPin,
                                 Resolved.CatalogueEntry->GetExternalIdentity().GetKey(),
@@ -724,11 +604,7 @@ namespace MiliastraPlusPlus
                                 Diagnostics,
                                 ValidationStage::ValueResolution,
                                 DiagnosticCode::UnsupportedGiaBackendValue,
-                                PinMessage(
-                                    Resolved.GraphNode->Identifier,
-                                    SemanticPin,
-                                    "the explicit literal is not supported by the target type."
-                                ),
+                                PinMessage(Resolved.GraphNode->Identifier, SemanticPin, "the explicit literal is not supported by the target type."),
                                 Resolved.GraphNode->Identifier,
                                 SemanticPin,
                                 Resolved.CatalogueEntry->GetExternalIdentity().GetKey(),
@@ -741,11 +617,7 @@ namespace MiliastraPlusPlus
                                 Diagnostics,
                                 ValidationStage::ValueResolution,
                                 DiagnosticCode::UnsupportedGiaBackendValue,
-                                PinMessage(
-                                    Resolved.GraphNode->Identifier,
-                                    SemanticPin,
-                                    "the explicit literal does not match the backend literal encoding."
-                                ),
+                                PinMessage(Resolved.GraphNode->Identifier, SemanticPin, "the explicit literal does not match the backend literal encoding."),
                                 Resolved.GraphNode->Identifier,
                                 SemanticPin,
                                 Resolved.CatalogueEntry->GetExternalIdentity().GetKey(),
@@ -753,27 +625,21 @@ namespace MiliastraPlusPlus
                             );
                         }
                     }
-                    else if (const GraphVariableReference* Variable =
-                        std::get_if<GraphVariableReference>(&Binding))
+                    else if (const GraphVariableReference* Variable = std::get_if<GraphVariableReference>(&Binding))
                     {
                         (void)Variable;
                         Add(
                             Diagnostics,
                             ValidationStage::TargetPreflight,
                             DiagnosticCode::UnsupportedGiaTargetGraphFeature,
-                            PinMessage(
-                                Resolved.GraphNode->Identifier,
-                                SemanticPin,
-                                "graph-variable references are unsupported by the target."
-                            ),
+                            PinMessage(Resolved.GraphNode->Identifier, SemanticPin, "graph-variable references are unsupported by the target."),
                             Resolved.GraphNode->Identifier,
                             SemanticPin,
                             Resolved.CatalogueEntry->GetExternalIdentity().GetKey(),
                             Resolved.Mapping->GetSourceProvenance()
                         );
                     }
-                    else if (const OutputReference* Output =
-                        std::get_if<OutputReference>(&Binding))
+                    else if (const OutputReference* Output = std::get_if<OutputReference>(&Binding))
                     {
                         const NodeInstance* SourceNode = FindNode(Graph, Output->SourceNode);
                         const NodeDescriptor* SourceDescriptor = nullptr;
@@ -788,20 +654,11 @@ namespace MiliastraPlusPlus
                             }
                         }
 
-                        const PinSchema* SourcePin = SourceDescriptor == nullptr
+                        const PinSchema* SourcePin = SourceDescriptor == nullptr ? nullptr : FindPin(*SourceDescriptor, Output->SourceOutputPin);
+                        const GiaBackendPinMapping* SourceMapping = SourceResolved == nullptr || SourceResolved->Mapping == nullptr
                             ? nullptr
-                            : FindPin(*SourceDescriptor, Output->SourceOutputPin);
-                        const GiaBackendPinMapping* SourceMapping =
-                            SourceResolved == nullptr || SourceResolved->Mapping == nullptr
-                            ? nullptr
-                            : FindMapping(
-                                *SourceResolved->Mapping,
-                                Output->SourceOutputPin
-                            );
-                        const bool ValidConnection =
-                            SourceNode != nullptr && SourcePin != nullptr &&
-                            SourceMapping != nullptr &&
-                            IsDataOutput(*SourcePin) &&
+                            : FindMapping(*SourceResolved->Mapping, Output->SourceOutputPin);
+                        const bool ValidConnection = SourceNode != nullptr && SourcePin != nullptr && SourceMapping != nullptr && IsDataOutput(*SourcePin) &&
                             SourceMapping->GetPinKind() == GiaPinKind::OutputParameter &&
                             IsSupportedType(SourcePin->GetType()) &&
                             PinMapping->GetPinKind() == GiaPinKind::InputParameter &&
@@ -814,11 +671,7 @@ namespace MiliastraPlusPlus
                                 Diagnostics,
                                 ValidationStage::ConnectionResolution,
                                 DiagnosticCode::InvalidGiaBackendConnection,
-                                PinMessage(
-                                    Resolved.GraphNode->Identifier,
-                                    SemanticPin,
-                                    "the output reference cannot become a supported semantic data connection."
-                                ),
+                                PinMessage(Resolved.GraphNode->Identifier, SemanticPin, "the output reference cannot become a supported semantic data connection."),
                                 Resolved.GraphNode->Identifier,
                                 SemanticPin,
                                 Resolved.CatalogueEntry->GetExternalIdentity().GetKey(),
@@ -858,20 +711,16 @@ namespace MiliastraPlusPlus
                     }
                 }
 
-                const PinSchema* SourcePin = SourceResolved == nullptr ||
-                    SourceResolved->Descriptor == nullptr
+                const PinSchema* SourcePin = SourceResolved == nullptr || SourceResolved->Descriptor == nullptr
                     ? nullptr
                     : FindPin(*SourceResolved->Descriptor, Edge.SourceOutputPin);
-                const PinSchema* DestinationPin = DestinationResolved == nullptr ||
-                    DestinationResolved->Descriptor == nullptr
+                const PinSchema* DestinationPin = DestinationResolved == nullptr || DestinationResolved->Descriptor == nullptr
                     ? nullptr
                     : FindPin(*DestinationResolved->Descriptor, Edge.DestinationInputPin);
-                const GiaBackendPinMapping* SourceMapping = SourceResolved == nullptr ||
-                    SourceResolved->Mapping == nullptr
+                const GiaBackendPinMapping* SourceMapping = SourceResolved == nullptr || SourceResolved->Mapping == nullptr
                     ? nullptr
                     : FindMapping(*SourceResolved->Mapping, Edge.SourceOutputPin);
-                const GiaBackendPinMapping* DestinationMapping = DestinationResolved == nullptr ||
-                    DestinationResolved->Mapping == nullptr
+                const GiaBackendPinMapping* DestinationMapping = DestinationResolved == nullptr || DestinationResolved->Mapping == nullptr
                     ? nullptr
                     : FindMapping(*DestinationResolved->Mapping, Edge.DestinationInputPin);
 
@@ -889,12 +738,8 @@ namespace MiliastraPlusPlus
                         ValidationStage::ConnectionResolution,
                         DiagnosticCode::InvalidGiaBackendConnection,
                         "A control edge cannot become a supported semantic flow connection.",
-                        SourceNode == nullptr
-                            ? std::nullopt
-                            : std::optional<NodeInstanceId>(SourceNode->Identifier),
-                        SourceNode == nullptr
-                            ? std::nullopt
-                            : std::optional<PinIndex>(Edge.SourceOutputPin)
+                        SourceNode == nullptr ? std::nullopt : std::optional<NodeInstanceId>(SourceNode->Identifier),
+                        SourceNode == nullptr ? std::nullopt : std::optional<PinIndex>(Edge.SourceOutputPin)
                     );
                 }
                 else
@@ -908,16 +753,8 @@ namespace MiliastraPlusPlus
                 }
             }
 
-            std::sort(
-                DataConnections.begin(),
-                DataConnections.end(),
-                IsCanonicalDataConnectionOrder
-            );
-            std::sort(
-                ControlConnections.begin(),
-                ControlConnections.end(),
-                IsCanonicalControlConnectionOrder
-            );
+            std::sort(DataConnections.begin(), DataConnections.end(), IsCanonicalDataConnectionOrder);
+            std::sort(ControlConnections.begin(), ControlConnections.end(), IsCanonicalControlConnectionOrder);
 
             if (HasPendingErrors(Diagnostics))
             {
@@ -940,9 +777,7 @@ namespace MiliastraPlusPlus
                     .Inputs = {}
                 };
 
-                for (std::size_t PinOffset = 0U;
-                    PinOffset < Resolved.Descriptor->GetPins().size();
-                    ++PinOffset)
+                for (std::size_t PinOffset = 0U; PinOffset < Resolved.Descriptor->GetPins().size(); ++PinOffset)
                 {
                     const PinIndex SemanticPin(static_cast<std::uint32_t>(PinOffset));
                     const PinSchema& Pin = Resolved.Descriptor->GetPins()[PinOffset];
@@ -951,24 +786,16 @@ namespace MiliastraPlusPlus
                         continue;
                     }
 
-                    const GiaBackendPinMapping* PinMapping = FindMapping(
-                        *Resolved.Mapping,
-                        SemanticPin
-                    );
+                    const GiaBackendPinMapping* PinMapping = FindMapping(*Resolved.Mapping, SemanticPin);
                     if (PinMapping == nullptr)
                     {
                         continue;
                     }
 
-                    const InputBindingRecord* BindingRecord = FindBinding(
-                        Graph,
-                        Resolved.GraphNode->Identifier,
-                        SemanticPin
-                    );
+                    const InputBindingRecord* BindingRecord = FindBinding(Graph, Resolved.GraphNode->Identifier, SemanticPin);
                     if (BindingRecord == nullptr)
                     {
-                        if (Pin.GetDefaultValue().has_value() &&
-                            PinMapping->GetEmissionPolicy() == GiaPinEmissionPolicy::Emit)
+                        if (Pin.GetDefaultValue().has_value() && PinMapping->GetEmissionPolicy() == GiaPinEmissionPolicy::Emit)
                         {
                             Node.Inputs.push_back(GiaBackendInputValue{
                                 SemanticPin,
@@ -980,8 +807,7 @@ namespace MiliastraPlusPlus
                         continue;
                     }
 
-                    if (const LiteralValue* Literal =
-                        std::get_if<LiteralValue>(&BindingRecord->Binding))
+                    if (const LiteralValue* Literal = std::get_if<LiteralValue>(&BindingRecord->Binding))
                     {
                         Node.Inputs.push_back(GiaBackendInputValue{
                             SemanticPin,
@@ -1003,30 +829,18 @@ namespace MiliastraPlusPlus
                 Nodes.push_back(std::move(Node));
             }
 
-            std::sort(
-                Nodes.begin(),
-                Nodes.end(),
+            std::sort(Nodes.begin(), Nodes.end(),
                 [](const GiaBackendNode& Left, const GiaBackendNode& Right)
                 {
                     return Left.Trace.GraphNode < Right.Trace.GraphNode;
                 }
             );
 
-            GiaBackendGraph Result(
-                MakeHeader(Context),
-                std::move(Nodes),
-                std::move(DataConnections),
-                std::move(ControlConnections)
-            );
+            GiaBackendGraph Result(MakeHeader(Context), std::move(Nodes), std::move(DataConnections), std::move(ControlConnections));
             if (!Result.IsValid())
             {
                 std::vector<PendingDiagnostic> ModelDiagnostics;
-                Add(
-                    ModelDiagnostics,
-                    ValidationStage::ModelValidation,
-                    DiagnosticCode::InvalidGiaBackendModel,
-                    "The complete GIA semantic backend model violates its invariants."
-                );
+                Add(ModelDiagnostics, ValidationStage::ModelValidation, DiagnosticCode::InvalidGiaBackendModel, "The complete GIA semantic backend model violates its invariants.");
                 return std::unexpected(Materialize(std::move(ModelDiagnostics)));
             }
 
@@ -1034,4 +848,3 @@ namespace MiliastraPlusPlus
         }
     };
 }
-

@@ -86,8 +86,7 @@ namespace MiliastraPlusPlus
             EPinType Type,
             EPinKind Kind,
             std::optional<EPinType> ElementType = std::nullopt,
-            std::int32_t TypeGroupIdentifier = -1
-        )
+            std::int32_t TypeGroupIdentifier = -1)
             : m_Identifier(Identifier)
             , m_Name(std::move(Name))
             , m_Category(Category)
@@ -190,10 +189,7 @@ namespace MiliastraPlusPlus
             const PinTypeSignature ThisTypeSignature = GetEffectiveTypeSignature();
             const PinTypeSignature OtherTypeSignature = OtherPin.GetEffectiveTypeSignature();
 
-            if (
-                ThisTypeSignature.PinType == EPinType::Generic ||
-                OtherTypeSignature.PinType == EPinType::Generic
-            )
+            if (ThisTypeSignature.PinType == EPinType::Generic || OtherTypeSignature.PinType == EPinType::Generic)
             {
                 return true;
             }

@@ -22,17 +22,10 @@ namespace
         return NodeDescriptor(
             Identifier,
             std::move(Name),
-            { NodeAvailability::Server, NodeAvailability::Client },
+            {NodeAvailability::Server, NodeAvailability::Client},
             {
-                PinSchema(
-                    "Input", TypeDesc::Integer(), PinDirection::Input,
-                    PinCategory::Data, PinCardinality::Optional, true,
-                    LiteralValue(LiteralValue::Data(std::int64_t(7)))
-                ),
-                PinSchema(
-                    "Output", TypeDesc::Integer(), PinDirection::Output,
-                    PinCategory::Data, PinCardinality::Single
-                )
+                PinSchema("Input", TypeDesc::Integer(), PinDirection::Input, PinCategory::Data, PinCardinality::Optional, true, LiteralValue(LiteralValue::Data(std::int64_t(7)))),
+                PinSchema("Output", TypeDesc::Integer(), PinDirection::Output, PinCategory::Data, PinCardinality::Single)
             }
         );
     }
@@ -45,11 +38,7 @@ namespace
         Check(!NodeDescriptorId().IsValid(), 1);
         Check(NodeDescriptorId(1U).IsValid(), 2);
 
-        const PinSchema InputSchema(
-            "Input", TypeDesc::Integer(), PinDirection::Input, PinCategory::Data,
-            PinCardinality::Optional, true,
-            LiteralValue(LiteralValue::Data(std::int64_t(7)))
-        );
+        const PinSchema InputSchema("Input", TypeDesc::Integer(), PinDirection::Input, PinCategory::Data, PinCardinality::Optional, true, LiteralValue(LiteralValue::Data(std::int64_t(7))));
         Check(InputSchema.GetDirection() == PinDirection::Input, 3);
         Check(InputSchema.GetCategory() == PinCategory::Data, 4);
         Check(InputSchema.GetCardinality() == PinCardinality::Optional, 5);
@@ -57,10 +46,7 @@ namespace
         Check(InputSchema.AllowsLiteral(), 7);
         Check(InputSchema.GetDefaultValue().has_value(), 8);
 
-        const PinSchema OutputSchema(
-            "Output", TypeDesc::List(TypeDesc::Integer()), PinDirection::Output,
-            PinCategory::Data, PinCardinality::Multiple
-        );
+        const PinSchema OutputSchema("Output", TypeDesc::List(TypeDesc::Integer()), PinDirection::Output, PinCategory::Data, PinCardinality::Multiple);
         Check(OutputSchema.GetDirection() == PinDirection::Output, 9);
         Check(OutputSchema.GetCardinality() == PinCardinality::Multiple, 10);
         Check(!OutputSchema.AllowsLiteral(), 11);
@@ -84,8 +70,7 @@ namespace
         Check(Registry.Size() == 1U, 25);
         Check(Registry.Find(NodeDescriptorId(10U)) != nullptr, 26);
         Check(Registry.Get(NodeDescriptorId(10U)).has_value(), 27);
-        Check(Registry.Register(MakeDescriptor(NodeDescriptorId(10U), "Duplicate")).error().Code ==
-            DiagnosticCode::DuplicateDescriptor, 28);
+        Check(Registry.Register(MakeDescriptor(NodeDescriptorId(10U), "Duplicate")).error().Code == DiagnosticCode::DuplicateDescriptor, 28);
         Check(!Registry.Get(NodeDescriptorId(99U)).has_value(), 29);
         Check(Registry.Get(NodeDescriptorId(99U)).error().Code == DiagnosticCode::MissingDescriptor, 30);
 
@@ -117,20 +102,13 @@ namespace
             "InvalidNestedPinType",
             {},
             {
-                PinSchema(
-                    "InvalidNested",
-                    TypeDesc::List(TypeDesc::Generic(GenericParameterId{})),
-                    PinDirection::Output,
-                    PinCategory::Data
-                )
+                PinSchema("InvalidNested", TypeDesc::List(TypeDesc::Generic(GenericParameterId{})), PinDirection::Output, PinCategory::Data)
             }
         );
         Check(!InvalidNestedPinTypeDescriptor.IsValid(), 38);
 
         NodeDescriptorRegistry InvalidPinTypeRegistry;
-        const auto InvalidPinTypeRegistration = InvalidPinTypeRegistry.Register(
-            InvalidNestedPinTypeDescriptor
-        );
+        const auto InvalidPinTypeRegistration = InvalidPinTypeRegistry.Register(InvalidNestedPinTypeDescriptor);
         Check(!InvalidPinTypeRegistration.has_value(), 39);
         Check(InvalidPinTypeRegistration.error().Code == DiagnosticCode::InvalidNodeDescriptor, 40);
 
@@ -139,12 +117,7 @@ namespace
             "FlowDataPin",
             {},
             {
-                PinSchema(
-                    "FlowData",
-                    TypeDesc::Dictionary(TypeDesc::String(), TypeDesc::Flow()),
-                    PinDirection::Output,
-                    PinCategory::Data
-                )
+                PinSchema("FlowData", TypeDesc::Dictionary(TypeDesc::String(), TypeDesc::Flow()), PinDirection::Output, PinCategory::Data)
             }
         );
         Check(!FlowDataPinDescriptor.IsValid(), 41);

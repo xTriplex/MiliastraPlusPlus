@@ -32,17 +32,14 @@ namespace
         Check(PinIndex(0U).IsValid(), 7);
         Check(PinIndex(2U) != PinIndex(3U), 8);
 
-        const OutputReference ValidOutput{
-            NodeInstanceId(12U),
-            PinIndex(2U)
-        };
+        const OutputReference ValidOutput{NodeInstanceId(12U), PinIndex(2U)};
         Check(ValidOutput.IsValid(), 9);
-        Check(!OutputReference{ NodeInstanceId(), PinIndex(2U) }.IsValid(), 10);
-        Check(!OutputReference{ NodeInstanceId(12U), PinIndex() }.IsValid(), 11);
+        Check(!OutputReference{NodeInstanceId(), PinIndex(2U)}.IsValid(), 10);
+        Check(!OutputReference{NodeInstanceId(12U), PinIndex()}.IsValid(), 11);
 
-        const GraphVariableReference ValidVariable{ GraphVariableId(4U) };
+        const GraphVariableReference ValidVariable{GraphVariableId(4U)};
         Check(ValidVariable.IsValid(), 12);
-        Check(!GraphVariableReference{ GraphVariableId() }.IsValid(), 13);
+        Check(!GraphVariableReference{GraphVariableId()}.IsValid(), 13);
 
         const LiteralValue InvalidLiteral;
         Check(!InvalidLiteral.IsValid(), 14);
@@ -51,11 +48,11 @@ namespace
         const LiteralValue IntegerLiteral(LiteralValue::Data(std::int64_t(42)));
         const LiteralValue FloatLiteral(LiteralValue::Data(3.5));
         const LiteralValue StringLiteral(LiteralValue::Data(std::string("value")));
-        const LiteralValue GuidLiteral(LiteralValue::Data(GuidValue{ 9U }));
-        const LiteralValue VectorLiteral(LiteralValue::Data(Vector3Value{ 1.0F, 2.0F, 3.0F }));
-        const LiteralValue PrefabLiteral(LiteralValue::Data(PrefabIdValue{ 10U }));
-        const LiteralValue ConfigLiteral(LiteralValue::Data(ConfigIdValue{ 11U }));
-        const LiteralValue FactionLiteral(LiteralValue::Data(FactionValue{ 12U }));
+        const LiteralValue GuidLiteral(LiteralValue::Data(GuidValue{9U}));
+        const LiteralValue VectorLiteral(LiteralValue::Data(Vector3Value{1.0F, 2.0F, 3.0F}));
+        const LiteralValue PrefabLiteral(LiteralValue::Data(PrefabIdValue{10U}));
+        const LiteralValue ConfigLiteral(LiteralValue::Data(ConfigIdValue{11U}));
+        const LiteralValue FactionLiteral(LiteralValue::Data(FactionValue{12U}));
 
         Check(BooleanLiteral.Is<bool>(), 15);
         Check(IntegerLiteral.Is<std::int64_t>(), 16);

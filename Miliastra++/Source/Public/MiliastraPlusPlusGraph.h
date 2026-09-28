@@ -82,11 +82,7 @@ namespace MiliastraPlusPlus
         {
             if (FindLinkByIdentifier(GraphLink.GetIdentifier()) != nullptr)
             {
-                return std::unexpected(CreateLinkDiagnostic(
-                    DiagnosticCode::DuplicateLinkIdentifier,
-                    "A graph cannot contain two links with the same link identifier.",
-                    GraphLink
-                ));
+                return std::unexpected(CreateLinkDiagnostic(DiagnosticCode::DuplicateLinkIdentifier, "A graph cannot contain two links with the same link identifier.", GraphLink));
             }
 
             if (const std::optional<Diagnostic> LinkDiagnostic = ValidateLink(GraphLink))
@@ -137,17 +133,13 @@ namespace MiliastraPlusPlus
         [[nodiscard]] Pin* FindPinByReference(const PinReference& Reference)
         {
             Node* ParentNode = FindNodeByIdentifier(Reference.OwningNodeIdentifier);
-            return ParentNode == nullptr
-                ? nullptr
-                : ParentNode->GetPinByIdentifier(Reference.LocalPinIdentifier);
+            return ParentNode == nullptr ? nullptr : ParentNode->GetPinByIdentifier(Reference.LocalPinIdentifier);
         }
 
         [[nodiscard]] const Pin* FindPinByReference(const PinReference& Reference) const
         {
             const Node* ParentNode = FindNodeByIdentifier(Reference.OwningNodeIdentifier);
-            return ParentNode == nullptr
-                ? nullptr
-                : ParentNode->GetPinByIdentifier(Reference.LocalPinIdentifier);
+            return ParentNode == nullptr ? nullptr : ParentNode->GetPinByIdentifier(Reference.LocalPinIdentifier);
         }
 
         [[nodiscard]] DiagnosticCollection PropagateTypes()
@@ -163,23 +155,17 @@ namespace MiliastraPlusPlus
             for (std::size_t FirstIndex = 0; FirstIndex < GenericPins.size(); ++FirstIndex)
             {
                 const GenericPinRecord& FirstGenericPin = GenericPins[FirstIndex];
-                const std::int32_t TypeGroupIdentifier =
-                    FirstGenericPin.GraphPin->GetTypeGroupIdentifier();
+                const std::int32_t TypeGroupIdentifier = FirstGenericPin.GraphPin->GetTypeGroupIdentifier();
                 if (TypeGroupIdentifier < 0)
                 {
                     continue;
                 }
 
-                for (std::size_t SecondIndex = FirstIndex + 1;
-                     SecondIndex < GenericPins.size();
-                     ++SecondIndex)
+                for (std::size_t SecondIndex = FirstIndex + 1; SecondIndex < GenericPins.size(); ++SecondIndex)
                 {
                     const GenericPinRecord& SecondGenericPin = GenericPins[SecondIndex];
-                    if (
-                        FirstGenericPin.Reference.OwningNodeIdentifier ==
-                            SecondGenericPin.Reference.OwningNodeIdentifier &&
-                        TypeGroupIdentifier == SecondGenericPin.GraphPin->GetTypeGroupIdentifier()
-                    )
+                    if (FirstGenericPin.Reference.OwningNodeIdentifier == SecondGenericPin.Reference.OwningNodeIdentifier &&
+                        TypeGroupIdentifier == SecondGenericPin.GraphPin->GetTypeGroupIdentifier())
                     {
                         GenericPinSets.Union(FirstIndex, SecondIndex);
                     }
@@ -199,22 +185,13 @@ namespace MiliastraPlusPlus
                     continue;
                 }
 
-                if (
-                    SourcePin->GetPinCategory() != EPinCategory::Data ||
-                    DestinationPin->GetPinCategory() != EPinCategory::Data
-                )
+                if (SourcePin->GetPinCategory() != EPinCategory::Data || DestinationPin->GetPinCategory() != EPinCategory::Data)
                 {
                     continue;
                 }
 
-                const std::optional<std::size_t> SourceGenericIndex = FindGenericPinIndex(
-                    GenericPins,
-                    GraphLink.GetSourcePinReference()
-                );
-                const std::optional<std::size_t> DestinationGenericIndex = FindGenericPinIndex(
-                    GenericPins,
-                    GraphLink.GetDestinationPinReference()
-                );
+                const std::optional<std::size_t> SourceGenericIndex = FindGenericPinIndex(GenericPins, GraphLink.GetSourcePinReference());
+                const std::optional<std::size_t> DestinationGenericIndex = FindGenericPinIndex(GenericPins, GraphLink.GetDestinationPinReference());
 
                 if (SourceGenericIndex.has_value() && DestinationGenericIndex.has_value())
                 {
@@ -233,22 +210,13 @@ namespace MiliastraPlusPlus
                     continue;
                 }
 
-                if (
-                    SourcePin->GetPinCategory() != EPinCategory::Data ||
-                    DestinationPin->GetPinCategory() != EPinCategory::Data
-                )
+                if (SourcePin->GetPinCategory() != EPinCategory::Data || DestinationPin->GetPinCategory() != EPinCategory::Data)
                 {
                     continue;
                 }
 
-                const std::optional<std::size_t> SourceGenericIndex = FindGenericPinIndex(
-                    GenericPins,
-                    GraphLink.GetSourcePinReference()
-                );
-                const std::optional<std::size_t> DestinationGenericIndex = FindGenericPinIndex(
-                    GenericPins,
-                    GraphLink.GetDestinationPinReference()
-                );
+                const std::optional<std::size_t> SourceGenericIndex = FindGenericPinIndex(GenericPins, GraphLink.GetSourcePinReference());
+                const std::optional<std::size_t> DestinationGenericIndex = FindGenericPinIndex(GenericPins, GraphLink.GetDestinationPinReference());
 
                 if (!SourceGenericIndex.has_value() && !DestinationGenericIndex.has_value())
                 {
@@ -320,9 +288,7 @@ namespace MiliastraPlusPlus
                     continue;
                 }
 
-                for (std::size_t CandidateIndex = 0;
-                     CandidateIndex < GenericPins.size();
-                     ++CandidateIndex)
+                for (std::size_t CandidateIndex = 0; CandidateIndex < GenericPins.size(); ++CandidateIndex)
                 {
                     if (GenericPinSets.Find(CandidateIndex) == GenericPinIndex)
                     {
@@ -438,107 +404,60 @@ namespace MiliastraPlusPlus
 
             if (SourcePinReference == DestinationPinReference)
             {
-                return CreateLinkDiagnostic(
-                    DiagnosticCode::SelfLink,
-                    "A link cannot connect a pin to itself.",
-                    GraphLink
-                );
+                return CreateLinkDiagnostic(DiagnosticCode::SelfLink, "A link cannot connect a pin to itself.", GraphLink);
             }
 
             const Pin* SourcePin = FindPinByReference(SourcePinReference);
             if (SourcePin == nullptr)
             {
-                return CreateLinkDiagnostic(
-                    DiagnosticCode::MissingSourcePin,
-                    "The source pin does not belong to this graph.",
-                    GraphLink
-                );
+                return CreateLinkDiagnostic(DiagnosticCode::MissingSourcePin, "The source pin does not belong to this graph.", GraphLink);
             }
 
             const Pin* DestinationPin = FindPinByReference(DestinationPinReference);
             if (DestinationPin == nullptr)
             {
-                return CreateLinkDiagnostic(
-                    DiagnosticCode::MissingDestinationPin,
-                    "The destination pin does not belong to this graph.",
-                    GraphLink
-                );
+                return CreateLinkDiagnostic(DiagnosticCode::MissingDestinationPin, "The destination pin does not belong to this graph.", GraphLink);
             }
 
             if (SourcePin->GetPinKind() != EPinKind::Output)
             {
-                return CreateLinkDiagnostic(
-                    DiagnosticCode::SourcePinMustBeOutput,
-                    "The source pin of a link must be an output pin.",
-                    GraphLink
-                );
+                return CreateLinkDiagnostic(DiagnosticCode::SourcePinMustBeOutput, "The source pin of a link must be an output pin.", GraphLink);
             }
 
             if (DestinationPin->GetPinKind() != EPinKind::Input)
             {
-                return CreateLinkDiagnostic(
-                    DiagnosticCode::DestinationPinMustBeInput,
-                    "The destination pin of a link must be an input pin.",
-                    GraphLink
-                );
+                return CreateLinkDiagnostic(DiagnosticCode::DestinationPinMustBeInput, "The destination pin of a link must be an input pin.", GraphLink);
             }
 
             if (SourcePin->GetPinCategory() != DestinationPin->GetPinCategory())
             {
-                return CreateLinkDiagnostic(
-                    DiagnosticCode::IncompatiblePinCategories,
-                    "Execution pins and data pins cannot be connected to each other.",
-                    GraphLink
-                );
+                return CreateLinkDiagnostic(DiagnosticCode::IncompatiblePinCategories, "Execution pins and data pins cannot be connected to each other.", GraphLink);
             }
 
             if (SourcePin->GetPinCategory() == EPinCategory::Execution)
             {
-                if (
-                    SourcePin->GetEffectiveType() != EPinType::Flow ||
-                    DestinationPin->GetEffectiveType() != EPinType::Flow
-                )
+                if (SourcePin->GetEffectiveType() != EPinType::Flow || DestinationPin->GetEffectiveType() != EPinType::Flow)
                 {
-                    return CreateLinkDiagnostic(
-                        DiagnosticCode::ExecutionPinsMustUseFlowType,
-                        "Execution links require Flow pins at both endpoints.",
-                        GraphLink
-                    );
+                    return CreateLinkDiagnostic(DiagnosticCode::ExecutionPinsMustUseFlowType, "Execution links require Flow pins at both endpoints.", GraphLink);
                 }
             }
             else if (!SourcePin->IsCompatibleWith(*DestinationPin))
             {
-                return CreateLinkDiagnostic(
-                    DiagnosticCode::IncompatibleDataPinTypes,
-                    "A data link connects incompatible pin types.",
-                    GraphLink
-                );
+                return CreateLinkDiagnostic(DiagnosticCode::IncompatibleDataPinTypes, "A data link connects incompatible pin types.", GraphLink);
             }
 
             for (const Link& ExistingLink : m_Links)
             {
-                if (
-                    ExistingLink.GetSourcePinReference() == SourcePinReference &&
-                    ExistingLink.GetDestinationPinReference() == DestinationPinReference
-                )
+                if (ExistingLink.GetSourcePinReference() == SourcePinReference &&
+                    ExistingLink.GetDestinationPinReference() == DestinationPinReference)
                 {
-                    return CreateLinkDiagnostic(
-                        DiagnosticCode::DuplicateLink,
-                        "The graph already contains this link.",
-                        GraphLink
-                    );
+                    return CreateLinkDiagnostic(DiagnosticCode::DuplicateLink, "The graph already contains this link.", GraphLink);
                 }
 
-                if (
-                    DestinationPin->GetPinCategory() == EPinCategory::Data &&
-                    ExistingLink.GetDestinationPinReference() == DestinationPinReference
-                )
+                if (DestinationPin->GetPinCategory() == EPinCategory::Data &&
+                    ExistingLink.GetDestinationPinReference() == DestinationPinReference)
                 {
-                    return CreateLinkDiagnostic(
-                        DiagnosticCode::MultipleDataInputProducers,
-                        "A data input pin can have only one producing link.",
-                        GraphLink
-                    );
+                    return CreateLinkDiagnostic(DiagnosticCode::MultipleDataInputProducers, "A data input pin can have only one producing link.", GraphLink);
                 }
             }
 
@@ -598,9 +517,7 @@ namespace MiliastraPlusPlus
 
         [[nodiscard]] static std::optional<std::size_t> FindGenericPinIndex(const std::vector<GenericPinRecord>& GenericPins, const PinReference& Reference)
         {
-            for (std::size_t GenericPinIndex = 0;
-                 GenericPinIndex < GenericPins.size();
-                 ++GenericPinIndex)
+            for (std::size_t GenericPinIndex = 0; GenericPinIndex < GenericPins.size(); ++GenericPinIndex)
             {
                 if (GenericPins[GenericPinIndex].Reference == Reference)
                 {

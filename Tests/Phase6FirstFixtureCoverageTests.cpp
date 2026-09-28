@@ -98,9 +98,7 @@ namespace
 
     bool HasCode(const DiagnosticCollection& Diagnostics, DiagnosticCode Code)
     {
-        return std::any_of(
-            Diagnostics.begin(),
-            Diagnostics.end(),
+        return std::any_of(Diagnostics.begin(), Diagnostics.end(),
             [Code](const Diagnostic& DiagnosticValue)
             {
                 return DiagnosticValue.Code == Code;
@@ -108,11 +106,7 @@ namespace
         );
     }
 
-    NormalizedNodeDescriptorRecord MakeRecord(
-        std::string Identity,
-        TypeDesc Type = TypeDesc::Boolean(),
-        std::optional<LiteralValue> Default = std::nullopt
-    )
+    NormalizedNodeDescriptorRecord MakeRecord(std::string Identity, TypeDesc Type = TypeDesc::Boolean(), std::optional<LiteralValue> Default = std::nullopt)
     {
         return NormalizedNodeDescriptorRecord(
             ExternalNodeIdentity(std::move(Identity)),
@@ -134,11 +128,7 @@ namespace
         );
     }
 
-    NormalizedNodeDescriptorRecord MakeEnumRecord(
-        std::string Identity = "enum-record",
-        std::string EnumIdentity = "filter_return_type",
-        std::int64_t EnumValue = 1000010
-    )
+    NormalizedNodeDescriptorRecord MakeEnumRecord(std::string Identity = "enum-record", std::string EnumIdentity = "filter_return_type", std::int64_t EnumValue = 1000010)
     {
         const EnumTypeIdentity TypeIdentity(std::move(EnumIdentity));
         return MakeRecord(
@@ -163,12 +153,7 @@ namespace
 
     std::expected<DescriptorCatalogue, DiagnosticCollection> BuildCombinedCatalogue()
     {
-        const auto Result =
-            GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(
-                NodeMetadataJson,
-                ModesJson,
-                EnumEvidenceJson
-            );
+        const auto Result = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(NodeMetadataJson, ModesJson, EnumEvidenceJson);
         if (!Result.has_value())
         {
             return std::unexpected(Result.error());
@@ -272,8 +257,7 @@ namespace
         });
         MPP_CHECK(EnumLiteral.Is<EnumLiteralValue>());
         MPP_CHECK(EnumLiteral.TryGet<EnumLiteralValue>() != nullptr);
-        MPP_CHECK(EnumType.IsCompatibleWith(TypeDesc::Enum(
-            EnumLiteral.TryGet<EnumLiteralValue>()->GetEnumTypeIdentity())));
+        MPP_CHECK(EnumType.IsCompatibleWith(TypeDesc::Enum(EnumLiteral.TryGet<EnumLiteralValue>()->GetEnumTypeIdentity())));
         MPP_CHECK(EnumLiteral != LiteralValue(LiteralValue::Data{std::int64_t(1000010)}));
         MPP_CHECK(OtherLiteral != EnumLiteral);
     }
@@ -292,15 +276,7 @@ namespace
             "Enum descriptor",
             {NodeAvailability::Client},
             {
-                PinSchema(
-                    "Value",
-                    TypeDesc::Enum(Family),
-                    PinDirection::Input,
-                    PinCategory::Data,
-                    PinCardinality::Single,
-                    true,
-                    Matching
-                )
+                PinSchema("Value", TypeDesc::Enum(Family), PinDirection::Input, PinCategory::Data, PinCardinality::Single, true, Matching)
             }
         );
         const NodeDescriptor Invalid(
@@ -308,15 +284,7 @@ namespace
             "Enum descriptor",
             {NodeAvailability::Client},
             {
-                PinSchema(
-                    "Value",
-                    TypeDesc::Enum(Family),
-                    PinDirection::Input,
-                    PinCategory::Data,
-                    PinCardinality::Single,
-                    true,
-                    Mismatched
-                )
+                PinSchema("Value", TypeDesc::Enum(Family), PinDirection::Input, PinCategory::Data, PinCardinality::Single, true, Mismatched)
             }
         );
         MPP_CHECK(Valid.IsValid());
@@ -341,10 +309,7 @@ namespace
             {MakeEnumRecord()}
         );
         MPP_CHECK(!SchemaOneEnum.has_value());
-        MPP_CHECK(HasCode(
-            SchemaOneEnum.error(),
-            DiagnosticCode::InvalidNormalizedDescriptorRecord
-        ));
+        MPP_CHECK(HasCode(SchemaOneEnum.error(), DiagnosticCode::InvalidNormalizedDescriptorRecord));
 
         const auto SchemaTwoEnum = DescriptorCatalogueBuilder::Build(
             "schema.tests",
@@ -361,10 +326,7 @@ namespace
             {}
         );
         MPP_CHECK(!Unsupported.has_value());
-        MPP_CHECK(HasCode(
-            Unsupported.error(),
-            DiagnosticCode::UnsupportedDescriptorCatalogueSemanticSchemaVersion
-        ));
+        MPP_CHECK(HasCode(Unsupported.error(), DiagnosticCode::UnsupportedDescriptorCatalogueSemanticSchemaVersion));
     }
 
     void TestCatalogueEnumContentIdentityAndPermutation()
@@ -390,10 +352,8 @@ namespace
         MPP_CHECK(First.has_value());
         MPP_CHECK(OtherFamily.has_value());
         MPP_CHECK(OtherValue.has_value());
-        MPP_CHECK(First->GetIdentity().GetCatalogueContentIdentifier() !=
-            OtherFamily->GetIdentity().GetCatalogueContentIdentifier());
-        MPP_CHECK(First->GetIdentity().GetCatalogueContentIdentifier() !=
-            OtherValue->GetIdentity().GetCatalogueContentIdentifier());
+        MPP_CHECK(First->GetIdentity().GetCatalogueContentIdentifier() != OtherFamily->GetIdentity().GetCatalogueContentIdentifier());
+        MPP_CHECK(First->GetIdentity().GetCatalogueContentIdentifier() != OtherValue->GetIdentity().GetCatalogueContentIdentifier());
 
         auto FirstRecords = MakeLegacyRecords();
         auto SecondRecords = MakeLegacyRecords();
@@ -447,14 +407,8 @@ namespace
         MPP_CHECK(RoundTrip["variables"][0U]["type"] == MakeEnumTypeJson());
         MPP_CHECK(RoundTrip["variables"][0U]["default"] == MakeEnumLiteralJson());
         MPP_CHECK(RoundTrip["variables"][1U]["type"]["element"] == MakeEnumTypeJson());
-        MPP_CHECK(
-            RoundTrip["inputBindings"][0U]["outputTypeConstraint"] ==
-            MakeEnumTypeJson()
-        );
-        MPP_CHECK(
-            RoundTrip["inputBindings"][0U]["binding"]["value"] ==
-            MakeEnumLiteralJson()
-        );
+        MPP_CHECK(RoundTrip["inputBindings"][0U]["outputTypeConstraint"] == MakeEnumTypeJson());
+        MPP_CHECK(RoundTrip["inputBindings"][0U]["binding"]["value"] == MakeEnumLiteralJson());
     }
 
     void TestGraphIRLegacyEnumRejection()
@@ -540,10 +494,8 @@ namespace
         MPP_CHECK(Written.has_value());
         const Json Document = Json::parse(*Written);
         MPP_CHECK(Document["snapshotFormatVersion"] == 2U);
-        MPP_CHECK(Document["entries"][0U]["record"]["pins"][0U]["type"] ==
-            MakeEnumTypeJson());
-        MPP_CHECK(Document["entries"][0U]["record"]["pins"][0U]["default"] ==
-            MakeEnumLiteralJson());
+        MPP_CHECK(Document["entries"][0U]["record"]["pins"][0U]["type"] == MakeEnumTypeJson());
+        MPP_CHECK(Document["entries"][0U]["record"]["pins"][0U]["default"] == MakeEnumLiteralJson());
         const auto Read = DescriptorCatalogueSnapshotPersistence::Read(*Written);
         MPP_CHECK(Read.has_value());
         MPP_CHECK(*Read == *Snapshot);
@@ -581,46 +533,30 @@ namespace
 
         EnumJson["snapshotFormatVersion"] = 1U;
         MPP_CHECK(!DescriptorCatalogueSnapshotPersistence::Read(EnumJson.dump()).has_value());
-        MPP_CHECK(HasCode(
-            DescriptorCatalogueSnapshotPersistence::Read(EnumJson.dump()).error(),
-            DiagnosticCode::UnsupportedDescriptorCatalogueSemanticSchemaVersion
-        ));
+        MPP_CHECK(HasCode(DescriptorCatalogueSnapshotPersistence::Read(EnumJson.dump()).error(), DiagnosticCode::UnsupportedDescriptorCatalogueSemanticSchemaVersion));
 
         EnumJson = Json::parse(*EnumJsonResult);
         EnumJson["catalogue"]["semanticSchemaVersion"] = 1U;
         MPP_CHECK(!DescriptorCatalogueSnapshotPersistence::Read(EnumJson.dump()).has_value());
-        MPP_CHECK(HasCode(
-            DescriptorCatalogueSnapshotPersistence::Read(EnumJson.dump()).error(),
-            DiagnosticCode::MalformedDescriptorCatalogueSnapshot
-        ));
+        MPP_CHECK(HasCode(DescriptorCatalogueSnapshotPersistence::Read(EnumJson.dump()).error(), DiagnosticCode::MalformedDescriptorCatalogueSnapshot));
 
         EnumJson = Json::parse(*EnumJsonResult);
         EnumJson["snapshotFormatVersion"] = 1U;
         EnumJson["catalogue"]["semanticSchemaVersion"] = 2U;
         const auto V1Schema2 = DescriptorCatalogueSnapshotPersistence::Read(EnumJson.dump());
         MPP_CHECK(!V1Schema2.has_value());
-        MPP_CHECK(HasCode(
-            V1Schema2.error(),
-            DiagnosticCode::UnsupportedDescriptorCatalogueSemanticSchemaVersion
-        ));
+        MPP_CHECK(HasCode(V1Schema2.error(), DiagnosticCode::UnsupportedDescriptorCatalogueSemanticSchemaVersion));
 
         EnumJson = Json::parse(*EnumJsonResult);
         EnumJson["snapshotFormatVersion"] = 3U;
         const auto FutureVersion = DescriptorCatalogueSnapshotPersistence::Read(EnumJson.dump());
         MPP_CHECK(!FutureVersion.has_value());
-        MPP_CHECK(HasCode(
-            FutureVersion.error(),
-            DiagnosticCode::UnsupportedDescriptorCatalogueSnapshotVersion
-        ));
+        MPP_CHECK(HasCode(FutureVersion.error(), DiagnosticCode::UnsupportedDescriptorCatalogueSnapshotVersion));
     }
 
     void TestResultNodeAdapterAcceptsBoundedFixture()
     {
-        const auto Result = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(
-            NodeMetadataJson,
-            ModesJson,
-            EnumEvidenceJson
-        );
+        const auto Result = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(NodeMetadataJson, ModesJson, EnumEvidenceJson);
         MPP_CHECK(Result.has_value());
         MPP_CHECK(Result->GetExternalIdentity().GetKey() == "200000");
         MPP_CHECK(Result->GetDisplayName() == "节点图结束(布尔型)");
@@ -632,8 +568,7 @@ namespace
         MPP_CHECK(Result->GetPins()[0U].GetDefaultValue()->Is<bool>());
         MPP_CHECK(*Result->GetPins()[0U].GetDefaultValue()->TryGet<bool>() == false);
         MPP_CHECK(Result->GetPins()[1U].GetName() == "filter返回类型");
-        MPP_CHECK(Result->GetPins()[1U].GetType() ==
-            TypeDesc::Enum(EnumTypeIdentity("filter_return_type")));
+        MPP_CHECK(Result->GetPins()[1U].GetType() == TypeDesc::Enum(EnumTypeIdentity("filter_return_type")));
         MPP_CHECK(Result->GetPins()[1U].GetDefaultValue()->Is<EnumLiteralValue>());
         MPP_CHECK(Result->GetPins()[1U].GetDefaultValue()->TryGet<EnumLiteralValue>()->GetValue() == 1000010);
         MPP_CHECK(Result->GetSourceProvenance()->GetSourceRecordIdentifier() == "200000");
@@ -641,48 +576,31 @@ namespace
 
     void TestResultNodeAdapterRejectsMalformedSource()
     {
-        const auto Malformed = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(
-            "{", ModesJson, EnumEvidenceJson);
+        const auto Malformed = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt("{", ModesJson, EnumEvidenceJson);
         MPP_CHECK(!Malformed.has_value());
-        MPP_CHECK(HasCode(
-            Malformed.error(),
-            DiagnosticCode::MalformedGenshinClientBooleanFilterResultNodeSource
-        ));
+        MPP_CHECK(HasCode(Malformed.error(), DiagnosticCode::MalformedGenshinClientBooleanFilterResultNodeSource));
 
-        const auto Missing = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(
-            "[]", ModesJson, EnumEvidenceJson);
+        const auto Missing = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt("[]", ModesJson, EnumEvidenceJson);
         MPP_CHECK(!Missing.has_value());
-        MPP_CHECK(HasCode(
-            Missing.error(),
-            DiagnosticCode::MissingGenshinClientBooleanFilterResultNodeSourceField
-        ));
+        MPP_CHECK(HasCode(Missing.error(), DiagnosticCode::MissingGenshinClientBooleanFilterResultNodeSourceField));
     }
 
     void TestResultNodeAdapterRejectsBoundedShapeViolations()
     {
         Json Metadata = Json::parse(NodeMetadataJson);
         Metadata[0U]["inputs"][0U]["defaultValue"] = false;
-        const auto WrongBooleanDefault =
-            GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(
-                Metadata.dump(), ModesJson, EnumEvidenceJson);
+        const auto WrongBooleanDefault = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(Metadata.dump(), ModesJson, EnumEvidenceJson);
         MPP_CHECK(!WrongBooleanDefault.has_value());
-        MPP_CHECK(HasCode(
-            WrongBooleanDefault.error(),
-            DiagnosticCode::UnsupportedGenshinClientBooleanFilterResultNodeSourceForm
-        ));
+        MPP_CHECK(HasCode(WrongBooleanDefault.error(), DiagnosticCode::UnsupportedGenshinClientBooleanFilterResultNodeSourceForm));
 
         Metadata = Json::parse(NodeMetadataJson);
         Metadata[0U]["concreteId"] = 1U;
-        const auto WrongConcreteId =
-            GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(
-                Metadata.dump(), ModesJson, EnumEvidenceJson);
+        const auto WrongConcreteId = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(Metadata.dump(), ModesJson, EnumEvidenceJson);
         MPP_CHECK(!WrongConcreteId.has_value());
 
         Metadata = Json::parse(NodeMetadataJson);
         Metadata[0U]["inputs"][1U]["connectionType"] = 13U;
-        const auto WrongEnumConnection =
-            GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(
-                Metadata.dump(), ModesJson, EnumEvidenceJson);
+        const auto WrongEnumConnection = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(Metadata.dump(), ModesJson, EnumEvidenceJson);
         MPP_CHECK(!WrongEnumConnection.has_value());
     }
 
@@ -690,30 +608,25 @@ namespace
     {
         Json Evidence = Json::parse(EnumEvidenceJson);
         Evidence["ioc"] = 39U;
-        const auto WrongIoc = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(
-            NodeMetadataJson, ModesJson, Evidence.dump());
+        const auto WrongIoc = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(NodeMetadataJson, ModesJson, Evidence.dump());
         MPP_CHECK(!WrongIoc.has_value());
 
         Json Modes = Json::parse(ModesJson);
         Modes["graphs"]["bool_filter"]["beyond"]["status"] = "unavailable";
-        const auto WrongMode = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(
-            NodeMetadataJson, Modes.dump(), EnumEvidenceJson);
+        const auto WrongMode = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(NodeMetadataJson, Modes.dump(), EnumEvidenceJson);
         MPP_CHECK(!WrongMode.has_value());
     }
 
     void TestResultNodeAdapterDeterminismAndFailureAtomicity()
     {
-        const auto First = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(
-            NodeMetadataJson, ModesJson, EnumEvidenceJson);
-        const auto Second = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(
-            NodeMetadataJson, ModesJson, EnumEvidenceJson);
+        const auto First = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(NodeMetadataJson, ModesJson, EnumEvidenceJson);
+        const auto Second = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(NodeMetadataJson, ModesJson, EnumEvidenceJson);
         MPP_CHECK(First.has_value() && Second.has_value());
         MPP_CHECK(*First == *Second);
 
         Json Metadata = Json::parse(NodeMetadataJson);
         Metadata[0U]["unsupported"] = true;
-        const auto Invalid = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(
-            Metadata.dump(), ModesJson, EnumEvidenceJson);
+        const auto Invalid = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(Metadata.dump(), ModesJson, EnumEvidenceJson);
         MPP_CHECK(!Invalid.has_value());
         MPP_CHECK(!Invalid.error().empty());
         MPP_CHECK(Invalid.error()[0U].Severity == DiagnosticSeverity::Error);
@@ -731,31 +644,14 @@ namespace
         Json Evidence = Json::parse(EnumEvidenceJson);
         Evidence["ioc"] = 39U;
 
-        const auto Result = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(
-            Metadata.dump(),
-            Modes.dump(),
-            Evidence.dump()
-        );
+        const auto Result = GenshinClientBooleanFilterResultNodeSourceAdapter::Adapt(Metadata.dump(), Modes.dump(), Evidence.dump());
         MPP_CHECK(!Result.has_value());
         const DiagnosticCollection& Diagnostics = Result.error();
         MPP_CHECK(Diagnostics.size() == 4U);
-        MPP_CHECK(
-            Diagnostics[0U].Message.find("node_graph_end_boolean.subType") !=
-            std::string::npos
-        );
-        MPP_CHECK(
-            Diagnostics[1U].Message.find("Input defaultValue") !=
-            std::string::npos
-        );
-        MPP_CHECK(
-            Diagnostics[2U].Message.find(
-                "modes.graphs.bool_filter.beyond.status") !=
-            std::string::npos
-        );
-        MPP_CHECK(
-            Diagnostics[3U].Message.find("enumEvidence.ioc") !=
-            std::string::npos
-        );
+        MPP_CHECK(Diagnostics[0U].Message.find("node_graph_end_boolean.subType") != std::string::npos);
+        MPP_CHECK(Diagnostics[1U].Message.find("Input defaultValue") != std::string::npos);
+        MPP_CHECK(Diagnostics[2U].Message.find("modes.graphs.bool_filter.beyond.status") != std::string::npos);
+        MPP_CHECK(Diagnostics[3U].Message.find("enumEvidence.ioc") != std::string::npos);
     }
 
     void TestCombinedCatalogueHasTwentySixRecords()
@@ -763,13 +659,11 @@ namespace
         const auto Catalogue = BuildCombinedCatalogue();
         MPP_CHECK(Catalogue.has_value());
         MPP_CHECK(Catalogue->GetEntryCount() == 26U);
-        const auto* Result = Catalogue->FindByExternalIdentity(
-            ExternalNodeIdentity("200000"));
+        const auto* Result = Catalogue->FindByExternalIdentity(ExternalNodeIdentity("200000"));
         MPP_CHECK(Result != nullptr);
         MPP_CHECK(Result->GetRecord().GetPins().size() == 2U);
         MPP_CHECK(Catalogue->GetIdentity().GetSemanticSchemaVersion().GetValue() == 2U);
-        MPP_CHECK(Catalogue->GetIdentity().GetSourceNamespace() ==
-            "genshin.client-bool-filter-descriptor-source");
+        MPP_CHECK(Catalogue->GetIdentity().GetSourceNamespace() == "genshin.client-bool-filter-descriptor-source");
     }
 
     void TestLegacyP53ScopeRemainsTwentyFiveRecords()
@@ -794,14 +688,11 @@ namespace
         MPP_CHECK(Snapshot.has_value());
         const auto Context = DescriptorCatalogueRegistryContext::Materialize(*Snapshot);
         MPP_CHECK(Context.has_value());
-        const auto* Entry = Context->GetCatalogue().FindByExternalIdentity(
-            ExternalNodeIdentity("200000"));
+        const auto* Entry = Context->GetCatalogue().FindByExternalIdentity(ExternalNodeIdentity("200000"));
         MPP_CHECK(Entry != nullptr);
-        const NodeDescriptor* Descriptor = Context->GetRegistry().Find(
-            Entry->GetDescriptorIdentifier());
+        const NodeDescriptor* Descriptor = Context->GetRegistry().Find(Entry->GetDescriptorIdentifier());
         MPP_CHECK(Descriptor != nullptr);
-        MPP_CHECK(Descriptor->GetPins()[1U].GetType() ==
-            TypeDesc::Enum(EnumTypeIdentity("filter_return_type")));
+        MPP_CHECK(Descriptor->GetPins()[1U].GetType() == TypeDesc::Enum(EnumTypeIdentity("filter_return_type")));
         MPP_CHECK(Descriptor->GetPins()[1U].GetDefaultValue()->Is<EnumLiteralValue>());
         MPP_CHECK(Descriptor->GetPins()[1U].GetDefaultValue()->TryGet<EnumLiteralValue>()->GetValue() == 1000010);
     }

@@ -23,12 +23,7 @@ namespace
     {
         const NodeInstance FirstNode{NodeInstanceId(1U), NodeDescriptorId(10U)};
         const NodeInstance SecondNode{NodeInstanceId(2U), NodeDescriptorId(10U)};
-        const GraphVariable Variable{
-            GraphVariableId(1U),
-            "Score",
-            TypeDesc::Integer(),
-            LiteralValue(LiteralValue::Data{std::int64_t{42}})
-        };
+        const GraphVariable Variable{GraphVariableId(1U), "Score", TypeDesc::Integer(), LiteralValue(LiteralValue::Data{std::int64_t{42}})};
 
         Check(FirstNode.IsValid());
         Check(!NodeInstance{}.IsValid());
@@ -47,21 +42,9 @@ namespace
         Check(Graph.FindVariable(GraphVariableId(1U)) != nullptr);
         Check(Graph.FindVariable(GraphVariableId(99U)) == nullptr);
 
-        Graph.BindInput(
-            FirstNode.Identifier,
-            PinIndex(0U),
-            LiteralValue(LiteralValue::Data{std::int64_t{7}})
-        );
-        Graph.BindInput(
-            FirstNode.Identifier,
-            PinIndex(1U),
-            OutputReference{SecondNode.Identifier, PinIndex(0U)}
-        );
-        Graph.BindInput(
-            SecondNode.Identifier,
-            PinIndex(0U),
-            GraphVariableReference{Variable.Identifier}
-        );
+        Graph.BindInput(FirstNode.Identifier, PinIndex(0U), LiteralValue(LiteralValue::Data{std::int64_t{7}}));
+        Graph.BindInput(FirstNode.Identifier, PinIndex(1U), OutputReference{SecondNode.Identifier, PinIndex(0U)});
+        Graph.BindInput(SecondNode.Identifier, PinIndex(0U), GraphVariableReference{Variable.Identifier});
 
         Check(Graph.GetInputBindingCount() == 3U);
         const InputBinding* LiteralBinding = Graph.GetInputBinding(FirstNode.Identifier, PinIndex(0U));
@@ -72,18 +55,8 @@ namespace
         Check(VariableBinding != nullptr && std::get<GraphVariableReference>(*VariableBinding).IsValid());
         Check(Graph.GetInputBinding(SecondNode.Identifier, PinIndex(9U)) == nullptr);
 
-        Graph.AddControlEdge(ControlEdge{
-            FirstNode.Identifier,
-            PinIndex(2U),
-            SecondNode.Identifier,
-            PinIndex(3U)
-        });
-        Graph.AddControlEdge(ControlEdge{
-            SecondNode.Identifier,
-            PinIndex(4U),
-            FirstNode.Identifier,
-            PinIndex(5U)
-        });
+        Graph.AddControlEdge(ControlEdge{FirstNode.Identifier, PinIndex(2U), SecondNode.Identifier, PinIndex(3U)});
+        Graph.AddControlEdge(ControlEdge{SecondNode.Identifier, PinIndex(4U), FirstNode.Identifier, PinIndex(5U)});
         Check(Graph.GetControlEdgeCount() == 2U);
         Check(Graph.GetControlEdges()[0].SourceNode == FirstNode.Identifier);
         Check(Graph.GetControlEdges()[0].DestinationInputPin == PinIndex(3U));

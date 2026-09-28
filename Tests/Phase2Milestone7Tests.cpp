@@ -12,12 +12,7 @@ namespace
     {
         if (!Condition)
         {
-            std::fprintf(
-                stderr,
-                "CHECK FAILED: %s (line %d)\n",
-                Expression,
-                Line
-            );
+            std::fprintf(stderr, "CHECK FAILED: %s (line %d)\n", Expression, Line);
             std::abort();
         }
     }
@@ -57,14 +52,10 @@ namespace
             "MappedNode",
             {NodeAvailability::Server},
             {
-                PinSchema("Input", TypeDesc::Integer(), PinDirection::Input,
-                    PinCategory::Data, PinCardinality::Single, false),
-                PinSchema("Output", TypeDesc::Integer(), PinDirection::Output,
-                    PinCategory::Data),
-                PinSchema("FlowInput", TypeDesc::Flow(), PinDirection::Input,
-                    PinCategory::Execution),
-                PinSchema("FlowOutput", TypeDesc::Flow(), PinDirection::Output,
-                    PinCategory::Execution)
+                PinSchema("Input", TypeDesc::Integer(), PinDirection::Input, PinCategory::Data, PinCardinality::Single, false),
+                PinSchema("Output", TypeDesc::Integer(), PinDirection::Output, PinCategory::Data),
+                PinSchema("FlowInput", TypeDesc::Flow(), PinDirection::Input, PinCategory::Execution),
+                PinSchema("FlowOutput", TypeDesc::Flow(), PinDirection::Output, PinCategory::Execution)
             }
         );
     }
@@ -107,63 +98,23 @@ namespace
         Graph SourceGraph(GraphIdentifier(1U), "Source");
         auto FirstNode = std::make_unique<Node>(NodeIdentifier(1U), "First");
         auto SecondNode = std::make_unique<Node>(NodeIdentifier(2U), "Second");
-        Check(FirstNode->AddPin(std::make_unique<Pin>(
-            PinIdentifier(10U), "Input", EPinCategory::Data, EPinType::Integer, EPinKind::Input
-        )).has_value());
-        Check(FirstNode->AddPin(std::make_unique<Pin>(
-            PinIdentifier(11U), "Output", EPinCategory::Data, EPinType::Integer, EPinKind::Output
-        )).has_value());
-        Check(FirstNode->AddPin(std::make_unique<Pin>(
-            PinIdentifier(12U), "FlowInput", EPinCategory::Execution, EPinType::Flow, EPinKind::Input
-        )).has_value());
-        Check(FirstNode->AddPin(std::make_unique<Pin>(
-            PinIdentifier(13U), "FlowOutput", EPinCategory::Execution, EPinType::Flow, EPinKind::Output
-        )).has_value());
-        Check(SecondNode->AddPin(std::make_unique<Pin>(
-            PinIdentifier(10U), "Input", EPinCategory::Data, EPinType::Integer, EPinKind::Input
-        )).has_value());
-        Check(SecondNode->AddPin(std::make_unique<Pin>(
-            PinIdentifier(11U), "Output", EPinCategory::Data, EPinType::Integer, EPinKind::Output
-        )).has_value());
-        Check(SecondNode->AddPin(std::make_unique<Pin>(
-            PinIdentifier(12U), "FlowInput", EPinCategory::Execution, EPinType::Flow, EPinKind::Input
-        )).has_value());
-        Check(SecondNode->AddPin(std::make_unique<Pin>(
-            PinIdentifier(13U), "FlowOutput", EPinCategory::Execution, EPinType::Flow, EPinKind::Output
-        )).has_value());
+        Check(FirstNode->AddPin(std::make_unique<Pin>(PinIdentifier(10U), "Input", EPinCategory::Data, EPinType::Integer, EPinKind::Input)).has_value());
+        Check(FirstNode->AddPin(std::make_unique<Pin>(PinIdentifier(11U), "Output", EPinCategory::Data, EPinType::Integer, EPinKind::Output)).has_value());
+        Check(FirstNode->AddPin(std::make_unique<Pin>(PinIdentifier(12U), "FlowInput", EPinCategory::Execution, EPinType::Flow, EPinKind::Input)).has_value());
+        Check(FirstNode->AddPin(std::make_unique<Pin>(PinIdentifier(13U), "FlowOutput", EPinCategory::Execution, EPinType::Flow, EPinKind::Output)).has_value());
+        Check(SecondNode->AddPin(std::make_unique<Pin>(PinIdentifier(10U), "Input", EPinCategory::Data, EPinType::Integer, EPinKind::Input)).has_value());
+        Check(SecondNode->AddPin(std::make_unique<Pin>(PinIdentifier(11U), "Output", EPinCategory::Data, EPinType::Integer, EPinKind::Output)).has_value());
+        Check(SecondNode->AddPin(std::make_unique<Pin>(PinIdentifier(12U), "FlowInput", EPinCategory::Execution, EPinType::Flow, EPinKind::Input)).has_value());
+        Check(SecondNode->AddPin(std::make_unique<Pin>(PinIdentifier(13U), "FlowOutput", EPinCategory::Execution, EPinType::Flow, EPinKind::Output)).has_value());
         Check(SourceGraph.AddNode(std::move(FirstNode)).has_value());
         Check(SourceGraph.AddNode(std::move(SecondNode)).has_value());
-        Check(SourceGraph.AddLink(Link(
-            LinkIdentifier(1U),
-            PinReference{NodeIdentifier(1U), PinIdentifier(11U)},
-            PinReference{NodeIdentifier(2U), PinIdentifier(10U)}
-        )).has_value());
+        Check(SourceGraph.AddLink(Link(LinkIdentifier(1U), PinReference{NodeIdentifier(1U), PinIdentifier(11U)}, PinReference{NodeIdentifier(2U), PinIdentifier(10U)})).has_value());
 
-        Check(!SourceGraph.AddLink(Link(
-            LinkIdentifier(3U),
-            PinReference{NodeIdentifier(1U), PinIdentifier(11U)},
-            PinReference{NodeIdentifier(2U), PinIdentifier(12U)}
-        )).has_value());
-        Check(!SourceGraph.AddLink(Link(
-            LinkIdentifier(4U),
-            PinReference{NodeIdentifier(1U), PinIdentifier(13U)},
-            PinReference{NodeIdentifier(2U), PinIdentifier(10U)}
-        )).has_value());
-        Check(!SourceGraph.AddLink(Link(
-            LinkIdentifier(5U),
-            PinReference{NodeIdentifier(1U), PinIdentifier(10U)},
-            PinReference{NodeIdentifier(2U), PinIdentifier(10U)}
-        )).has_value());
-        Check(!SourceGraph.AddLink(Link(
-            LinkIdentifier(6U),
-            PinReference{NodeIdentifier(1U), PinIdentifier(11U)},
-            PinReference{NodeIdentifier(2U), PinIdentifier(11U)}
-        )).has_value());
-        Check(SourceGraph.AddLink(Link(
-            LinkIdentifier(2U),
-            PinReference{NodeIdentifier(1U), PinIdentifier(13U)},
-            PinReference{NodeIdentifier(2U), PinIdentifier(12U)}
-        )).has_value());
+        Check(!SourceGraph.AddLink(Link(LinkIdentifier(3U), PinReference{NodeIdentifier(1U), PinIdentifier(11U)}, PinReference{NodeIdentifier(2U), PinIdentifier(12U)})).has_value());
+        Check(!SourceGraph.AddLink(Link(LinkIdentifier(4U), PinReference{NodeIdentifier(1U), PinIdentifier(13U)}, PinReference{NodeIdentifier(2U), PinIdentifier(10U)})).has_value());
+        Check(!SourceGraph.AddLink(Link(LinkIdentifier(5U), PinReference{NodeIdentifier(1U), PinIdentifier(10U)}, PinReference{NodeIdentifier(2U), PinIdentifier(10U)})).has_value());
+        Check(!SourceGraph.AddLink(Link(LinkIdentifier(6U), PinReference{NodeIdentifier(1U), PinIdentifier(11U)}, PinReference{NodeIdentifier(2U), PinIdentifier(11U)})).has_value());
+        Check(SourceGraph.AddLink(Link(LinkIdentifier(2U), PinReference{NodeIdentifier(1U), PinIdentifier(13U)}, PinReference{NodeIdentifier(2U), PinIdentifier(12U)})).has_value());
 
         const GraphIRAdapterMapping Mapping{{MakeMapping(NodeIdentifier(1U)), MakeMapping(NodeIdentifier(2U))}};
         const auto Converted = GraphIRAdapter::Convert(SourceGraph, Mapping);
@@ -217,21 +168,17 @@ namespace
         Check(!GraphIRAdapter::Convert(SourceGraph, DuplicateMapping).has_value());
 
         GraphIRAdapterMapping DuplicatePinMapping = Mapping;
-        DuplicatePinMapping.Nodes[0].Pins.push_back(
-            {PinIdentifier(11U), PinIndex(4U)});
+        DuplicatePinMapping.Nodes[0].Pins.push_back({PinIdentifier(11U), PinIndex(4U)});
         Check(!GraphIRAdapter::Convert(SourceGraph, DuplicatePinMapping).has_value());
 
         GraphIRAdapterMapping DuplicateGraphIRPinMapping = Mapping;
-        DuplicateGraphIRPinMapping.Nodes[0].Pins.push_back(
-            {PinIdentifier(10U), PinIndex(1U)});
+        DuplicateGraphIRPinMapping.Nodes[0].Pins.push_back({PinIdentifier(10U), PinIndex(1U)});
         Check(!GraphIRAdapter::Convert(SourceGraph, DuplicateGraphIRPinMapping).has_value());
 
         GraphIRAdapterMapping AggregatedErrors = Mapping;
         AggregatedErrors.Nodes[0].Descriptor = NodeDescriptorId();
         AggregatedErrors.Nodes[1].Pins.clear();
-        AggregatedErrors.Nodes.push_back(GraphIRNodeMapping{
-            NodeIdentifier(99U), NodeDescriptorId(), {}
-        });
+        AggregatedErrors.Nodes.push_back(GraphIRNodeMapping{NodeIdentifier(99U), NodeDescriptorId(), {}});
         const auto AggregatedResult = GraphIRAdapter::Convert(SourceGraph, AggregatedErrors);
         Check(!AggregatedResult.has_value());
         Check(AggregatedResult.error().size() >= 3U);
