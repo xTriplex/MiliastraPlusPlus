@@ -360,3 +360,40 @@ versioned. The P6.4 CMake integration is local-only/offline: Abseil is added
 before Protobuf, Protobuf's local-dependency and force-fetch switches disable
 network acquisition, tests/examples/conformance/install/shared/zlib support are
 disabled, and no system Protobuf or FetchContent dependency is used.
+
+Phase 6 Milestone 5: Complete Representative Client bool_filter GIA Export
+---------------------------------------------------------------------------
+
+Direct source-evidence consumers:
+Miliastra++/Source/Public/MiliastraPlusPlusGiaExporter.h
+Miliastra++/Source/Private/MiliastraPlusPlusGiaExporter.cpp
+Tests/Phase6Milestone5Tests.cpp
+
+The bounded implementation reuses the accepted pinned genshin-ts revision:
+26bdf2a9a3fadba934423940489236f0b53eb3ea
+
+Reused pinned evidence:
+scripts/client-nodegraph/smoke-minimal-client-gia.ts
+Pinned Git blob: 07e62f88cd7dca60995e29588c20df912e6cc65f
+
+src/thirdparty/Genshin-Impact-Miliastra-Wonderland-Code-Node-Editor-Pack/protobuf/decode.ts
+Pinned Git blob: dfe353a0767643fa89adf9b954256a18f2082129
+
+src/thirdparty/Genshin-Impact-Miliastra-Wonderland-Code-Node-Editor-Pack/node_data/client_graph_encoding.ts
+Pinned Git blob: 7c9f66706d89cd1c50a59bdca9346f9dc5611429
+
+resources/client_node_metadata.json
+Pinned Git blob: 93237c724f6453650ae9394077620c6e0fddb3d3
+
+resources/client_node_modes.json
+Pinned Git blob: b7e14a0dd7102ccd682235cf958a2d3d36378033
+
+src/thirdparty/Genshin-Impact-Miliastra-Wonderland-Code-Node-Editor-Pack/protobuf/gia.proto
+Pinned Git blob: 233bbb264fa89abb1dc708d4d0ad1142dc213b86
+
+The M5 facade composes the existing GraphIR lowering, resolved target
+semantics/layout, and P6.4 deterministic bare Root protobuf validation, then
+adds only the fixed in-memory GIA envelope. The M5 test independently parses
+that envelope and decodes the extracted Root payload. No new upstream resource
+copy, schema pin, generated source, filesystem writer, CLI, or GIL integration
+is introduced.

@@ -231,6 +231,7 @@ set(TEST_TARGETS
     Phase6Milestone2Tests
     Phase6Milestone3Tests
     Phase6Milestone4Tests
+    Phase6Milestone5Tests
 )
 
 foreach(TEST_NAME ${TEST_TARGETS})
@@ -249,6 +250,19 @@ endforeach()
 
 target_link_libraries(Phase6Milestone4Tests PRIVATE
     protobuf::libprotobuf
+)
+
+target_link_libraries(Phase6Milestone5Tests PRIVATE
+    protobuf::libprotobuf
+)
+
+target_include_directories(Phase6Milestone5Tests PRIVATE
+    ${MILIASTRA_GIA_PROTO_DIR}
+)
+
+add_dependencies(
+    Phase6Milestone5Tests
+    MiliastraGiaProtoGeneration
 )
 
 target_compile_definitions(Phase6Milestone4Tests PRIVATE

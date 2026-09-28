@@ -26,9 +26,9 @@ The core remains a static library. Test executables are separate targets, and th
 | Phase 3 | Complete through Milestone 3: typed GraphBuilder, bindings, variables, and generic validation |
 | Phase 4 | Complete through Milestone 4: structured control-flow construction and validation |
 | Phase 5 | Complete through Milestone 5: catalogue ingestion, specialization, snapshots, and registry materialization |
-| Phase 6 | Complete through Milestone 4: deterministic resolved-model protobuf encoding and validation |
+| Phase 6 | Complete through Milestone 5: deterministic resolved-model protobuf encoding, fresh validation, and bounded in-memory `.gia` export |
 
-The current implementation boundary is Phase 6 Milestone 4. The next bounded milestone is Phase 6 Milestone 5 for complete framed `.gia` export. It is not implemented here.
+The current implementation boundary is Phase 6 Milestone 5. The bounded representative Client `bool_filter` / `Beyond` path now produces owned in-memory `.gia` bytes. Filesystem and application integration remain deferred.
 
 ## Phase 6 / GIA Export
 
@@ -41,11 +41,12 @@ validated GraphIR
     -> deterministic bare Root protobuf bytes
     -> fresh protobuf decode
     -> structural validation and model/connection comparison
+    -> deterministic owned in-memory `.gia` framing
 ```
 
 Phase 6 Milestone 1 establishes target, configuration, context, and mapping contracts. The first-fixture bool-filter coverage prerequisite freezes the representative `ClientBooleanFilter`/`Beyond` target. Milestones 2 and 3 own semantic lowering and resolved pin, connection, and layout decisions. Milestone 4 mechanically encodes the resolved model into the pinned protobuf schema and validates a fresh decode.
 
-P6.4 produces a bare serialized `Root` protobuf payload. `.gia` framing and filesystem output, an export facade, CLI/GIL integration, complete editor-loadable export, broader target profiles, and broader pin-family support remain deferred to later bounded work.
+Phase 6 Milestone 5 wraps that validated bare `Root` protobuf payload in the deterministic GIA header/tail and exposes the result through an owning in-memory export facade for the bounded representative fixture. Filesystem output, filename policy, CLI/GIL integration, editor/runtime integration, broader target profiles, and broader pin-family support remain deferred.
 
 ## Building / Project Generation
 
@@ -70,7 +71,7 @@ cmake --build Miliastra++ --config Dist -- /m:4
 ctest --test-dir Miliastra++ -C Dist --output-on-failure
 ```
 
-The configured suite currently contains 26 tests. Builds use the vendored Protobuf and Abseil trees; no package-manager or network dependency is required by the project configuration.
+The configured suite currently contains 27 tests. Builds use the vendored Protobuf and Abseil trees; no package-manager or network dependency is required by the project configuration.
 
 ## Project Structure
 
@@ -88,6 +89,6 @@ The generated solution groups dependency projects under `Dependencies` and proje
 
 ## Scope / Deferred Work
 
-The current bounded implementation does not yet provide the complete framed in-memory `.gia` export path.
+The current bounded implementation provides owned in-memory `.gia` bytes for the representative Client `bool_filter` / `Beyond` fixture.
 
-Phase 6 Milestone 5 is the next bounded step and adds deterministic in-memory `.gia` framing plus the export facade. Filesystem output, CLI/GIL integration, broader target support, and editor/runtime integration remain later work. No Phase 6 Milestone 5 implementation is included in this baseline.
+Filesystem `.gia` writing, filename policy, CLI/GIL integration, broader target support, editor/runtime integration, and automatic editor loading remain later work. This milestone does not claim filesystem export or broad GIA target support.
