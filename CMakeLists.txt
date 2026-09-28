@@ -2,6 +2,31 @@ cmake_minimum_required(VERSION 3.20)
 
 project(Miliastra++ CXX)
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+function(MILIASTRA_ASSIGN_DIRECTORY_TARGETS_TO_FOLDER DIRECTORY FOLDER_NAME)
+    get_property(MILIASTRA_DIRECTORY_TARGETS
+        DIRECTORY "${DIRECTORY}"
+        PROPERTY BUILDSYSTEM_TARGETS
+    )
+
+    foreach(MILIASTRA_TARGET IN LISTS MILIASTRA_DIRECTORY_TARGETS)
+        set_property(TARGET ${MILIASTRA_TARGET} PROPERTY FOLDER "${FOLDER_NAME}")
+    endforeach()
+
+    get_property(MILIASTRA_SUBDIRECTORIES
+        DIRECTORY "${DIRECTORY}"
+        PROPERTY SUBDIRECTORIES
+    )
+
+    foreach(MILIASTRA_SUBDIRECTORY IN LISTS MILIASTRA_SUBDIRECTORIES)
+        MILIASTRA_ASSIGN_DIRECTORY_TARGETS_TO_FOLDER(
+            "${MILIASTRA_SUBDIRECTORY}"
+            "${FOLDER_NAME}"
+        )
+    endforeach()
+endfunction()
+
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;Dist" CACHE STRING
     "Supported build configurations" FORCE
 )
@@ -34,6 +59,11 @@ add_subdirectory(
     EXCLUDE_FROM_ALL
 )
 
+MILIASTRA_ASSIGN_DIRECTORY_TARGETS_TO_FOLDER(
+    "${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Vendor/abseil-cpp"
+    "Dependencies/Abseil"
+)
+
 if(NOT TARGET absl::strings)
     message(FATAL_ERROR "The pinned local Abseil targets were not created")
 endif()
@@ -56,6 +86,11 @@ add_subdirectory(
     ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Vendor/protobuf
     ${CMAKE_CURRENT_BINARY_DIR}/ThirdParty/protobuf
     EXCLUDE_FROM_ALL
+)
+
+MILIASTRA_ASSIGN_DIRECTORY_TARGETS_TO_FOLDER(
+    "${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Vendor/protobuf"
+    "Dependencies/Protobuf"
 )
 
 if(NOT TARGET protobuf::libprotobuf OR NOT TARGET protobuf::libprotoc OR NOT TARGET protobuf::protoc)
@@ -111,6 +146,11 @@ add_custom_target(MiliastraGiaProtoGeneration
     DEPENDS
         ${MILIASTRA_GIA_PROTO_HEADER}
         ${MILIASTRA_GIA_PROTO_SOURCE}
+)
+
+set_property(
+    TARGET MiliastraGiaProtoGeneration
+    PROPERTY FOLDER "Dependencies/Protobuf"
 )
 
 # Output directories
@@ -198,6 +238,8 @@ foreach(TEST_NAME ${TEST_TARGETS})
         ${CMAKE_CURRENT_SOURCE_DIR}/Tests/${TEST_NAME}.cpp
     )
 
+    set_property(TARGET ${TEST_NAME} PROPERTY FOLDER "Tests")
+
     target_link_libraries(${TEST_NAME} PRIVATE
         ${PROJECT_NAME}
     )
@@ -283,6 +325,11 @@ target_precompile_headers(${PROJECT_NAME} PRIVATE
 # source without test-only definitions or symbols.
 add_library(Phase6Milestone4EncoderTestAccess OBJECT
     ${CMAKE_CURRENT_SOURCE_DIR}/Miliastra++/Source/Private/MiliastraPlusPlusGiaProtobufEncoder.cpp
+)
+
+set_property(
+    TARGET Phase6Milestone4EncoderTestAccess
+    PROPERTY FOLDER "Tests"
 )
 
 target_include_directories(Phase6Milestone4EncoderTestAccess PRIVATE

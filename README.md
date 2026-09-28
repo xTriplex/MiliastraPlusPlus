@@ -1,34 +1,93 @@
 # Miliastra++
-A C++ library for building node graphs for Miliastra Wonderland.
 
-## Progress
+Miliastra++ is a C++23 static library for constructing, validating, and lowering typed node graphs through a staged GIA export pipeline.
 
-- Phase 1 — completed: the original graph, node, pin, link, and compiler prototype.
-- Phase 2 — completed through Milestone 8: backend-neutral GraphIR, descriptors, validation, JSON support, adapters, and representative fixtures.
-- Phase 3 Milestone 1 — completed: GraphBuilder ownership, descriptor-backed nodes, deterministic IDs, safe NodeHandles, and consuming finalization.
-- Phase 3 Milestone 2 — completed: typed outputs, explicit data-flow bindings, literals, graph variables, and list/cardinality checks.
-- Phase 3 Milestone 3 — completed: deterministic generic unification, persisted typed-output use constraints, and final typed validation.
-- Phase 4 Milestone 1 — completed: persisted execution mode, entry and region ownership, trusted control-role descriptors, structural validation, and GraphIR JSON v3 with v1/v2 read compatibility.
-- Phase 4 Milestone 2 — completed: structured Entry and Sequence construction, binary BranchArm scopes, explicit Join and one-live-arm continuation, branch reachability, and branch data dominance/provenance validation.
-- Phase 4 Milestone 3 — completed: nested LoopBody construction, Conditional and Unconditional loops, explicit nearest-loop Break/Continue transfers, Repeat backedges, loop Exit continuation, loop-aware reachability/cycle validation, and loop-aware data dominance/provenance.
-- Phase 4 Milestone 4 — completed: execution-only Return construction, terminal path validation, complete structured reachability and per-entry data provenance validation, with GraphIR JSON v3 and legacy v1/v2 Unstructured behavior preserved.
-- Phase 5 Milestone 1 — completed: source-independent descriptor catalogue identity, opaque external node identity, logical provenance, catalogue binding, deterministic catalogue-local descriptor-ID allocation, and compatibility diagnostics.
-- Phase 5 Milestone 2 — completed: normalized backend-neutral descriptor records, current descriptor semantic validation, deterministic SHA-256 content identity, immutable in-memory catalogues, canonical ordering, provenance-preserving diagnostics, and P5.1 allocation integration.
-- Phase 5 Milestone 3 — completed: bounded ingestion of pinned upstream-derived Genshin client boolean-filter metadata through an isolated source adapter, P5.2 normalized records, and deterministic catalogue integration.
-- Phase 5 Milestone 4 — completed: bounded reflected descriptor-family specialization for the pinned Genshin client boolean-filter source, producing deterministic concrete backend-neutral normalized variants through the existing catalogue boundary.
+## What is Miliastra++?
 
-- Phase 5 Milestone 5 — completed: deterministic descriptor catalogue snapshots and validated NodeDescriptorRegistry materialization with catalogue-local identity preservation.
-- Post-Phase 5 infrastructure — completed: Miliastra++ is built as a static C++ core library, all Phase test executables link against it, and the placeholder Main.cpp application entry point has been removed.
-- Phase 6 Milestone 1 — completed: validated GIA target/configuration contracts, opaque-identity backend mapping packages, exact catalogue compatibility enforcement, and immutable export context; GraphIR lowering, enum/source coverage, protobuf encoding, byte export, CLI, and GIL integration remain out of scope.
+The project provides a backend-neutral graph model for Miliastra Wonderland-style node graphs. `GraphIR` is the canonical representation; descriptor registries and catalogues provide validated node metadata; `GraphBuilder` constructs typed graphs; and deterministic validation and persistence keep graph behavior reproducible.
 
-The first-fixture coverage prerequisite adds the bounded client bool_filter result-node descriptor, backend-neutral enum identity/literal semantics, catalogue semantic schema 2, snapshot format 2 with legacy v1 reading, and additive GraphIR v3 Enum JSON forms. P6.2 GraphIR-to-GIA lowering, protobuf, GIA bytes, CLI, and GIL remain out of scope.
+The core remains a static library. Test executables are separate targets, and the repository keeps vendored Protobuf and Abseil dependencies local for offline builds.
 
-- Phase 6 Milestone 2 — completed: validated GraphIR can be lowered through GiaExportContext into an owned deterministic protobuf-independent semantic backend model with exact descriptor/catalogue/external-identity/mapping resolution and first-target default/literal materialization. Final GIA pin coordinates, effective i2/remaps, final connection coordinates, and layout are provided by the completed P6.3 milestone; protobuf, bytes, file output, CLI, and GIL remain unimplemented.
+## Highlights
 
-- Phase 6 Milestone 3 — completed: validated P6.2 semantic backend graphs can be resolved into an owned deterministic target-semantic GIA model with final supported pin kinds, i1/effective i2 endpoints, separate data/control connections, and deterministic SCC/grid layout. Protobuf classes/runtime, encoding, bytes, `.gia` output, CLI/GIL, complete editor-loadable export, broader target profiles, ClientExecution/ClientSignal support, and editor layout persistence remain unimplemented.
+- Descriptor-backed nodes with catalogue identity, provenance, deterministic allocation, specialization, and snapshot materialization.
+- Typed data flow with literals, graph variables, lists, cardinality checks, and owner-scoped generic validation.
+- Structured execution with entries, sequences, branches, joins, nested loops, `Break`, `Continue`, and valueless `Return`.
+- Deterministic GraphIR JSON v3 with v1/v2 read compatibility.
+- A staged GIA backend that separates semantic lowering, target resolution/layout, and protobuf encoding.
+- Dedicated test-access seams that keep failure injection and protobuf inspection out of the production archive.
 
-- Phase 6 Milestone 4 - completed: bounded ClientBooleanFilter/Beyond resolved GIA models can be encoded as deterministic bare protobuf Root payloads using the pinned schema and offline C++ toolchain, then decoded into a fresh message and independently validated. `.gia` framing/filesystem output, export facade, CLI/GIL, editor-loadable export, broader target profiles, and broader pin-family support remain unimplemented for Phase 6 Milestone 5 or later.
+## Current Status
 
-The current builder constructs typed data flow from descriptor-backed nodes and structured execution through explicit Entry, Sequence, BranchArm, Join, nested Loop, and Return operations. Branch continuation requires an explicit Join for two live arms or an explicit one-live-arm continuation. Loop Break and Continue target the nearest active loop and persist as ControlEdges to descriptor-declared inputs. Return is execution-only: it consumes one explicit Flow predecessor and terminates that path without producing a continuation. Natural path completion remains valid, while root-only structured Entries are rejected. Inputs can be bound explicitly to supported literals, typed node outputs, or graph-variable references. Typed output assertions are stored per binding in canonical GraphIR and checked by a separate validation pass using scoped, deterministic constraints. GraphIR JSON v3 persists execution mode and structured ownership while preserving typed output assertions; v1/v2 graphs remain readable as Unstructured. Descriptor pin metadata remains the source of truth for pin direction, category, type, cardinality, and declared control roles.
+| Area | Status |
+| --- | --- |
+| Phase 1 | Complete: original graph, node, pin, link, and compiler foundation |
+| Phase 2 | Complete through Milestone 8: GraphIR, descriptors, validation, JSON, adapters, and fixtures |
+| Phase 3 | Complete through Milestone 3: typed GraphBuilder, bindings, variables, and generic validation |
+| Phase 4 | Complete through Milestone 4: structured control-flow construction and validation |
+| Phase 5 | Complete through Milestone 5: catalogue ingestion, specialization, snapshots, and registry materialization |
+| Phase 6 | Complete through Milestone 4: deterministic resolved-model protobuf encoding and validation |
 
-Labeled transfers, phi/SSA behavior, GIA/GIL integration, broader vendor metadata ingestion, backend compilation, and runtime/editor integration remain out of scope. No implicit Join, Repeat edge, or phi/SSA behavior is provided.
+The current implementation boundary is Phase 6 Milestone 4. The next bounded milestone is Phase 6 Milestone 5 for complete framed `.gia` export. It is not implemented here.
+
+## Phase 6 / GIA Export
+
+The implemented P6.4 production path is:
+
+```text
+validated GraphIR
+    -> semantic GIA backend lowering
+    -> resolved target-semantic GIA model
+    -> deterministic bare Root protobuf bytes
+    -> fresh protobuf decode
+    -> structural validation and model/connection comparison
+```
+
+Phase 6 Milestone 1 establishes target, configuration, context, and mapping contracts. The first-fixture bool-filter coverage prerequisite freezes the representative `ClientBooleanFilter`/`Beyond` target. Milestones 2 and 3 own semantic lowering and resolved pin, connection, and layout decisions. Milestone 4 mechanically encodes the resolved model into the pinned protobuf schema and validates a fresh decode.
+
+P6.4 produces a bare serialized `Root` protobuf payload. `.gia` framing and filesystem output, an export facade, CLI/GIL integration, complete editor-loadable export, broader target profiles, and broader pin-family support remain deferred to later bounded work.
+
+## Building / Project Generation
+
+Run from the repository root with the pinned local dependencies available:
+
+```bat
+GenerateProjectFiles.bat
+```
+
+The script regenerates the existing Visual Studio 2022 solution and project tree. It places `Miliastra++.sln` at the repository root and keeps generated files under the existing `Miliastra++` CMake binary tree.
+
+Build a configuration and run the complete configured test suite with:
+
+```bat
+cmake --build Miliastra++ --config Debug -- /m:4
+ctest --test-dir Miliastra++ -C Debug --output-on-failure
+
+cmake --build Miliastra++ --config Release -- /m:4
+ctest --test-dir Miliastra++ -C Release --output-on-failure
+
+cmake --build Miliastra++ --config Dist -- /m:4
+ctest --test-dir Miliastra++ -C Dist --output-on-failure
+```
+
+The configured suite currently contains 26 tests. Builds use the vendored Protobuf and Abseil trees; no package-manager or network dependency is required by the project configuration.
+
+## Project Structure
+
+```text
+Miliastra++/
+├─ Source/Public/       public project headers
+├─ Source/Private/      project implementation sources
+└─ Vendor/              pinned dependencies and GIA schema
+Tests/                  milestone test executables
+CMakeLists.txt          offline targets and build configuration
+GenerateProjectFiles.bat
+```
+
+The generated solution groups dependency projects under `Dependencies` and project tests under `Tests`; the main `Miliastra++` static-library target remains at the solution root.
+
+## Scope / Deferred Work
+
+The current bounded implementation does not yet provide the complete framed in-memory `.gia` export path.
+
+Phase 6 Milestone 5 is the next bounded step and adds deterministic in-memory `.gia` framing plus the export facade. Filesystem output, CLI/GIL integration, broader target support, and editor/runtime integration remain later work. No Phase 6 Milestone 5 implementation is included in this baseline.
